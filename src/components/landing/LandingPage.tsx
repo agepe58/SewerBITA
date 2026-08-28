@@ -24,9 +24,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard }) =>
     <div className="min-h-screen w-full bg-gradient-to-br from-[#D9E4FF] via-[#EBF1FF] to-[#D2E2FF] text-slate-900 selection:bg-[#2563EB] selection:text-white font-sans flex flex-col justify-between">
       {/* Landing Navbar */}
       <header className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 h-20 flex items-center justify-between border-b border-white/60 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-md shrink-0">
-            <Droplets className="w-6 h-6 text-[#38BDF8]" />
+        <div className="flex items-center gap-4">
+          <div className="bg-white/90 p-1.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-center">
+            <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="h-10 sm:h-12 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-extrabold text-2xl tracking-tight text-slate-900">

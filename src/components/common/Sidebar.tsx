@@ -87,15 +87,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Brand & User Greeting Header */}
       <div className="space-y-6">
         {/* Brand */}
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-md">
-            <Droplets className="w-6 h-6 text-[#38BDF8]" />
+        <div className="flex flex-col gap-2 px-2 pb-3 border-b border-slate-100">
+          <div className="bg-slate-50 p-2 rounded-2xl border border-slate-200/80 flex items-center justify-center">
+            <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="w-full h-auto max-h-14 object-contain" />
           </div>
-          <div>
-            <h1 className="font-extrabold text-xl tracking-tight text-slate-900 flex items-center gap-1">
-              Sewer<span className="text-[#2563EB]">BITA</span>
-            </h1>
-            <p className="text-xs text-slate-400 font-mono leading-none">Enterprise Intelligence</p>
+          <div className="flex items-center justify-between text-xs text-slate-600 font-mono font-bold pt-0.5">
+            <span className="text-slate-900 font-extrabold text-sm">Sewer<span className="text-[#2563EB]">BITA</span></span>
+            <span className="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[11px]">Online</span>
           </div>
         </div>
 
