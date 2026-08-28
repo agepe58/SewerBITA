@@ -198,9 +198,9 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#D9E4FF] via-[#EBF1FF] to-[#D2E2FF] p-2 sm:p-4 lg:p-6 flex flex-col justify-center items-center font-sans text-slate-900 selection:bg-[#2563EB] selection:text-white">
-      {/* Floating Card Container Shell (Aoxa Aesthetics) */}
-      <div className="w-full max-w-[1920px] bg-white rounded-[24px] sm:rounded-[32px] shadow-2xl shadow-blue-900/15 border border-white/80 overflow-hidden flex min-h-[95vh] h-full">
+    <div className="min-h-screen w-full bg-[#F4F5F7] p-2 sm:p-3 lg:p-4 flex flex-col justify-center items-center font-sans text-slate-900 selection:bg-[#2563EB] selection:text-white">
+      {/* Ramp HQ / Notion Clean Workspace Shell */}
+      <div className="w-full max-w-[1920px] bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden flex min-h-[96vh] h-full">
         {/* Sidebar Navigation */}
         <Sidebar
           activeTab={activeTab}
