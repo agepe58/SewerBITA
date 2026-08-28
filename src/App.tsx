@@ -121,9 +121,9 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#D9E4FF] via-[#EBF1FF] to-[#D2E2FF] p-2 sm:p-4 md:p-6 flex flex-col justify-center items-center font-sans text-slate-900 selection:bg-[#2563EB] selection:text-white">
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#D9E4FF] via-[#EBF1FF] to-[#D2E2FF] p-2 sm:p-4 lg:p-6 flex flex-col justify-center items-center font-sans text-slate-900 selection:bg-[#2563EB] selection:text-white">
       {/* Floating Card Container Shell (Aoxa Aesthetics) */}
-      <div className="w-full max-w-[1680px] bg-white rounded-[24px] sm:rounded-[32px] shadow-2xl shadow-blue-900/15 border border-white/80 overflow-hidden flex min-h-[92vh]">
+      <div className="w-full max-w-[1920px] bg-white rounded-[24px] sm:rounded-[32px] shadow-2xl shadow-blue-900/15 border border-white/80 overflow-hidden flex min-h-[95vh] h-full">
         {/* Sidebar Navigation */}
         <Sidebar
           activeTab={activeTab}

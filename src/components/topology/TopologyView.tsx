@@ -59,24 +59,26 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto text-slate-900">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto text-slate-900 font-sans">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
-            <GitBranch className="w-7 h-7 text-[#2563EB]" />
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2563EB]">
+              <GitBranch className="w-6 h-6" />
+            </div>
             <span>Network Topology & Flow Tracing Solver</span>
           </h1>
-          <p className="text-sm text-slate-600 font-medium mt-0.5">
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">
             Penelusuran graf terarah (*Directed Graph DAG*) jaringan air limbah dan validasi integritas koneksi aset.
           </p>
         </div>
 
         <button
           onClick={handleRunValidation}
-          className="flex items-center gap-2 bg-white hover:bg-slate-50 text-[#0284C7] border border-slate-200 font-extrabold text-sm px-5 py-3 rounded-full transition shadow-xs"
+          className="flex items-center gap-2.5 bg-white hover:bg-slate-50 text-[#0284C7] border border-slate-200 font-black text-sm px-6 py-3.5 rounded-full transition shadow-xs hover:scale-105 shrink-0 self-start md:self-auto"
         >
-          <ShieldAlert className="w-4.5 h-4.5" />
+          <ShieldAlert className="w-5 h-5" />
           <span>Jalankan Diagnostic Validator</span>
         </button>
       </div>
@@ -85,18 +87,18 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
         {/* Left Column: Trace Configurator */}
         <div className="lg:col-span-5 space-y-6">
           {/* Card Configurator */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-5">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+            <h2 className="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-4">
               Konfigurasi Simulator Flow Tracing
             </h2>
 
             {/* Select Start Node */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <label className="text-sm font-bold text-slate-800">Pilih Aset Awal (Start Node)</label>
               <select
                 value={selectedStartId}
                 onChange={(e) => setSelectedStartId(e.target.value)}
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#2563EB] font-bold"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl p-3.5 text-sm focus:outline-none focus:border-[#2563EB] font-extrabold cursor-pointer"
               >
                 {manholes.map(mh => (
                   <option key={mh.id} value={mh.id}>
@@ -107,35 +109,35 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
             </div>
 
             {/* Select Trace Direction */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <label className="text-sm font-bold text-slate-800">Arah Tracing Network</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <button
                   type="button"
                   onClick={() => setTraceType('downstream')}
-                  className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-1 transition ${
+                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition ${
                     traceType === 'downstream'
-                      ? 'bg-blue-50 border-[#2563EB] text-[#2563EB] font-bold shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'
+                      ? 'bg-blue-50/80 border-[#2563EB] text-[#2563EB] font-bold shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <ArrowDown className="w-6 h-6" />
-                  <span className="text-sm font-bold">Downstream</span>
-                  <span className="text-xs text-slate-500 font-medium">Menuju Pompa</span>
+                  <ArrowDown className="w-6 h-6 text-[#2563EB]" />
+                  <span className="text-sm font-extrabold">Downstream</span>
+                  <span className="text-xs text-slate-500 font-semibold">Menuju Pompa</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setTraceType('upstream')}
-                  className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-1 transition ${
+                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition ${
                     traceType === 'upstream'
-                      ? 'bg-sky-50 border-[#0284C7] text-[#0284C7] font-bold shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'
+                      ? 'bg-sky-50/80 border-[#0284C7] text-[#0284C7] font-bold shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <ArrowUp className="w-6 h-6" />
-                  <span className="text-sm font-bold">Upstream</span>
-                  <span className="text-xs text-slate-500 font-medium">Jaringan Feeder</span>
+                  <ArrowUp className="w-6 h-6 text-[#0284C7]" />
+                  <span className="text-sm font-extrabold">Upstream</span>
+                  <span className="text-xs text-slate-500 font-semibold">Jaringan Feeder</span>
                 </button>
               </div>
             </div>
@@ -144,9 +146,9 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
             <div className="pt-2 flex gap-3">
               <button
                 onClick={handleRunTrace}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#2563EB] text-white font-extrabold py-3.5 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20 text-sm"
+                className="flex-1 flex items-center justify-center gap-2.5 bg-[#2563EB] text-white font-black py-4 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 text-sm hover:scale-105"
               >
-                <Play className="w-4 h-4 fill-white" />
+                <Play className="w-4.5 h-4.5 fill-white" />
                 <span>Simulasi Flow Trace</span>
               </button>
             </div>
@@ -154,26 +156,26 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
 
           {/* Validation Summary Card */}
           {validationReport && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-slate-900">Laporan Diagnostic Topology</h2>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${validationReport.isValid ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#FEE2E2] text-[#DC2626]'}`}>
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <h2 className="text-lg font-extrabold text-slate-900">Laporan Diagnostic Topology</h2>
+                <span className={`px-3.5 py-1 rounded-full text-xs font-black ${validationReport.isValid ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#FEE2E2] text-[#DC2626]'}`}>
                   {validationReport.isValid ? 'Topology Valid' : 'Isu Ditemukan'}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
-                  <div className="text-slate-500 text-xs font-bold">Total Error</div>
-                  <div className="text-xl font-black text-[#DC2626] font-mono">{validationReport.errorsCount}</div>
+              <div className="grid grid-cols-2 gap-3.5 text-center">
+                <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+                  <div className="text-slate-500 text-xs font-extrabold">Total Error</div>
+                  <div className="text-2xl font-black text-[#DC2626] font-mono">{validationReport.errorsCount}</div>
                 </div>
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
-                  <div className="text-slate-500 text-xs font-bold">Total Warning</div>
-                  <div className="text-xl font-black text-[#CA8A04] font-mono">{validationReport.warningsCount}</div>
+                <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+                  <div className="text-slate-500 text-xs font-extrabold">Total Warning</div>
+                  <div className="text-2xl font-black text-[#CA8A04] font-mono">{validationReport.warningsCount}</div>
                 </div>
               </div>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
                 {validationReport.issues.length === 0 ? (
                   <div className="text-center py-4 text-[#16A34A] text-sm font-bold flex items-center justify-center gap-2">
                     <CheckCircle2 className="w-5 h-5" />
@@ -181,14 +183,14 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
                   </div>
                 ) : (
                   validationReport.issues.map((issue) => (
-                    <div key={issue.id} className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 text-xs space-y-1.5">
+                    <div key={issue.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-xs space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${issue.severity === 'error' ? 'bg-[#F87171] text-white' : 'bg-[#FDE047] text-slate-900'}`}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${issue.severity === 'error' ? 'bg-[#F87171] text-white' : 'bg-[#FDE047] text-slate-900'}`}>
                           {issue.severity.toUpperCase()}
                         </span>
-                        <span className="font-mono text-slate-900 font-bold">{issue.issueType}</span>
+                        <span className="font-mono text-slate-900 font-extrabold">{issue.issueType}</span>
                       </div>
-                      <div className="text-slate-800 font-medium text-xs">{issue.message}</div>
+                      <div className="text-slate-800 font-semibold text-xs">{issue.message}</div>
                       {issue.suggestedFix && (
                         <div className="text-xs text-[#2563EB] font-bold">Solusi: {issue.suggestedFix}</div>
                       )}
@@ -202,17 +204,17 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
 
         {/* Right Column: Trace Result Path Breakdown */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Hasil Penelusuran Jalur (Network Path)</h2>
-                <p className="text-xs text-slate-500 font-medium">Urutan aset yang dilalui oleh air limbah</p>
+                <h2 className="text-lg font-extrabold text-slate-900">Hasil Penelusuran Jalur (Network Path)</h2>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium">Urutan aset yang dilalui oleh air limbah</p>
               </div>
 
               {traceResult && (
                 <button
                   onClick={onNavigateToMap}
-                  className="flex items-center gap-2 bg-[#2563EB] text-white font-bold text-xs px-4.5 py-2.5 rounded-full hover:bg-[#1D4ED8] transition shadow-xs"
+                  className="flex items-center gap-2 bg-[#2563EB] text-white font-extrabold text-xs px-5 py-3 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20 hover:scale-105"
                 >
                   <MapPin className="w-4 h-4" />
                   <span>Visualisasikan di Peta →</span>
@@ -221,45 +223,45 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
             </div>
 
             {!traceResult ? (
-              <div className="text-center py-16 text-slate-400 space-y-2">
-                <GitBranch className="w-12 h-12 mx-auto text-slate-300 animate-pulse" />
-                <p className="text-sm font-medium">Pilih Aset Awal dan klik "Simulasi Flow Trace" untuk melihat penelusuran graf.</p>
+              <div className="text-center py-20 text-slate-400 space-y-3">
+                <GitBranch className="w-14 h-14 mx-auto text-slate-300 animate-pulse" />
+                <p className="text-sm font-semibold">Pilih Aset Awal dan klik "Simulasi Flow Trace" untuk melihat penelusuran graf.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {/* Summary Metrics */}
-                <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4.5 rounded-2xl border border-slate-200/80 text-center">
+                <div className="grid grid-cols-3 gap-4 bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80 text-center">
                   <div>
                     <div className="text-xs text-slate-500 font-bold">Manhole Dilalui</div>
-                    <div className="text-xl font-black text-[#2563EB] font-mono">{traceResult.traversedManholeIds.length}</div>
+                    <div className="text-2xl font-black text-[#2563EB] font-mono">{traceResult.traversedManholeIds.length}</div>
                   </div>
                   <div>
                     <div className="text-xs text-slate-500 font-bold font-mono">Pipa Dilalui</div>
-                    <div className="text-xl font-black text-[#0284C7] font-mono">{traceResult.traversedPipeIds.length}</div>
+                    <div className="text-2xl font-black text-[#0284C7] font-mono">{traceResult.traversedPipeIds.length}</div>
                   </div>
                   <div>
                     <div className="text-xs text-slate-500 font-bold">Total Jarak Aliran</div>
-                    <div className="text-xl font-black text-slate-900 font-mono">{traceResult.totalDistanceMeters} m</div>
+                    <div className="text-2xl font-black text-slate-900 font-mono">{traceResult.totalDistanceMeters} m</div>
                   </div>
                 </div>
 
                 {traceResult.destinationPumpStationId && (
-                  <div className="bg-blue-50 p-3.5 rounded-2xl border border-blue-200 flex items-center justify-between text-xs text-[#2563EB]">
-                    <span className="font-bold">Terminal Stasiun Pompa Tujuan:</span>
-                    <span className="font-mono font-extrabold text-slate-900 text-sm">
+                  <div className="bg-blue-50/80 p-4 rounded-2xl border border-blue-200 flex items-center justify-between text-xs text-[#2563EB]">
+                    <span className="font-extrabold">Terminal Stasiun Pompa Tujuan:</span>
+                    <span className="font-mono font-black text-slate-900 text-sm">
                       {allAssetsMap.get(traceResult.destinationPumpStationId)?.name}
                     </span>
                   </div>
                 )}
 
                 {/* Traversal Path Sequence */}
-                <div className="space-y-2 pt-2">
-                  <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <ListOrdered className="w-4 h-4 text-[#2563EB]" />
+                <div className="space-y-3 pt-2">
+                  <div className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    <ListOrdered className="w-4.5 h-4.5 text-[#2563EB]" />
                     <span>Urutan Aliran Graf (Sequence):</span>
                   </div>
 
-                  <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
                     {traceResult.pathAssetIds.map((id, index) => {
                       const item = allAssetsMap.get(id);
                       if (!item) return null;
@@ -269,26 +271,26 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
                       return (
                         <div
                           key={`${id}-${index}`}
-                          className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs transition ${
+                          className={`p-4 rounded-2xl border flex items-center justify-between text-xs transition ${
                             isNode
-                              ? 'bg-slate-50 border-slate-200 text-slate-900 font-semibold'
-                              : 'bg-white border-slate-100 text-slate-600 pl-6'
+                              ? 'bg-slate-50/90 border-slate-200 text-slate-900 font-bold'
+                              : 'bg-white border-slate-200/60 text-slate-600 pl-6'
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 rounded-full bg-blue-100 text-[#2563EB] flex items-center justify-center font-mono text-xs font-bold">
+                            <span className="w-7 h-7 rounded-full bg-blue-100 text-[#2563EB] flex items-center justify-center font-mono text-xs font-black">
                               {index + 1}
                             </span>
                             <div>
-                              <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                                <span>{item.assetCode}</span>
-                                <span className="text-xs text-slate-500 font-normal">({item.name})</span>
+                              <div className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                                <span className="font-mono text-[#2563EB]">{item.assetCode}</span>
+                                <span className="text-xs text-slate-600 font-semibold">({item.name})</span>
                               </div>
-                              <div className="text-xs text-slate-500 capitalize font-medium">{item.type.replace('_', ' ')} • {item.area}</div>
+                              <div className="text-xs text-slate-500 capitalize font-medium mt-0.5">{item.type.replace('_', ' ')} • {item.area}</div>
                             </div>
                           </div>
 
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          <span className={`px-3.5 py-1 rounded-full text-xs font-extrabold ${
                             item.condition === 'Good' ? 'bg-[#4ADE80] text-slate-900' :
                             item.condition === 'Warning' ? 'bg-[#FDE047] text-slate-900' : 'bg-[#F87171] text-white'
                           }`}>
