@@ -28,6 +28,25 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [material, setMaterial] = useState('Precast Concrete');
   const [lat, setLat] = useState(-6.2100);
   const [lng, setLng] = useState(106.8240);
+  const [googleMapsInput, setGoogleMapsInput] = useState('');
+
+  // Helper to parse Google Maps URL or "lat, lng" string automatically
+  const parseGoogleMapsInput = (val: string) => {
+    setGoogleMapsInput(val);
+    if (!val.trim()) return;
+
+    // Regex to extract Lat and Long from Google Maps formats
+    // e.g. "-6.210452, 106.824123" or "@-6.210452,106.824123" or "q=-6.210452,106.824123"
+    const match = val.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+    if (match) {
+      const parsedLat = parseFloat(match[1]);
+      const parsedLng = parseFloat(match[2]);
+      if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+        setLat(parsedLat);
+        setLng(parsedLng);
+      }
+    }
+  };
 
   // Form states for Pipe
   const [pipeCode, setPipeCode] = useState('P-' + Math.floor(100 + Math.random() * 900));
@@ -200,9 +219,30 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 </div>
               </div>
 
+              {/* Quick Google Maps Coordinates Input Helper */}
+              <div className="bg-blue-50/80 p-3.5 rounded-2xl border border-blue-200/80 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-[#2563EB]">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-[#2563EB]" />
+                    <span>Paste Link / Koordinat Google Maps</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500 font-normal">Format: Lat, Lng / URL</span>
+                </div>
+                <input
+                  type="text"
+                  value={googleMapsInput}
+                  onChange={e => parseGoogleMapsInput(e.target.value)}
+                  placeholder="Paste e.g. -6.210452, 106.824123 atau Link Google Maps"
+                  className="w-full bg-white border border-blue-200 rounded-xl p-2.5 text-slate-900 text-xs font-mono focus:outline-none focus:border-[#2563EB]"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Salin koordinat dari Google Maps (Klik kanan di Google Maps → Pilih angka koordinat), lalu tempel di atas.
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-600 font-bold">Latitude GIS</label>
+                  <label className="text-xs text-slate-600 font-bold">Latitude (Google Maps)</label>
                   <input
                     type="number"
                     step="0.000001"
@@ -213,7 +253,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-600 font-bold">Longitude GIS</label>
+                  <label className="text-xs text-slate-600 font-bold">Longitude (Google Maps)</label>
                   <input
                     type="number"
                     step="0.000001"
