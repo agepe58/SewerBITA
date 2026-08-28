@@ -75,12 +75,17 @@ export const App: React.FC = () => {
       if (existingPipeIndex !== -1) {
         const oldPipe = pipes[existingPipeIndex];
         const halfLength = Math.round(oldPipe.lengthMeters / 2);
+        const fromMh = manholes.find(m => m.id === oldPipe.fromAssetId);
+        const toMh = manholes.find(m => m.id === oldPipe.toAssetId);
+
+        const fromCode = fromMh ? fromMh.assetCode : 'MH';
+        const toCode = toMh ? toMh.assetCode : 'MH';
 
         const pipeA: PipeAsset = {
           ...oldPipe,
           id: `p-${Date.now()}-a`,
-          assetCode: `P-${Math.floor(100 + Math.random() * 900)}`,
-          name: `Pipa ${oldPipe.fromAssetId} → ${createdMh.assetCode}`,
+          assetCode: `P-${fromCode}_${createdMh.assetCode}`,
+          name: `Pipa Segmen ${fromCode} → ${createdMh.assetCode}`,
           fromAssetId: oldPipe.fromAssetId,
           toAssetId: newMhId,
           lengthMeters: halfLength
@@ -89,8 +94,8 @@ export const App: React.FC = () => {
         const pipeB: PipeAsset = {
           ...oldPipe,
           id: `p-${Date.now()}-b`,
-          assetCode: `P-${Math.floor(100 + Math.random() * 900)}`,
-          name: `Pipa ${createdMh.assetCode} → ${oldPipe.toAssetId}`,
+          assetCode: `P-${createdMh.assetCode}_${toCode}`,
+          name: `Pipa Segmen ${createdMh.assetCode} → ${toCode}`,
           fromAssetId: newMhId,
           toAssetId: oldPipe.toAssetId,
           lengthMeters: halfLength

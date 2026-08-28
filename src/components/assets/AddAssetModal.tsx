@@ -101,13 +101,53 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   };
 
   // Form states for Pipe
-  const [pipeCode, setPipeCode] = useState('P-' + Math.floor(100 + Math.random() * 900));
+  const [pipeCode, setPipeCode] = useState('');
   const [pipeName, setPipeName] = useState('');
   const [fromAssetId, setFromAssetId] = useState(existingManholes[0]?.id || '');
   const [toAssetId, setToAssetId] = useState(existingManholes[1]?.id || '');
   const [pipeDiameter, setPipeDiameter] = useState(800);
   const [pipeMaterial, setPipeMaterial] = useState('Precast Concrete');
   const [pipeLength, setPipeLength] = useState(250);
+
+  // Auto-generate Manhole Code based on Civil Engineering Standards (e.g. MH-SD-01, MH-SD-01.1)
+  React.useEffect(() => {
+    if (isIntermediate && upstreamMhId) {
+      const uMh = existingManholes.find(m => m.id === upstreamMhId);
+      if (uMh) {
+        const prefix = uMh.assetCode;
+        const subCount = existingManholes.filter(m => m.assetCode.startsWith(`${prefix}.`)).length;
+        const autoCode = `${prefix}.${subCount + 1}`;
+        setAssetCode(autoCode);
+        setName(`Manhole Sisipan ${autoCode}`);
+      }
+    } else if (area) {
+      const prefixMap: Record<string, string> = {
+        'Zone A - Sudirman': 'MH-SD',
+        'Zone A - Setiabudi': 'MH-SB',
+        'Zone A - Manggarai': 'MH-MG',
+        'Zone B - Tebet': 'MH-TB',
+        'Zone C - Pluit': 'MH-PL'
+      };
+      const prefix = prefixMap[area] || `MH-${area.split(' ')[0].toUpperCase()}`;
+      const count = existingManholes.filter(m => m.area === area).length + 1;
+      const autoCode = `${prefix}-${String(count).padStart(2, '0')}`;
+      setAssetCode(autoCode);
+      setName(`Manhole Kolektor ${autoCode}`);
+    }
+  }, [isIntermediate, upstreamMhId, area, isOpen]);
+
+  // Auto-generate Pipe Code based on Civil Engineering Standards (P-{FromCode}_{ToCode})
+  React.useEffect(() => {
+    if (fromAssetId && toAssetId) {
+      const fromMh = existingManholes.find(m => m.id === fromAssetId);
+      const toMh = existingManholes.find(m => m.id === toAssetId);
+      if (fromMh && toMh) {
+        const code = `P-${fromMh.assetCode}_${toMh.assetCode}`;
+        setPipeCode(code);
+        setPipeName(`Pipa Segmen ${fromMh.assetCode} → ${toMh.assetCode}`);
+      }
+    }
+  }, [fromAssetId, toAssetId, isOpen]);
 
   if (!isOpen) return null;
 
