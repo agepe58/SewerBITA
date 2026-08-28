@@ -32,6 +32,8 @@ export interface ManholeAsset extends BaseAsset {
   diameterMm: number;
   material: string; // e.g. Precast Concrete, HDPE, Brick
   coverCondition: string;
+  sequenceNumber?: number; // Dynamic topological flow sequence (#1, #2, #3...)
+  parentLineCode?: string; // e.g. "Line Sudirman-A"
 }
 
 export interface PumpStationAsset extends BaseAsset {

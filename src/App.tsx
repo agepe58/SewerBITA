@@ -52,12 +52,60 @@ export const App: React.FC = () => {
   }, [manholes, pumpStations, pipes]);
 
   // Handlers for data modification
-  const handleAddManhole = (newMh: Omit<ManholeAsset, 'id'>) => {
-    const created: ManholeAsset = {
+  const handleAddManhole = (
+    newMh: Omit<ManholeAsset, 'id'>,
+    intermediateInfo?: { upstreamId: string; downstreamId: string }
+  ) => {
+    const newMhId = `mh-${Date.now()}`;
+    const createdMh: ManholeAsset = {
       ...newMh,
-      id: `mh-${Date.now()}`
+      id: newMhId
     };
-    setManholes(prev => [created, ...prev]);
+
+    let updatedPipes = [...pipes];
+
+    // If inserted between two registered manholes, split the existing pipe automatically
+    if (intermediateInfo) {
+      const { upstreamId, downstreamId } = intermediateInfo;
+      const existingPipeIndex = pipes.findIndex(
+        p => (p.fromAssetId === upstreamId && p.toAssetId === downstreamId) ||
+             (p.fromAssetId === downstreamId && p.toAssetId === upstreamId)
+      );
+
+      if (existingPipeIndex !== -1) {
+        const oldPipe = pipes[existingPipeIndex];
+        const halfLength = Math.round(oldPipe.lengthMeters / 2);
+
+        const pipeA: PipeAsset = {
+          ...oldPipe,
+          id: `p-${Date.now()}-a`,
+          assetCode: `P-${Math.floor(100 + Math.random() * 900)}`,
+          name: `Pipa ${oldPipe.fromAssetId} → ${createdMh.assetCode}`,
+          fromAssetId: oldPipe.fromAssetId,
+          toAssetId: newMhId,
+          lengthMeters: halfLength
+        };
+
+        const pipeB: PipeAsset = {
+          ...oldPipe,
+          id: `p-${Date.now()}-b`,
+          assetCode: `P-${Math.floor(100 + Math.random() * 900)}`,
+          name: `Pipa ${createdMh.assetCode} → ${oldPipe.toAssetId}`,
+          fromAssetId: newMhId,
+          toAssetId: oldPipe.toAssetId,
+          lengthMeters: halfLength
+        };
+
+        updatedPipes = pipes.filter((_, idx) => idx !== existingPipeIndex).concat([pipeA, pipeB]);
+        setPipes(updatedPipes);
+      }
+    }
+
+    const allManholesUnsequenced = [createdMh, ...manholes];
+    const tempEngine = new NetworkGraphEngine(allManholesUnsequenced, pumpStations, updatedPipes);
+    const sequencedManholes = tempEngine.computeDynamicSequences(allManholesUnsequenced);
+
+    setManholes(sequencedManholes);
   };
 
   const handleAddPipe = (newPipe: Omit<PipeAsset, 'id'>) => {

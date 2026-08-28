@@ -151,7 +151,14 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
             <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
               {filteredAssets.map(asset => (
                 <tr key={asset.id} className="hover:bg-slate-50/80 transition">
-                  <td className="p-5 font-mono font-black text-[#2563EB] text-base">{asset.assetCode}</td>
+                  <td className="p-5">
+                    <div className="font-mono font-black text-[#2563EB] text-base">{asset.assetCode}</div>
+                    {asset.type === 'manhole' && 'sequenceNumber' in asset && asset.sequenceNumber && (
+                      <div className="text-[11px] text-[#0284C7] font-bold font-mono">
+                        Urutan Flow #{asset.sequenceNumber}
+                      </div>
+                    )}
+                  </td>
                   <td className="p-5 font-bold text-slate-900">{asset.name}</td>
                   <td className="p-5 capitalize">
                     <span className={`px-3.5 py-1 rounded-full text-xs font-extrabold ${

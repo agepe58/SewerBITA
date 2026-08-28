@@ -5,7 +5,10 @@ import { ManholeAsset, PipeAsset, AssetType, SewerAsset } from '../../types/asse
 interface AddAssetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddManhole: (manhole: Omit<ManholeAsset, 'id'>) => void;
+  onAddManhole: (
+    manhole: Omit<ManholeAsset, 'id'>,
+    intermediateInfo?: { upstreamId: string; downstreamId: string }
+  ) => void;
   onAddPipe: (pipe: Omit<PipeAsset, 'id'>) => void;
   existingManholes: ManholeAsset[];
 }
@@ -29,6 +32,29 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [lat, setLat] = useState(-6.2100);
   const [lng, setLng] = useState(106.8240);
   const [googleMapsInput, setGoogleMapsInput] = useState('');
+
+  // Intermediate Insertion State
+  const [isIntermediate, setIsIntermediate] = useState(false);
+  const [upstreamMhId, setUpstreamMhId] = useState(existingManholes[0]?.id || '');
+  const [downstreamMhId, setDownstreamMhId] = useState(existingManholes[1]?.id || '');
+
+  // Helper to handle intermediate selection
+  const handleSelectIntermediateUpstream = (uId: string) => {
+    setUpstreamMhId(uId);
+    const uMh = existingManholes.find(m => m.id === uId);
+    if (uMh) {
+      setAssetCode(`${uMh.assetCode}.A`);
+      setName(`Manhole Sisipan ${uMh.assetCode}.A`);
+      setArea(uMh.area);
+
+      // If downstream exists, set midpoint coords
+      const dMh = existingManholes.find(m => m.id === downstreamMhId);
+      if (dMh) {
+        setLat(Number(((uMh.coordinates.lat + dMh.coordinates.lat) / 2).toFixed(6)));
+        setLng(Number(((uMh.coordinates.lng + dMh.coordinates.lng) / 2).toFixed(6)));
+      }
+    }
+  };
 
   // Helper to parse Google Maps URL or "lat, lng" string automatically
   const parseGoogleMapsInput = (val: string) => {
@@ -65,23 +91,28 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
     const nextDue = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     if (assetType === 'manhole') {
-      onAddManhole({
-        assetCode,
-        name: name || `Manhole Baru ${assetCode}`,
-        type: 'manhole',
-        area,
-        status: 'Active',
-        condition: 'Good',
-        installationYear: 2026,
-        lastInspectedAt: today,
-        nextInspectionDue: nextDue,
-        coordinates: { lat: Number(lat), lng: Number(lng), elevation: 10 },
-        depthMeters: Number(depthMeters),
-        diameterMm: Number(diameterMm),
-        material,
-        coverCondition: 'Good - New Sealed',
-        photos: []
-      });
+      onAddManhole(
+        {
+          assetCode,
+          name: name || `Manhole Baru ${assetCode}`,
+          type: 'manhole',
+          area,
+          status: 'Active',
+          condition: 'Good',
+          installationYear: 2026,
+          lastInspectedAt: today,
+          nextInspectionDue: nextDue,
+          coordinates: { lat: Number(lat), lng: Number(lng), elevation: 10 },
+          depthMeters: Number(depthMeters),
+          diameterMm: Number(diameterMm),
+          material,
+          coverCondition: 'Good - New Sealed',
+          photos: []
+        },
+        isIntermediate && upstreamMhId && downstreamMhId
+          ? { upstreamId: upstreamMhId, downstreamId: downstreamMhId }
+          : undefined
+      );
     } else {
       onAddPipe({
         assetCode: pipeCode,
@@ -156,6 +187,64 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {assetType === 'manhole' ? (
             <>
+              {/* Intermediate Insertion Toggle */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isIntermediate}
+                    onChange={e => {
+                      const checked = e.target.checked;
+                      setIsIntermediate(checked);
+                      if (checked && existingManholes.length >= 2) {
+                        handleSelectIntermediateUpstream(existingManholes[0].id);
+                      }
+                    }}
+                    className="w-4 h-4 text-[#2563EB] rounded focus:ring-[#2563EB]"
+                  />
+                  <span className="text-xs font-extrabold text-slate-900">
+                    Sisipkan di antara 2 Manhole (Intermediate Node)
+                  </span>
+                </label>
+
+                {isIntermediate && (
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    <div>
+                      <label className="text-[11px] text-slate-500 font-bold">Node Hulu (Upstream)</label>
+                      <select
+                        value={upstreamMhId}
+                        onChange={e => handleSelectIntermediateUpstream(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:outline-none"
+                      >
+                        {existingManholes.map(m => (
+                          <option key={m.id} value={m.id}>{m.assetCode} — {m.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] text-slate-500 font-bold">Node Hilir (Downstream)</label>
+                      <select
+                        value={downstreamMhId}
+                        onChange={e => {
+                          setDownstreamMhId(e.target.value);
+                          const dMh = existingManholes.find(m => m.id === e.target.value);
+                          const uMh = existingManholes.find(m => m.id === upstreamMhId);
+                          if (uMh && dMh) {
+                            setLat(Number(((uMh.coordinates.lat + dMh.coordinates.lat) / 2).toFixed(6)));
+                            setLng(Number(((uMh.coordinates.lng + dMh.coordinates.lng) / 2).toFixed(6)));
+                          }
+                        }}
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:outline-none"
+                      >
+                        {existingManholes.map(m => (
+                          <option key={m.id} value={m.id}>{m.assetCode} — {m.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-600 font-bold">Kode Aset (ID)</label>

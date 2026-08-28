@@ -235,4 +235,49 @@ export class NetworkGraphEngine {
       issues
     };
   }
+
+  /**
+   * Dynamically calculate sequential topological order numbers for all manholes in network lines
+   */
+  public computeDynamicSequences(manholes: ManholeAsset[]): ManholeAsset[] {
+    const inDegreeMap = new Map<string, number>();
+    manholes.forEach(mh => inDegreeMap.set(mh.id, 0));
+
+    this.pipes.forEach(pipe => {
+      if (inDegreeMap.has(pipe.toAssetId)) {
+        inDegreeMap.set(pipe.toAssetId, (inDegreeMap.get(pipe.toAssetId) || 0) + 1);
+      }
+    });
+
+    const headNodeIds = manholes.filter(mh => (inDegreeMap.get(mh.id) || 0) === 0).map(mh => mh.id);
+    const sequences = new Map<string, number>();
+    const visited = new Set<string>();
+
+    headNodeIds.forEach(headId => {
+      let currentSeq = 1;
+      let currId: string | undefined = headId;
+
+      while (currId && !visited.has(currId)) {
+        visited.add(currId);
+        if (this.manholesMap.has(currId)) {
+          sequences.set(currId, currentSeq++);
+        }
+        const outPipes: PipeAsset[] = this.outgoingEdges.get(currId) || [];
+        if (outPipes.length > 0) {
+          currId = outPipes[0].toAssetId;
+        } else {
+          currId = undefined;
+        }
+      }
+    });
+
+    let fallbackSeq = 1;
+    return manholes.map(mh => {
+      const seq = sequences.get(mh.id) || (headNodeIds.length > 0 ? 1 : fallbackSeq++);
+      return {
+        ...mh,
+        sequenceNumber: seq
+      };
+    });
+  }
 }
