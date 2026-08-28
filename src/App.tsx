@@ -108,12 +108,36 @@ export const App: React.FC = () => {
     setManholes(sequencedManholes);
   };
 
+  // Dynamic Master Areas / Zones state
+  const [areas, setAreas] = useState<string[]>([
+    'Zone A - Sudirman',
+    'Zone A - Setiabudi',
+    'Zone A - Manggarai',
+    'Zone B - Tebet',
+    'Zone C - Pluit'
+  ]);
+
+  const handleAddArea = (newAreaName: string) => {
+    const trimmed = newAreaName.trim();
+    if (trimmed && !areas.includes(trimmed)) {
+      setAreas(prev => [...prev, trimmed]);
+    }
+  };
+
   const handleAddPipe = (newPipe: Omit<PipeAsset, 'id'>) => {
     const created: PipeAsset = {
       ...newPipe,
       id: `p-${Date.now()}`
     };
     setPipes(prev => [created, ...prev]);
+  };
+
+  const handleAddPumpStation = (newPs: Omit<PumpStationAsset, 'id'>) => {
+    const created: PumpStationAsset = {
+      ...newPs,
+      id: `ps-${Date.now()}`
+    };
+    setPumpStations(prev => [created, ...prev]);
   };
 
   const handleAddInspection = (newInsp: Omit<InspectionRecord, 'id'>) => {
@@ -287,7 +311,10 @@ export const App: React.FC = () => {
         onClose={() => setIsAddAssetModalOpen(false)}
         onAddManhole={handleAddManhole}
         onAddPipe={handleAddPipe}
+        onAddPumpStation={handleAddPumpStation}
         existingManholes={manholes}
+        areas={areas}
+        onAddArea={handleAddArea}
       />
 
       <NewInspectionModal

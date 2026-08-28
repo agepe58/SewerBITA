@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Plus, MapPin, Boxes, GitBranch } from 'lucide-react';
-import { ManholeAsset, PipeAsset, AssetType, SewerAsset } from '../../types/asset';
+import { X, Plus, MapPin, Boxes, GitBranch, Zap, Layers } from 'lucide-react';
+import { ManholeAsset, PipeAsset, PumpStationAsset, AssetType, SewerAsset } from '../../types/asset';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -10,7 +10,10 @@ interface AddAssetModalProps {
     intermediateInfo?: { upstreamId: string; downstreamId: string }
   ) => void;
   onAddPipe: (pipe: Omit<PipeAsset, 'id'>) => void;
+  onAddPumpStation: (pumpStation: Omit<PumpStationAsset, 'id'>) => void;
   existingManholes: ManholeAsset[];
+  areas: string[];
+  onAddArea: (newAreaName: string) => void;
 }
 
 export const AddAssetModal: React.FC<AddAssetModalProps> = ({
@@ -18,14 +21,21 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   onClose,
   onAddManhole,
   onAddPipe,
-  existingManholes
+  onAddPumpStation,
+  existingManholes,
+  areas,
+  onAddArea
 }) => {
   const [assetType, setAssetType] = useState<AssetType>('manhole');
+
+  // Dynamic Area management state
+  const [area, setArea] = useState(areas[0] || 'Zone A - Sudirman');
+  const [isAddingNewArea, setIsAddingNewArea] = useState(false);
+  const [customAreaName, setCustomAreaName] = useState('');
 
   // Form states for Manhole
   const [assetCode, setAssetCode] = useState('MH-' + Math.floor(100 + Math.random() * 900));
   const [name, setName] = useState('');
-  const [area, setArea] = useState('Zone A - Sudirman');
   const [depthMeters, setDepthMeters] = useState(3.5);
   const [diameterMm, setDiameterMm] = useState(1000);
   const [material, setMaterial] = useState('Precast Concrete');
@@ -33,10 +43,28 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [lng, setLng] = useState(106.8240);
   const [googleMapsInput, setGoogleMapsInput] = useState('');
 
+  // Form states for Pump Station
+  const [psCode, setPsCode] = useState('PS-' + Math.floor(100 + Math.random() * 900));
+  const [psName, setPsName] = useState('');
+  const [capacityLps, setCapacityLps] = useState(450);
+  const [pumpCount, setPumpCount] = useState(4);
+  const [activePumps, setActivePumps] = useState(3);
+  const [powerSource, setPowerSource] = useState('PLN 250 kVA + Diesel Genset');
+
   // Intermediate Insertion State
   const [isIntermediate, setIsIntermediate] = useState(false);
   const [upstreamMhId, setUpstreamMhId] = useState(existingManholes[0]?.id || '');
   const [downstreamMhId, setDownstreamMhId] = useState(existingManholes[1]?.id || '');
+
+  const handleCreateNewArea = () => {
+    if (customAreaName.trim()) {
+      const trimmed = customAreaName.trim();
+      onAddArea(trimmed);
+      setArea(trimmed);
+      setIsAddingNewArea(false);
+      setCustomAreaName('');
+    }
+  };
 
   // Helper to handle intermediate selection
   const handleSelectIntermediateUpstream = (uId: string) => {
@@ -61,8 +89,6 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
     setGoogleMapsInput(val);
     if (!val.trim()) return;
 
-    // Regex to extract Lat and Long from Google Maps formats
-    // e.g. "-6.210452, 106.824123" or "@-6.210452,106.824123" or "q=-6.210452,106.824123"
     const match = val.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
     if (match) {
       const parsedLat = parseFloat(match[1]);
@@ -113,6 +139,24 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
           ? { upstreamId: upstreamMhId, downstreamId: downstreamMhId }
           : undefined
       );
+    } else if (assetType === 'pump_station') {
+      onAddPumpStation({
+        assetCode: psCode,
+        name: psName || `Stasiun Pompa ${psCode}`,
+        type: 'pump_station',
+        area,
+        status: 'Active',
+        condition: 'Good',
+        installationYear: 2026,
+        lastInspectedAt: today,
+        nextInspectionDue: nextDue,
+        coordinates: { lat: Number(lat), lng: Number(lng), elevation: 10 },
+        capacityLps: Number(capacityLps),
+        pumpCount: Number(pumpCount),
+        activePumps: Number(activePumps),
+        powerSource,
+        photos: []
+      });
     } else {
       onAddPipe({
         assetCode: pipeCode,
@@ -153,39 +197,98 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
 
         {/* Type Selector */}
         <div className="p-4.5 bg-slate-50 border-b border-slate-100">
-          <label className="text-xs text-slate-500 uppercase font-bold tracking-wider">Jenis Aset</label>
-          <div className="grid grid-cols-2 gap-3 mt-2">
+          <label className="text-xs text-slate-500 uppercase font-bold tracking-wider">Jenis Aset Jaringan</label>
+          <div className="grid grid-cols-3 gap-2.5 mt-2">
             <button
               type="button"
               onClick={() => setAssetType('manhole')}
-              className={`p-3 rounded-2xl border font-bold transition flex items-center justify-center gap-2 text-sm ${
+              className={`p-3 rounded-2xl border font-bold transition flex items-center justify-center gap-1.5 text-xs sm:text-sm ${
                 assetType === 'manhole'
                   ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
-              <MapPin className="w-4.5 h-4.5" />
+              <MapPin className="w-4 h-4" />
               <span>Manhole</span>
             </button>
 
             <button
               type="button"
               onClick={() => setAssetType('pipe')}
-              className={`p-3 rounded-2xl border font-bold transition flex items-center justify-center gap-2 text-sm ${
+              className={`p-3 rounded-2xl border font-bold transition flex items-center justify-center gap-1.5 text-xs sm:text-sm ${
                 assetType === 'pipe'
                   ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-xs'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
-              <GitBranch className="w-4.5 h-4.5" />
-              <span>Pipa Jaringan</span>
+              <GitBranch className="w-4 h-4" />
+              <span>Pipa</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAssetType('pump_station')}
+              className={`p-3 rounded-2xl border font-bold transition flex items-center justify-center gap-1.5 text-xs sm:text-sm ${
+                assetType === 'pump_station'
+                  ? 'bg-[#059669] text-white border-[#059669] shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              <span>Stasiun Pompa</span>
             </button>
           </div>
         </div>
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
-          {assetType === 'manhole' ? (
+          {/* Dynamic Area Selector Component */}
+          <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+              <span className="flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-[#2563EB]" />
+                <span>Area / Zona / Sektor</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsAddingNewArea(!isAddingNewArea)}
+                className="text-[11px] text-[#2563EB] font-extrabold hover:underline"
+              >
+                {isAddingNewArea ? '← Pilih dari Daftar' : '+ Tambah Area Baru'}
+              </button>
+            </div>
+
+            {!isAddingNewArea ? (
+              <select
+                value={area}
+                onChange={e => setArea(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 font-bold text-sm focus:outline-none focus:border-[#2563EB]"
+              >
+                {areas.map(a => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customAreaName}
+                  onChange={e => setCustomAreaName(e.target.value)}
+                  placeholder="mis. Zone D - Kemang / Sektor 4"
+                  className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#2563EB]"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateNewArea}
+                  className="bg-[#2563EB] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-blue-700 transition"
+                >
+                  Simpan Area
+                </button>
+              </div>
+            )}
+          </div>
+
+          {assetType === 'manhole' && (
             <>
               {/* Intermediate Insertion Toggle */}
               <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5">
@@ -245,32 +348,16 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-slate-600 font-bold">Kode Aset (ID)</label>
-                  <input
-                    type="text"
-                    value={assetCode}
-                    onChange={e => setAssetCode(e.target.value)}
-                    required
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
-                  />
-                </div>
 
-                <div>
-                  <label className="text-xs text-slate-600 font-bold">Area / Zona</label>
-                  <select
-                    value={area}
-                    onChange={e => setArea(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
-                  >
-                    <option value="Zone A - Sudirman">Zone A - Sudirman</option>
-                    <option value="Zone A - Setiabudi">Zone A - Setiabudi</option>
-                    <option value="Zone A - Manggarai">Zone A - Manggarai</option>
-                    <option value="Zone B - Tebet">Zone B - Tebet</option>
-                    <option value="Zone C - Pluit">Zone C - Pluit</option>
-                  </select>
-                </div>
+              <div>
+                <label className="text-xs text-slate-600 font-bold">Kode Aset (ID)</label>
+                <input
+                  type="text"
+                  value={assetCode}
+                  onChange={e => setAssetCode(e.target.value)}
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
+                />
               </div>
 
               <div>
@@ -281,7 +368,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                   onChange={e => setName(e.target.value)}
                   placeholder="mis. Manhole Kolektor Sudirman B3"
                   required
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-semibold text-sm focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -293,7 +380,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                     step="0.1"
                     value={depthMeters}
                     onChange={e => setDepthMeters(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
@@ -303,7 +390,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                     type="number"
                     value={diameterMm}
                     onChange={e => setDiameterMm(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
@@ -324,9 +411,6 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                   placeholder="Paste e.g. -6.210452, 106.824123 atau Link Google Maps"
                   className="w-full bg-white border border-blue-200 rounded-xl p-2.5 text-slate-900 text-xs font-mono focus:outline-none focus:border-[#2563EB]"
                 />
-                <p className="text-[11px] text-slate-500">
-                  Salin koordinat dari Google Maps (Klik kanan di Google Maps → Pilih angka koordinat), lalu tempel di atas.
-                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -337,7 +421,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                     step="0.000001"
                     value={lat}
                     onChange={e => setLat(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono text-sm focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
@@ -348,12 +432,128 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                     step="0.000001"
                     value={lng}
                     onChange={e => setLng(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono text-sm focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
             </>
-          ) : (
+          )}
+
+          {assetType === 'pump_station' && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Kode Stasiun Pompa (ID)</label>
+                  <input
+                    type="text"
+                    value={psCode}
+                    onChange={e => setPsCode(e.target.value)}
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#059669]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Kapasitas Aliran (L/detik)</label>
+                  <input
+                    type="number"
+                    value={capacityLps}
+                    onChange={e => setCapacityLps(Number(e.target.value))}
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#059669]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-600 font-bold">Nama Stasiun Pompa</label>
+                <input
+                  type="text"
+                  value={psName}
+                  onChange={e => setPsName(e.target.value)}
+                  placeholder="mis. Stasiun Pompa Tebet Utama"
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-[#059669]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Total Unit Pompa</label>
+                  <input
+                    type="number"
+                    value={pumpCount}
+                    onChange={e => setPumpCount(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#059669]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Jumlah Pompa Aktif</label>
+                  <input
+                    type="number"
+                    value={activePumps}
+                    onChange={e => setActivePumps(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#059669]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-600 font-bold">Sumber Daya Listrik & Backup</label>
+                <input
+                  type="text"
+                  value={powerSource}
+                  onChange={e => setPowerSource(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-[#059669]"
+                />
+              </div>
+
+              {/* Quick Google Maps Coordinates Input Helper */}
+              <div className="bg-emerald-50/80 p-3.5 rounded-2xl border border-emerald-200/80 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-[#059669]">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-[#059669]" />
+                    <span>Paste Link / Koordinat Google Maps</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500 font-normal">Format: Lat, Lng / URL</span>
+                </div>
+                <input
+                  type="text"
+                  value={googleMapsInput}
+                  onChange={e => parseGoogleMapsInput(e.target.value)}
+                  placeholder="Paste e.g. -6.210452, 106.824123 atau Link Google Maps"
+                  className="w-full bg-white border border-emerald-200 rounded-xl p-2.5 text-slate-900 text-xs font-mono focus:outline-none focus:border-[#059669]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Latitude (Google Maps)</label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={lat}
+                    onChange={e => setLat(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono text-sm focus:outline-none focus:border-[#059669]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Longitude (Google Maps)</label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={lng}
+                    onChange={e => setLng(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono text-sm focus:outline-none focus:border-[#059669]"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {assetType === 'pipe' && (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -363,21 +563,18 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                     value={pipeCode}
                     onChange={e => setPipeCode(e.target.value)}
                     required
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-600 font-bold">Area / Zona</label>
-                  <select
-                    value={area}
-                    onChange={e => setArea(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
-                  >
-                    <option value="Zone A - Sudirman">Zone A - Sudirman</option>
-                    <option value="Zone A - Setiabudi">Zone A - Setiabudi</option>
-                    <option value="Zone A - Manggarai">Zone A - Manggarai</option>
-                  </select>
+                  <label className="text-xs text-slate-600 font-bold">Panjang Pipa (meter)</label>
+                  <input
+                    type="number"
+                    value={pipeLength}
+                    onChange={e => setPipeLength(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#0284C7]"
+                  />
                 </div>
               </div>
 
@@ -386,7 +583,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 <select
                   value={fromAssetId}
                   onChange={e => setFromAssetId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
                 >
                   {existingManholes.map(mh => (
                     <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
@@ -399,7 +596,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 <select
                   value={toAssetId}
                   onChange={e => setToAssetId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
                 >
                   {existingManholes.map(mh => (
                     <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
@@ -409,22 +606,22 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-600 font-bold">Panjang (meter)</label>
-                  <input
-                    type="number"
-                    value={pipeLength}
-                    onChange={e => setPipeLength(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-slate-600 font-bold">Diameter (mm)</label>
+                  <label className="text-xs text-slate-600 font-bold">Diameter Pipa (mm)</label>
                   <input
                     type="number"
                     value={pipeDiameter}
                     onChange={e => setPipeDiameter(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#0284C7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Bahan Material</label>
+                  <input
+                    type="text"
+                    value={pipeMaterial}
+                    onChange={e => setPipeMaterial(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
               </div>
@@ -435,13 +632,13 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold transition text-sm"
+              className="flex-1 py-3.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold transition text-sm"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 rounded-full bg-[#2563EB] text-white font-extrabold hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20 text-sm"
+              className="flex-1 py-3.5 rounded-full bg-[#2563EB] text-white font-extrabold hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20 text-sm"
             >
               Simpan Aset Baru
             </button>
