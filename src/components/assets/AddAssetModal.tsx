@@ -89,72 +89,72 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1200] flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-100 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden text-xs text-slate-900 font-sans">
+      <div className="bg-white border border-slate-100 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden text-sm text-slate-900 font-sans">
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Plus className="w-4 h-4 text-[#2563EB]" />
+        <div className="p-4.5 border-b border-slate-100 flex items-center justify-between bg-white">
+          <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <Plus className="w-5 h-5 text-[#2563EB]" />
             <span>Tambah Aset Jaringan Baru</span>
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="p-2 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Type Selector */}
-        <div className="p-4 bg-slate-50 border-b border-slate-100">
-          <label className="text-[10px] text-slate-400 uppercase font-bold">Jenis Aset</label>
-          <div className="grid grid-cols-2 gap-3 mt-1.5">
+        <div className="p-4.5 bg-slate-50 border-b border-slate-100">
+          <label className="text-xs text-slate-500 uppercase font-bold tracking-wider">Jenis Aset</label>
+          <div className="grid grid-cols-2 gap-3 mt-2">
             <button
               type="button"
               onClick={() => setAssetType('manhole')}
-              className={`p-2.5 rounded-2xl border font-bold transition flex items-center justify-center gap-2 ${
+              className={`p-3 rounded-2xl border font-bold transition flex items-center justify-center gap-2 text-sm ${
                 assetType === 'manhole'
                   ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-4.5 h-4.5" />
               <span>Manhole</span>
             </button>
 
             <button
               type="button"
               onClick={() => setAssetType('pipe')}
-              className={`p-2.5 rounded-2xl border font-bold transition flex items-center justify-center gap-2 ${
+              className={`p-3 rounded-2xl border font-bold transition flex items-center justify-center gap-2 text-sm ${
                 assetType === 'pipe'
                   ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-xs'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
-              <GitBranch className="w-4 h-4" />
+              <GitBranch className="w-4.5 h-4.5" />
               <span>Pipa Jaringan</span>
             </button>
           </div>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {assetType === 'manhole' ? (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Kode Aset (ID)</label>
+                  <label className="text-xs text-slate-600 font-bold">Kode Aset (ID)</label>
                   <input
                     type="text"
                     value={assetCode}
                     onChange={e => setAssetCode(e.target.value)}
                     required
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono font-bold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Area / Zona</label>
+                  <label className="text-xs text-slate-600 font-bold">Area / Zona</label>
                   <select
                     value={area}
                     onChange={e => setArea(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 mt-1 focus:outline-none focus:border-[#2563EB] font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
                   >
                     <option value="Zone A - Sudirman">Zone A - Sudirman</option>
                     <option value="Zone A - Setiabudi">Zone A - Setiabudi</option>
@@ -166,60 +166,60 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold">Nama Deskriptif Manhole</label>
+                <label className="text-xs text-slate-600 font-bold">Nama Deskriptif Manhole</label>
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="mis. Manhole Kolektor Sudirman B3"
                   required
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-medium focus:outline-none focus:border-[#2563EB]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-semibold text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Kedalaman (meter)</label>
+                  <label className="text-xs text-slate-600 font-bold">Kedalaman (meter)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={depthMeters}
                     onChange={e => setDepthMeters(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono font-bold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Diameter (mm)</label>
+                  <label className="text-xs text-slate-600 font-bold">Diameter (mm)</label>
                   <input
                     type="number"
                     value={diameterMm}
                     onChange={e => setDiameterMm(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono font-bold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Latitude GIS</label>
+                  <label className="text-xs text-slate-600 font-bold">Latitude GIS</label>
                   <input
                     type="number"
                     step="0.000001"
                     value={lat}
                     onChange={e => setLat(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Longitude GIS</label>
+                  <label className="text-xs text-slate-600 font-bold">Longitude GIS</label>
                   <input
                     type="number"
                     step="0.000001"
                     value={lng}
                     onChange={e => setLng(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
@@ -228,22 +228,22 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Kode Pipa (ID)</label>
+                  <label className="text-xs text-slate-600 font-bold">Kode Pipa (ID)</label>
                   <input
                     type="text"
                     value={pipeCode}
                     onChange={e => setPipeCode(e.target.value)}
                     required
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono font-bold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Area / Zona</label>
+                  <label className="text-xs text-slate-600 font-bold">Area / Zona</label>
                   <select
                     value={area}
                     onChange={e => setArea(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 mt-1 focus:outline-none focus:border-[#2563EB] font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
                   >
                     <option value="Zone A - Sudirman">Zone A - Sudirman</option>
                     <option value="Zone A - Setiabudi">Zone A - Setiabudi</option>
@@ -253,11 +253,11 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold">Node Asal (From Manhole)</label>
+                <label className="text-xs text-slate-600 font-bold">Node Asal (From Manhole)</label>
                 <select
                   value={fromAssetId}
                   onChange={e => setFromAssetId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 mt-1 focus:outline-none focus:border-[#2563EB] font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
                 >
                   {existingManholes.map(mh => (
                     <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
@@ -266,11 +266,11 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold">Node Tujuan (To Manhole / Station)</label>
+                <label className="text-xs text-slate-600 font-bold">Node Tujuan (To Manhole / Station)</label>
                 <select
                   value={toAssetId}
                   onChange={e => setToAssetId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 mt-1 focus:outline-none focus:border-[#2563EB] font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
                 >
                   {existingManholes.map(mh => (
                     <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
@@ -280,39 +280,39 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Panjang (meter)</label>
+                  <label className="text-xs text-slate-600 font-bold">Panjang (meter)</label>
                   <input
                     type="number"
                     value={pipeLength}
                     onChange={e => setPipeLength(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono font-bold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold">Diameter (mm)</label>
+                  <label className="text-xs text-slate-600 font-bold">Diameter (mm)</label>
                   <input
                     type="number"
                     value={pipeDiameter}
                     onChange={e => setPipeDiameter(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono font-bold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono font-bold text-sm focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
             </>
           )}
 
-          <div className="pt-2 flex gap-3">
+          <div className="pt-3 flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold transition"
+              className="flex-1 py-3 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold transition text-sm"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 rounded-full bg-[#2563EB] text-white font-bold hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20"
+              className="flex-1 py-3 rounded-full bg-[#2563EB] text-white font-extrabold hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20 text-sm"
             >
               Simpan Aset Baru
             </button>

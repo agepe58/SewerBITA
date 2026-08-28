@@ -91,11 +91,11 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto text-slate-900">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
-            <FileSpreadsheet className="w-6 h-6 text-[#2563EB]" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
+            <FileSpreadsheet className="w-7 h-7 text-[#2563EB]" />
             <span>Migrasi Data, Import & Export Sistem</span>
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-600 font-medium mt-0.5">
             Fasilitas import spreadsheet CSV/Excel dan export backup master data aset dan log inspeksi.
           </p>
         </div>
@@ -104,12 +104,12 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Import Section */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-4">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <Upload className="w-5 h-5 text-[#2563EB]" />
             <span>Import Data Aset (CSV / Excel)</span>
           </h2>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-600 font-medium leading-relaxed">
             Unggah file CSV berisi data Manhole, Pipa, atau Stasiun Pompa untuk migrasi massal dari spreadsheet existing.
           </p>
 
@@ -120,14 +120,14 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
               onChange={handleFileUpload}
               className="absolute inset-0 opacity-0 cursor-pointer"
             />
-            <FileSpreadsheet className="w-10 h-10 mx-auto text-[#2563EB] group-hover:scale-110 transition" />
-            <div className="text-xs font-bold text-slate-900">Klik atau Tarik File CSV ke Sini</div>
-            <div className="text-[10px] text-slate-400 font-mono">Format yang didukung: .csv, .xlsx (Maks 10MB)</div>
+            <FileSpreadsheet className="w-12 h-12 mx-auto text-[#2563EB] group-hover:scale-110 transition" />
+            <div className="text-sm font-extrabold text-slate-900">Klik atau Tarik File CSV ke Sini</div>
+            <div className="text-xs text-slate-500 font-mono font-medium">Format yang didukung: .csv, .xlsx (Maks 10MB)</div>
           </div>
 
           {importStatus && (
-            <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-xs text-[#16A34A] font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 text-sm text-[#16A34A] font-bold flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
               <span>{importStatus}</span>
             </div>
           )}
@@ -135,42 +135,42 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
 
         {/* Export Section */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-4">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <Download className="w-5 h-5 text-[#0284C7]" />
             <span>Export Data & Laporan</span>
           </h2>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-600 font-medium leading-relaxed">
             Unduh berkas CSV untuk keperluan backup, analisis lebih lanjut di Excel, atau laporan manajemen.
           </p>
 
           <div className="space-y-3 pt-2">
             <button
               onClick={handleExportAssets}
-              className="w-full bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 hover:border-[#2563EB] p-4 rounded-2xl text-left flex items-center justify-between transition group"
+              className="w-full bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 hover:border-[#2563EB] p-4.5 rounded-2xl text-left flex items-center justify-between transition group"
             >
               <div className="flex items-center gap-3">
-                <Database className="w-5 h-5 text-[#2563EB]" />
+                <Database className="w-6 h-6 text-[#2563EB]" />
                 <div>
-                  <div className="text-xs font-bold text-slate-900">Export Master Aset (CSV)</div>
-                  <div className="text-[10px] text-slate-400">Semua Manhole, Pipa, dan Stasiun Pompa</div>
+                  <div className="text-sm font-extrabold text-slate-900">Export Master Aset (CSV)</div>
+                  <div className="text-xs text-slate-500 font-medium">Semua Manhole, Pipa, dan Stasiun Pompa</div>
                 </div>
               </div>
-              <Download className="w-4 h-4 text-slate-400 group-hover:text-[#2563EB]" />
+              <Download className="w-5 h-5 text-slate-400 group-hover:text-[#2563EB]" />
             </button>
 
             <button
               onClick={handleExportInspections}
-              className="w-full bg-slate-50 hover:bg-sky-50/50 border border-slate-200/80 hover:border-[#0284C7] p-4 rounded-2xl text-left flex items-center justify-between transition group"
+              className="w-full bg-slate-50 hover:bg-sky-50/50 border border-slate-200/80 hover:border-[#0284C7] p-4.5 rounded-2xl text-left flex items-center justify-between transition group"
             >
               <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-[#0284C7]" />
+                <FileText className="w-6 h-6 text-[#0284C7]" />
                 <div>
-                  <div className="text-xs font-bold text-slate-900">Export Riwayat Inspeksi (CSV)</div>
-                  <div className="text-[10px] text-slate-400">Seluruh catatan temuan dan kondisi petugas</div>
+                  <div className="text-sm font-extrabold text-slate-900">Export Riwayat Inspeksi (CSV)</div>
+                  <div className="text-xs text-slate-500 font-medium">Seluruh catatan temuan dan kondisi petugas</div>
                 </div>
               </div>
-              <Download className="w-4 h-4 text-slate-400 group-hover:text-[#0284C7]" />
+              <Download className="w-5 h-5 text-slate-400 group-hover:text-[#0284C7]" />
             </button>
           </div>
         </div>

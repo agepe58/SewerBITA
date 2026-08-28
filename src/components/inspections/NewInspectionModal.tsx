@@ -69,26 +69,26 @@ export const NewInspectionModal: React.FC<NewInspectionModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1200] flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-100 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden text-xs text-slate-900 font-sans">
+      <div className="bg-white border border-slate-100 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden text-sm text-slate-900 font-sans">
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <ClipboardCheck className="w-4 h-4 text-[#2563EB]" />
+        <div className="p-4.5 border-b border-slate-100 flex items-center justify-between bg-white">
+          <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <ClipboardCheck className="w-5 h-5 text-[#2563EB]" />
             <span>Buat Laporan Inspeksi Lapangan</span>
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="p-2 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
           {/* Target Asset Selector */}
           <div>
-            <label className="text-[10px] text-slate-400 font-bold uppercase">Pilih Aset Terinspeksi</label>
+            <label className="text-xs text-slate-600 font-bold uppercase tracking-wider">Pilih Aset Terinspeksi</label>
             <select
               value={selectedAssetId}
               onChange={e => setSelectedAssetId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 mt-1 focus:outline-none focus:border-[#2563EB] font-medium"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
             >
               {allAssets.map(a => (
                 <option key={a.id} value={a.id}>
@@ -100,19 +100,19 @@ export const NewInspectionModal: React.FC<NewInspectionModalProps> = ({
 
           {/* Rating Condition */}
           <div>
-            <label className="text-[10px] text-slate-400 font-bold uppercase">Kondisi Aset Hasil Inspeksi</label>
+            <label className="text-xs text-slate-600 font-bold uppercase tracking-wider">Kondisi Aset Hasil Inspeksi</label>
             <div className="grid grid-cols-4 gap-2 mt-1.5">
               {(['Good', 'Fair', 'Warning', 'Critical'] as AssetCondition[]).map(c => (
                 <button
                   type="button"
                   key={c}
                   onClick={() => setCondition(c)}
-                  className={`py-2 rounded-xl border font-bold text-[11px] transition shadow-2xs ${
+                  className={`py-2.5 rounded-xl border font-bold text-xs transition shadow-2xs ${
                     condition === c
                       ? c === 'Good' ? 'bg-[#4ADE80] text-slate-900 border-[#4ADE80]' :
                         c === 'Fair' ? 'bg-[#38BDF8] text-slate-900 border-[#38BDF8]' :
                         c === 'Warning' ? 'bg-[#FDE047] text-slate-900 border-[#FDE047]' : 'bg-[#F87171] text-white border-[#F87171]'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   {c}
@@ -123,11 +123,11 @@ export const NewInspectionModal: React.FC<NewInspectionModalProps> = ({
 
           {/* Issue Category */}
           <div>
-            <label className="text-[10px] text-slate-400 font-bold uppercase">Kategori Masalah / Temuan</label>
+            <label className="text-xs text-slate-600 font-bold uppercase tracking-wider">Kategori Masalah / Temuan</label>
             <select
               value={issueCategory}
               onChange={e => setIssueCategory(e.target.value as IssueCategory)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 mt-1 focus:outline-none focus:border-[#2563EB] font-medium"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
             >
               {categories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -137,20 +137,20 @@ export const NewInspectionModal: React.FC<NewInspectionModalProps> = ({
 
           {/* Field Notes */}
           <div>
-            <label className="text-[10px] text-slate-400 font-bold uppercase">Catatan Petugas & Detail Kerusakan</label>
+            <label className="text-xs text-slate-600 font-bold uppercase tracking-wider">Catatan Petugas & Detail Kerusakan</label>
             <textarea
               rows={3}
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Jelaskan kondisi fisik, tingkat penyumbatan, retakan, atau bau..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-medium focus:outline-none focus:border-[#2563EB]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-semibold text-sm focus:outline-none focus:border-[#2563EB]"
             />
           </div>
 
           {/* Photo Attachment Demo */}
           <div>
-            <label className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1">
-              <Camera className="w-3 h-3 text-[#2563EB]" />
+            <label className="text-xs text-slate-600 font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-[#2563EB]" />
               <span>URL Foto Dokumentasi Lapangan (Opsional)</span>
             </label>
             <input
@@ -158,22 +158,22 @@ export const NewInspectionModal: React.FC<NewInspectionModalProps> = ({
               value={photoUrl}
               onChange={e => setPhotoUrl(e.target.value)}
               placeholder="https://images.unsplash.com/photo-..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 mt-1 font-mono text-[11px] focus:outline-none focus:border-[#2563EB]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 font-mono text-xs focus:outline-none focus:border-[#2563EB]"
             />
           </div>
 
           {/* Action Footer */}
-          <div className="pt-2 flex gap-3">
+          <div className="pt-3 flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold transition"
+              className="flex-1 py-3 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold transition text-sm"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 rounded-full bg-[#2563EB] text-white font-bold hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20"
+              className="flex-1 py-3 rounded-full bg-[#2563EB] text-white font-extrabold hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20 text-sm"
             >
               Kirim Laporan Inspeksi
             </button>

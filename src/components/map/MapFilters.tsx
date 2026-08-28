@@ -35,24 +35,24 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
   const conditions = ['All Conditions', 'Good', 'Fair', 'Warning', 'Critical'];
 
   return (
-    <div className="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur-md border border-slate-200 p-4 rounded-2xl shadow-xl w-72 space-y-4 text-xs text-slate-800">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-        <div className="flex items-center gap-2 font-bold text-slate-900">
-          <Filter className="w-4 h-4 text-[#2563EB]" />
+    <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-md border border-slate-200 p-4.5 rounded-2xl shadow-xl w-80 space-y-4 text-sm text-slate-800 font-sans">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
+          <Filter className="w-5 h-5 text-[#2563EB]" />
           <span>Layer & Filter Peta GIS</span>
         </div>
       </div>
 
       {/* Active Flow Trace Badge */}
       {isTraceActive && (
-        <div className="bg-blue-50 border border-blue-200 p-2.5 rounded-xl flex items-center justify-between text-xs">
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 text-[#2563EB]">
             <GitBranch className="w-4 h-4 animate-pulse" />
-            <span className="font-bold">Mode Trace Aktif</span>
+            <span className="font-extrabold text-sm">Mode Trace Aktif</span>
           </div>
           <button
             onClick={onClearTrace}
-            className="text-[10px] bg-[#2563EB] text-white font-bold px-2 py-0.5 rounded-full hover:bg-blue-700"
+            className="text-xs bg-[#2563EB] text-white font-bold px-3 py-1 rounded-full hover:bg-blue-700 transition shadow-2xs"
           >
             Reset Trace
           </button>
@@ -60,12 +60,12 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
       )}
 
       {/* Filter by Area */}
-      <div className="space-y-1">
-        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Area / Zona</label>
+      <div className="space-y-1.5">
+        <label className="text-xs text-slate-500 font-bold uppercase tracking-wider">Area / Zona</label>
         <select
           value={selectedArea}
           onChange={(e) => onSelectArea(e.target.value)}
-          className="w-full bg-slate-50 text-slate-800 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#2563EB]"
+          className="w-full bg-slate-50 text-slate-900 font-bold border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#2563EB]"
         >
           {areas.map(a => (
             <option key={a} value={a}>{a}</option>
@@ -74,12 +74,12 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
       </div>
 
       {/* Filter by Condition */}
-      <div className="space-y-1">
-        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kondisi Aset</label>
+      <div className="space-y-1.5">
+        <label className="text-xs text-slate-500 font-bold uppercase tracking-wider">Kondisi Aset</label>
         <select
           value={selectedCondition}
           onChange={(e) => onSelectCondition(e.target.value)}
-          className="w-full bg-slate-50 text-slate-800 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#2563EB]"
+          className="w-full bg-slate-50 text-slate-900 font-bold border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#2563EB]"
         >
           {conditions.map(c => (
             <option key={c} value={c}>{c}</option>
@@ -88,36 +88,36 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
       </div>
 
       {/* Layers Toggle */}
-      <div className="space-y-2 pt-1 border-t border-slate-100">
-        <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Layer Aset</label>
-        <div className="space-y-1">
-          <label className="flex items-center justify-between cursor-pointer p-1.5 rounded-lg hover:bg-slate-50">
-            <span className="text-slate-700 font-medium">Manhole Markers</span>
+      <div className="space-y-2 pt-2 border-t border-slate-100">
+        <label className="text-xs text-slate-500 font-bold uppercase tracking-wider">Layer Aset</label>
+        <div className="space-y-1.5">
+          <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-slate-50 font-bold text-slate-800">
+            <span>Manhole Markers</span>
             <input
               type="checkbox"
               checked={showManholes}
               onChange={(e) => onToggleManholes(e.target.checked)}
-              className="accent-[#2563EB] w-4 h-4 cursor-pointer"
+              className="accent-[#2563EB] w-4.5 h-4.5 cursor-pointer"
             />
           </label>
 
-          <label className="flex items-center justify-between cursor-pointer p-1.5 rounded-lg hover:bg-slate-50">
-            <span className="text-slate-700 font-medium">Pipa & Directional Flow</span>
+          <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-slate-50 font-bold text-slate-800">
+            <span>Pipa & Directional Flow</span>
             <input
               type="checkbox"
               checked={showPipes}
               onChange={(e) => onTogglePipes(e.target.checked)}
-              className="accent-[#2563EB] w-4 h-4 cursor-pointer"
+              className="accent-[#2563EB] w-4.5 h-4.5 cursor-pointer"
             />
           </label>
 
-          <label className="flex items-center justify-between cursor-pointer p-1.5 rounded-lg hover:bg-slate-50">
-            <span className="text-slate-700 font-medium">Stasiun Pompa</span>
+          <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-slate-50 font-bold text-slate-800">
+            <span>Stasiun Pompa</span>
             <input
               type="checkbox"
               checked={showPumpStations}
               onChange={(e) => onTogglePumpStations(e.target.checked)}
-              className="accent-[#2563EB] w-4 h-4 cursor-pointer"
+              className="accent-[#2563EB] w-4.5 h-4.5 cursor-pointer"
             />
           </label>
         </div>
