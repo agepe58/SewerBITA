@@ -15,6 +15,8 @@ interface MapFiltersProps {
   onSelectCondition: (cond: string) => void;
   isTraceActive: boolean;
   onClearTrace: () => void;
+  basemap: string;
+  onSelectBasemap: (basemap: string) => void;
 }
 
 export const MapFilters: React.FC<MapFiltersProps> = ({
@@ -29,13 +31,15 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
   selectedCondition,
   onSelectCondition,
   isTraceActive,
-  onClearTrace
+  onClearTrace,
+  basemap,
+  onSelectBasemap
 }) => {
   const areas = ['All Areas', 'Zone A - Sudirman', 'Zone A - Setiabudi', 'Zone A - Manggarai', 'Zone B - Tebet', 'Zone C - Pluit'];
   const conditions = ['All Conditions', 'Good', 'Fair', 'Warning', 'Critical'];
 
   return (
-    <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-md border border-slate-200 p-4.5 rounded-2xl shadow-xl w-80 space-y-4 text-sm text-slate-800 font-sans">
+    <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-md border border-slate-200/90 p-4.5 rounded-xl shadow-xl w-80 space-y-4 text-sm text-slate-800 font-sans">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
           <Filter className="w-5 h-5 text-[#2563EB]" />
@@ -58,6 +62,21 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
           </button>
         </div>
       )}
+
+      {/* Basemap Switcher Selector */}
+      <div className="space-y-1.5">
+        <label className="text-xs text-slate-500 font-bold uppercase tracking-wider">Tipe Peta Dasar (Basemap)</label>
+        <select
+          value={basemap}
+          onChange={(e) => onSelectBasemap(e.target.value)}
+          className="w-full bg-slate-50 text-slate-900 font-bold border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#2563EB] cursor-pointer"
+        >
+          <option value="esri_satellite">🛰️ Foto Satelit Real (Esri ArcGIS - Gratis)</option>
+          <option value="carto_voyager">🗺️ CARTO Voyager (Clean Light GIS)</option>
+          <option value="carto_dark">🌙 CARTO Dark Matter (Night Mode)</option>
+          <option value="osm_standard">🏙️ OpenStreetMap Standard</option>
+        </select>
+      </div>
 
       {/* Filter by Area */}
       <div className="space-y-1.5">

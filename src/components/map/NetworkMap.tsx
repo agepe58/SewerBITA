@@ -83,60 +83,91 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   onOpenNewInspection,
   selectedAssetIdFromParent
 }) => {
-  const [selectedAsset, setSelectedAsset] = useState<SewerAsset | null>(null);
-  const [selectedArea, setSelectedArea] = useState<string>('All Areas');
-  const [selectedCondition, setSelectedCondition] = useState<string>('All Conditions');
+  const [selectedArea, setSelectedArea] = useState('All Areas');
+  const [selectedCondition, setSelectedCondition] = useState('All Conditions');
   const [showManholes, setShowManholes] = useState(true);
   const [showPipes, setShowPipes] = useState(true);
   const [showPumpStations, setShowPumpStations] = useState(true);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
-  // Center map on Jakarta network default
-  const defaultCenter: [number, number] = [-6.2128, 106.8255];
+  // Basemap Switcher State (Default: Esri Satellite / CARTO Voyager)
+  type BasemapType = 'esri_satellite' | 'carto_voyager' | 'carto_dark' | 'osm_standard';
+  const [basemap, setBasemap] = useState<BasemapType>('esri_satellite');
+
+  const BASEMAP_TILES: Record<BasemapType, { name: string; icon: string; url: string; attribution: string }> = {
+    esri_satellite: {
+      name: 'Foto Satelit Real',
+      icon: '🛰️',
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution: '&copy; Esri, Maxar, Earthstar Geographics &mdash; ArcGIS World Imagery'
+    },
+    carto_voyager: {
+      name: 'CARTO Light GIS',
+      icon: '🗺️',
+      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
+    },
+    carto_dark: {
+      name: 'CARTO Night Mode',
+      icon: '🌙',
+      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
+    },
+    osm_standard: {
+      name: 'OpenStreetMap',
+      icon: '🏙️',
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }
+  };
+
+  // Center Coordinates for Bukit Indah
+  const defaultCenter: [number, number] = [-6.444, 107.452];
   const [panTarget, setPanTarget] = useState<[number, number] | null>(null);
 
-  // Handle parent selection (e.g. from Dashboard click)
+  // Synchronize when asset is selected from parent or table
   useEffect(() => {
     if (selectedAssetIdFromParent) {
-      const mh = manholes.find(m => m.id === selectedAssetIdFromParent);
-      const ps = pumpStations.find(p => p.id === selectedAssetIdFromParent);
-      const target = mh || ps;
-      if (target && 'coordinates' in target) {
-        setSelectedAsset(target);
-        setPanTarget([target.coordinates.lat, target.coordinates.lng]);
+      setSelectedAssetId(selectedAssetIdFromParent);
+      const matched = [...manholes, ...pumpStations].find(a => a.id === selectedAssetIdFromParent);
+      if (matched) {
+        setPanTarget([matched.coordinates.lat, matched.coordinates.lng]);
       }
     }
   }, [selectedAssetIdFromParent, manholes, pumpStations]);
 
-  // Combine node assets
-  const allNodeAssets = [...manholes, ...pumpStations];
-  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
+  const handleSelectAsset = (asset: SewerAsset | null) => {
+    setSelectedAssetId(asset ? asset.id : null);
+  };
 
-  // Helper map for coordinates lookup
+  // Combined asset node coordinates mapping for polyline connections
   const nodeCoordsMap = new Map<string, [number, number]>();
-  allNodeAssets.forEach(node => {
-    nodeCoordsMap.set(node.id, [node.coordinates.lat, node.coordinates.lng]);
+  manholes.forEach(m => nodeCoordsMap.set(m.id, [m.coordinates.lat, m.coordinates.lng]));
+  pumpStations.forEach(p => nodeCoordsMap.set(p.id, [p.coordinates.lat, p.coordinates.lng]));
+
+  // Filters logic
+  const filteredManholes = manholes.filter(m => {
+    const areaMatch = selectedArea === 'All Areas' || m.area === selectedArea;
+    const condMatch = selectedCondition === 'All Conditions' || m.condition === selectedCondition;
+    return areaMatch && condMatch;
   });
 
-  // Filtered Assets
-  const filteredManholes = manholes.filter(mh => {
-    if (selectedArea !== 'All Areas' && mh.area !== selectedArea) return false;
-    if (selectedCondition !== 'All Conditions' && mh.condition !== selectedCondition) return false;
-    return true;
-  });
-
-  const filteredPumpStations = pumpStations.filter(ps => {
-    if (selectedArea !== 'All Areas' && ps.area !== selectedArea) return false;
-    if (selectedCondition !== 'All Conditions' && ps.condition !== selectedCondition) return false;
-    return true;
+  const filteredPumpStations = pumpStations.filter(p => {
+    const areaMatch = selectedArea === 'All Areas' || p.area === selectedArea;
+    const condMatch = selectedCondition === 'All Conditions' || p.condition === selectedCondition;
+    return areaMatch && condMatch;
   });
 
   const filteredPipes = pipes.filter(p => {
-    if (selectedArea !== 'All Areas' && p.area !== selectedArea) return false;
-    if (selectedCondition !== 'All Conditions' && p.condition !== selectedCondition) return false;
-    return true;
+    const areaMatch = selectedArea === 'All Areas' || p.area === selectedArea;
+    const condMatch = selectedCondition === 'All Conditions' || p.condition === selectedCondition;
+    return areaMatch && condMatch;
   });
 
-  // Check if asset is part of active trace
+  const selectedAsset = [...manholes, ...pumpStations, ...pipes].find(a => a.id === selectedAssetId) || null;
+  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
+
+  // Active Topology Trace Path Check
   const isAssetInTrace = (id: string) => {
     if (!activeTraceResult) return false;
     return activeTraceResult.pathAssetIds.includes(id);
@@ -158,7 +189,43 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         onSelectCondition={setSelectedCondition}
         isTraceActive={!!activeTraceResult}
         onClearTrace={onClearTrace}
+        basemap={basemap}
+        onSelectBasemap={(b) => setBasemap(b as BasemapType)}
       />
+
+      {/* Floating Quick Basemap Switcher Pill (Top Right) */}
+      <div className="absolute top-4 right-4 z-[1000] bg-white/95 backdrop-blur-md border border-slate-200/90 p-1.5 rounded-xl shadow-lg flex items-center gap-1 text-xs font-extrabold">
+        <button
+          onClick={() => setBasemap('esri_satellite')}
+          className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
+            basemap === 'esri_satellite' ? 'bg-[#2563EB] text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'
+          }`}
+          title="Foto Satelit Real gratis dari Esri ArcGIS"
+        >
+          <span>🛰️</span>
+          <span>Foto Satelit</span>
+        </button>
+        <button
+          onClick={() => setBasemap('carto_voyager')}
+          className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
+            basemap === 'carto_voyager' ? 'bg-[#2563EB] text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'
+          }`}
+          title="CARTO Voyager Clean GIS View"
+        >
+          <span>🗺️</span>
+          <span>Clean GIS</span>
+        </button>
+        <button
+          onClick={() => setBasemap('carto_dark')}
+          className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
+            basemap === 'carto_dark' ? 'bg-[#2563EB] text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'
+          }`}
+          title="CARTO Night Mode"
+        >
+          <span>🌙</span>
+          <span>Night</span>
+        </button>
+      </div>
 
       {/* Main Leaflet Map Container */}
       <MapContainer
@@ -169,10 +236,11 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       >
         <MapController centerCoords={panTarget} />
 
-        {/* CartoDB Voyager Light Tile Layer */}
+        {/* Dynamic Basemap Tile Layer */}
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          key={basemap}
+          attribution={BASEMAP_TILES[basemap].attribution}
+          url={BASEMAP_TILES[basemap].url}
           maxZoom={19}
         />
 
@@ -206,7 +274,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
                 className: 'flowing-pipe'
               }}
               eventHandlers={{
-                click: () => setSelectedAsset(pipe)
+                click: () => handleSelectAsset(pipe)
               }}
             >
               <Popup>
@@ -216,7 +284,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
                   <div className="text-slate-600">Diameter: {pipe.diameterMm}mm ({pipe.material})</div>
                   <div className="text-slate-600">Panjang: {pipe.lengthMeters}m</div>
                   <button
-                    onClick={() => setSelectedAsset(pipe)}
+                    onClick={() => handleSelectAsset(pipe)}
                     className="mt-2 text-[10px] bg-[#2563EB] text-white font-bold px-2.5 py-1 rounded-full w-full hover:bg-blue-700 transition"
                   >
                     Buka Detail Pipa
@@ -240,7 +308,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
               icon={icon}
               opacity={opacity}
               eventHandlers={{
-                click: () => setSelectedAsset(mh)
+                click: () => handleSelectAsset(mh)
               }}
             >
               <Popup>
@@ -259,7 +327,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
                       Trace Downstream
                     </button>
                     <button
-                      onClick={() => setSelectedAsset(mh)}
+                      onClick={() => handleSelectAsset(mh)}
                       className="text-[10px] bg-slate-100 text-slate-700 font-bold px-2.5 py-1 rounded-full border border-slate-200"
                     >
                       Detail
@@ -282,7 +350,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
               position={[ps.coordinates.lat, ps.coordinates.lng]}
               icon={icon}
               eventHandlers={{
-                click: () => setSelectedAsset(ps)
+                click: () => handleSelectAsset(ps)
               }}
             >
               <Popup>
@@ -291,7 +359,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
                   <div className="font-bold text-slate-900">{ps.name}</div>
                   <div className="text-slate-600">Kapasitas: {ps.capacityLps} L/s ({ps.activePumps} Pompa Aktif)</div>
                   <button
-                    onClick={() => setSelectedAsset(ps)}
+                    onClick={() => handleSelectAsset(ps)}
                     className="mt-2 text-[10px] bg-[#2563EB] text-white font-bold px-2.5 py-1 rounded-full w-full hover:bg-blue-700 transition"
                   >
                     Buka Detail Stasiun Pompa
@@ -306,7 +374,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       {/* Asset Slide-over Drawer */}
       <AssetDrawer
         asset={selectedAsset}
-        onClose={() => setSelectedAsset(null)}
+        onClose={() => handleSelectAsset(null)}
         onTraceDownstream={onTraceDownstream}
         onTraceUpstream={onTraceUpstream}
         onOpenQrModal={onOpenQrModal}
