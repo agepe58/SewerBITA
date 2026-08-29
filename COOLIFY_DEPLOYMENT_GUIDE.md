@@ -145,9 +145,44 @@ export const fetchAssetsFromDatabase = async () => {
 };
 ```
 
-#### 4. Keuntungan Jaringan Internal Coolify (Zero Public Exposure)
-- Service `postgres-sewerbita` **tidak perlu mengekspos Port 5432 ke internet publik**.
-- Seluruh lalu lintas query antara Backend API dan PostgreSQL berjalan di dalam **Docker Bridge Network internal Coolify**, menjamin kecepatan tinggi dan keamanan maksimal.
+#### 5. Cara Memeriksa Koneksi Database dan Web App Sudah Terhubung (4 Metode Audit)
+
+##### Metode A: Cek Endpoint Status Health Database di Backend API
+Setiap layanan backend enterprise menyediakan endpoint verifikasi koneksi database:
+- **Akses Endpoint**: `https://api.sewer.kbi.web.id/api/health` (atau `http://192.168.10.236:3005/api/health`)
+- **Respon Sukses Terhubung (JSON)**:
+  ```json
+  {
+    "status": "healthy",
+    "database": "connected",
+    "postgis_version": "POSTGIS=\"3.4.0\"...",
+    "database_name": "sewerbita_db",
+    "timestamp": "2026-08-30T00:51:00Z"
+  }
+  ```
+
+##### Metode B: Inspeksi Tab Network pada Browser DevTools (F12)
+1. Buka Web App SewerBITA di peramban (`https://sewer.kbi.web.id` atau `http://192.168.10.236:3005`).
+2. Tekan **F12** $\to$ Pilih tab **Network** $\to$ Filter berdasarkan **Fetch/XHR**.
+3. Buka modul **Katalog Master Aset**, **Peta GIS**, atau **Riwayat Inspeksi**.
+4. Periksa baris HTTP Request (`GET /api/assets` atau `GET /api/inspections`):
+   - Status **`200 OK`** dengan payload data aset JSON $\to$ **Database 100% Terhubung & Aktif!**
+   - Status **`500 Internal Server Error`** $\to$ Backend gagal menghubungi PostgreSQL (periksa `DATABASE_URL`).
+
+##### Metode C: Cek Log Container Backend di Dashboard Coolify
+1. Buka Dashboard Coolify $\to$ Masuk ke resource **Backend API Service**.
+2. Pilih tab **Logs**.
+3. Cari log inisialisasi koneksi:
+   - ✅ `"Database pool initialized successfully. Connected to postgres-sewerbita:5432/sewerbita_db"`
+   - ❌ `"Connection refused"` atau `"FATAL: password authentication failed"` $\to$ Ada kesalahan pada kredensial `DATABASE_URL`.
+
+##### Metode D: Uji Query psql via Terminal PostgreSQL Coolify
+1. Buka Dashboard Coolify $\to$ Masuk ke resource **PostgreSQL Container** (`postgres-sewerbita`).
+2. Pilih tab **Terminal** $\to$ Jalankan query pengujian psql:
+   ```sql
+   psql -U sewerbita_admin -d sewerbita_db -c "SELECT COUNT(*) FROM manhole_assets;"
+   ```
+3. Jika jumlah baris aset berhasil ditampilkan $\to$ PostgreSQL aktif dan siap menyimpan data aset jaringan air limbah!
 
 ---
 
