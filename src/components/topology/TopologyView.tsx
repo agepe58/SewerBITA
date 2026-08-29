@@ -87,7 +87,7 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
         {/* Left Column: Trace Configurator */}
         <div className="lg:col-span-5 space-y-6">
           {/* Card Configurator */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+          <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/80 shadow-xs space-y-5">
             <h2 className="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-4">
               Konfigurasi Simulator Flow Tracing
             </h2>
@@ -156,7 +156,7 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
 
           {/* Validation Summary Card */}
           {validationReport && (
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+            <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/80 shadow-xs space-y-5">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <h2 className="text-lg font-extrabold text-slate-900">Laporan Diagnostic Topology</h2>
                 <span className={`px-3.5 py-1 rounded-full text-xs font-black ${validationReport.isValid ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#FEE2E2] text-[#DC2626]'}`}>
@@ -204,7 +204,7 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
 
         {/* Right Column: Trace Result Path Breakdown */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+          <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/80 shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900">Hasil Penelusuran Jalur (Network Path)</h2>

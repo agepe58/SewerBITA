@@ -93,7 +93,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 w-full max-w-[1920px] mx-auto text-slate-900 font-sans min-h-[calc(100vh-70px)] flex flex-col">
       {/* Workspace Header & Action Bar */}
-      <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
+      <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-slate-100 p-2.5 flex items-center justify-center border border-slate-200 shadow-2xs shrink-0">
@@ -158,7 +158,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 sm:gap-4.5">
           {/* 1. Total Manhole */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
               <span>Total Manhole</span>
               <MapPin className="w-4.5 h-4.5 text-[#2563EB]" />
@@ -168,7 +168,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* 2. Total Pipa */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
               <span>Total Pipa</span>
               <GitBranch className="w-4.5 h-4.5 text-[#0284C7]" />
@@ -178,7 +178,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* 3. Total Stasiun Pompa */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
               <span>Stasiun Pompa</span>
               <Zap className="w-4.5 h-4.5 text-[#059669]" />
@@ -188,7 +188,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* 4. Total Aset Aktif */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-emerald-700 uppercase tracking-wider">
               <span>Aset Aktif</span>
               <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
@@ -198,7 +198,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* 5. Aset Membutuhkan Inspeksi */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-amber-700 uppercase tracking-wider">
               <span>Butuh Inspeksi</span>
               <Clock className="w-4.5 h-4.5 text-amber-600" />
@@ -208,7 +208,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* 6. Aset Bermasalah */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-rose-700 uppercase tracking-wider">
               <span>Bermasalah</span>
               <AlertTriangle className="w-4.5 h-4.5 text-rose-600" />
@@ -218,7 +218,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* 7. Aset Overdue Inspection */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs card-hover flex flex-col justify-between space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-purple-700 uppercase tracking-wider">
               <span>Overdue</span>
               <AlertCircle className="w-4.5 h-4.5 text-purple-600" />
@@ -234,7 +234,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* LEFT COLUMN (7 Cols): Kondisi Aset & Distribusi Per Area */}
         <div className="lg:col-span-7 space-y-6 flex flex-col justify-between">
           {/* PRD Visualisasi 1: Ringkasan Kondisi Aset */}
-          <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
+          <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
@@ -298,7 +298,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* PRD Visualisasi 4: Daftar Aset Bermasalah (Pindah ke Kolom Kiri) */}
-          <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4 flex-1 flex flex-col justify-between">
+          <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-4 flex-1 flex flex-col justify-between">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
@@ -354,7 +354,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* RIGHT COLUMN (5 Cols): Distribusi Per Area & Aktivitas Inspeksi Terbaru */}
         <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
           {/* PRD Visualisasi 2: Distribusi Aset Berdasarkan Area (Pindah ke Kolom Kanan) */}
-          <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-5 flex-1 flex flex-col justify-between">
+          <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-5 flex-1 flex flex-col justify-between">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
@@ -387,7 +387,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* PRD Visualisasi 3: Aktivitas Inspeksi Terbaru */}
-          <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+          <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">

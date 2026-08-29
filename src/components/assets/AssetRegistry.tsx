@@ -76,7 +76,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
       </div>
 
       {/* Control Bar: Tabs, Search, Filter */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+      <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         {/* Type Filter Tabs */}
         <div className="flex flex-wrap bg-slate-100/90 p-1.5 rounded-full border border-slate-200/80 text-sm font-bold gap-1">
           <button
@@ -134,7 +134,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
       </div>
 
       {/* Main Assets Table */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50/90 text-slate-500 font-extrabold border-b border-slate-200/80 uppercase tracking-wider text-xs">

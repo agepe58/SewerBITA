@@ -21,7 +21,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({ asset, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1300] flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center text-slate-900 space-y-5 font-sans">
+      <div className="bg-white border border-slate-200/90 w-full max-w-sm rounded-xl shadow-2xl p-6 text-center text-slate-900 space-y-5 font-sans">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2 font-extrabold text-sm">
             <QrIcon className="w-5 h-5 text-[#2563EB]" />

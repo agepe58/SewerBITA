@@ -69,7 +69,7 @@ export const NewInspectionModal: React.FC<NewInspectionModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1200] flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-100 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden text-sm text-slate-900 font-sans">
+      <div className="bg-white border border-slate-200/90 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden text-sm text-slate-900 font-sans">
         {/* Header */}
         <div className="p-4.5 border-b border-slate-100 flex items-center justify-between bg-white">
           <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
