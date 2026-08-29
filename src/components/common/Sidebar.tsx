@@ -10,7 +10,8 @@ import {
   Droplets,
   Activity,
   Layers,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 import { UserRole } from '../../types/rbac';
 import { RBACService } from '../../services/rbacService';
@@ -28,12 +29,14 @@ interface SidebarProps {
   activeTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   currentUserRole: UserRole;
+  onLogout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
-  currentUserRole
+  currentUserRole,
+  onLogout
 }) => {
   const navItems = [
     {
@@ -51,26 +54,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'topology' as NavTab,
-      label: 'Topology & Flow Tracing',
+      label: 'Flow Topology Solver',
       icon: GitBranch,
-      action: 'view_map' as const,
-      badge: 'Core'
+      action: 'view_assets' as const
     },
     {
       id: 'assets' as NavTab,
-      label: 'Asset Registry',
+      label: 'Master Asset Registry',
       icon: Boxes,
       action: 'view_assets' as const
     },
     {
       id: 'inspections' as NavTab,
-      label: 'Inspections & Field',
+      label: 'Inspections & Reports',
       icon: ClipboardCheck,
-      action: 'view_assets' as const
+      action: 'create_inspection' as const
     },
     {
       id: 'data' as NavTab,
-      label: 'Import / Export Data',
+      label: 'Data Import / Export',
       icon: FileSpreadsheet,
       action: 'export_data' as const
     },
@@ -83,39 +85,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-72 bg-[#F7F7F8] border-r border-slate-200/70 flex flex-col justify-between h-auto min-h-full select-none py-5 px-3.5 shrink-0">
-      {/* Brand & User Greeting Header */}
-      <div className="space-y-5">
-        {/* Brand Logo Box */}
-        <div className="flex flex-col gap-2 px-1.5 pb-3 border-b border-slate-200/60">
-          <div className="bg-white p-2 rounded-xl border border-slate-200/80 flex items-center justify-center shadow-2xs">
-            <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="w-full h-auto max-h-12 object-contain" />
-          </div>
-          <div className="flex items-center justify-between text-xs text-slate-500 font-mono font-bold pt-1 px-1">
-            <span className="text-slate-900 font-extrabold text-sm tracking-tight">Sewer<span className="text-[#2563EB]">BITA</span></span>
-            <span className="text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-full border border-emerald-200 text-[11px] font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>Active</span>
-            </span>
-          </div>
-        </div>
-
-        {/* User Greeting Block */}
-        <div className="px-2 pt-1 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-100 text-[#2563EB] flex items-center justify-center font-black text-sm border border-blue-200">
-            J
+    <aside className="w-64 bg-[#F7F7F8] border-r border-slate-200/80 p-4 flex flex-col justify-between shrink-0 font-sans select-none">
+      {/* Upper Brand & Views */}
+      <div className="space-y-6">
+        {/* Workspace Brand Badge */}
+        <div className="flex items-center gap-3 px-2 py-1">
+          <div className="w-8 h-8 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-xs shadow-md shadow-blue-500/20">
+            <Droplets className="w-4 h-4 fill-white text-white" />
           </div>
           <div>
-            <h2 className="text-sm font-extrabold text-slate-900 tracking-tight flex items-center gap-1">
-              <span>Jonathan</span>
-              <span className="text-xs">👋</span>
-            </h2>
-            <p className="text-xs text-slate-500 font-medium">Wastewater Manager</p>
+            <div className="font-black text-slate-900 text-sm tracking-tight leading-tight">
+              SewerBITA
+            </div>
+            <div className="text-[11px] text-slate-500 font-semibold leading-tight">
+              PT. Bukit Indah Tirta Alam
+            </div>
           </div>
         </div>
 
         {/* Section Header */}
-        <div className="px-2 pt-2 text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+        <div className="px-3 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
           Workspace Views
         </div>
 
@@ -156,22 +145,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Footer Network Status Widget */}
-      <div className="p-3.5 bg-white rounded-xl border border-slate-200/70 space-y-2 mt-4 shadow-2xs">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span className="text-xs font-extrabold text-slate-900">Network GIS</span>
+      {/* Footer Widgets & Logout Button */}
+      <div className="space-y-3 mt-4">
+        <div className="p-3.5 bg-white rounded-xl border border-slate-200/70 space-y-2 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span className="text-xs font-extrabold text-slate-900">Network GIS</span>
+            </div>
+            <Activity className="w-3.5 h-3.5 text-[#2563EB]" />
           </div>
-          <Activity className="w-3.5 h-3.5 text-[#2563EB]" />
+          <div className="text-[11px] text-slate-500 font-medium leading-tight">
+            Sewerage Zone 1 & 2 Active
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+            <span>Topology DAG</span>
+            <span className="text-emerald-600 font-bold font-mono">100% OK</span>
+          </div>
         </div>
-        <div className="text-[11px] text-slate-500 font-medium leading-tight">
-          Sewerage Zone 1 & 2 Active
-        </div>
-        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-          <span>Topology DAG</span>
-          <span className="text-emerald-600 font-bold font-mono">100% OK</span>
-        </div>
+
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-extrabold text-xs transition cursor-pointer shadow-2xs group"
+            title="Keluar dari Sesi Sistem"
+          >
+            <LogOut className="w-4 h-4 text-rose-600 group-hover:scale-110 transition" />
+            <span>Logout Sistem</span>
+          </button>
+        )}
       </div>
     </aside>
   );

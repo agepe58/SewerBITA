@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, QrCode, Bell, UserCheck, ChevronDown, ShieldAlert, Sparkles } from 'lucide-react';
+import { Search, QrCode, Bell, UserCheck, ChevronDown, ShieldAlert, Sparkles, LogOut } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types/rbac';
 
 interface HeaderProps {
@@ -7,7 +7,7 @@ interface HeaderProps {
   onRoleChange: (newRole: UserRole) => void;
   onOpenQrScanner: () => void;
   onSearchAsset: (query: string) => void;
-  onToggleLandingPage: () => void;
+  onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRoleChange,
   onOpenQrScanner,
   onSearchAsset,
-  onToggleLandingPage
+  onLogout
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -30,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-18 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs gap-3">
+    <header className="h-18 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs gap-3 font-sans">
       {/* Left: Dual-Function Global Search Box */}
       <form onSubmit={handleSearchSubmit} className="relative w-64 sm:w-96 lg:w-[480px] shrink">
         {/* Left Magnifying Glass Search Icon */}
@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onOpenQrScanner}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-blue-50 text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-full transition border border-blue-100 flex items-center justify-center shadow-2xs group"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-blue-50 text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-full transition border border-blue-100 flex items-center justify-center shadow-2xs group cursor-pointer"
           title="Scan QR Code Aset"
         >
           <QrCode className="w-4 h-4" />
@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Right Action Tools */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Notifications */}
-        <button className="relative p-2.5 text-slate-600 hover:text-slate-900 rounded-full bg-slate-100 border border-slate-200 transition">
+        <button className="relative p-2.5 text-slate-600 hover:text-slate-900 rounded-full bg-slate-100 border border-slate-200 transition cursor-pointer">
           <Bell className="w-4 h-4" />
           <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#EF4444] rounded-full animate-ping"></span>
           <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#EF4444] rounded-full"></span>
@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="relative">
           <button
             onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 px-4 py-2 rounded-full border border-slate-200 text-sm transition"
+            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 px-4 py-2 rounded-full border border-slate-200 text-sm transition cursor-pointer"
           >
             <UserCheck className="w-4 h-4 text-[#0284C7]" />
             <div className="text-left hidden sm:block">
@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
                     onRoleChange(role);
                     setIsRoleDropdownOpen(false);
                   }}
-                  className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 transition ${
+                  className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
                     currentUser.role === role ? 'text-[#2563EB] font-extrabold bg-blue-50/50' : 'text-slate-800 font-medium'
                   }`}
                 >
@@ -116,6 +116,16 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="text-xs text-slate-500 font-medium leading-tight">{currentUser.department}</div>
           </div>
         </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-1.5 p-2 sm:px-3.5 sm:py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl border border-rose-200 transition text-xs font-extrabold cursor-pointer ml-1 shadow-2xs"
+          title="Keluar dari Sesi Sistem"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="hidden sm:inline">Logout</span>
+        </button>
       </div>
     </header>
   );

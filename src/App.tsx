@@ -261,6 +261,7 @@ export const App: React.FC = () => {
           activeTab={activeTab}
           onSelectTab={setActiveTab}
           currentUserRole={currentUser.role}
+          onLogout={() => setIsLandingPage(true)}
         />
 
         {/* Main Content Area */}
@@ -271,7 +272,7 @@ export const App: React.FC = () => {
             onRoleChange={handleRoleChange}
             onOpenQrScanner={() => setIsQrScannerModalOpen(true)}
             onSearchAsset={handleSearchAsset}
-            onToggleLandingPage={() => setIsLandingPage(true)}
+            onLogout={() => setIsLandingPage(true)}
           />
 
           {/* Tab Router Views */}
