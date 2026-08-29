@@ -55,10 +55,99 @@ Untuk aplikasi sistem GIS dan manajemen jaringan air limbahn seperti **SewerBITA
    -- Verifikasi versi PostGIS yang aktif
    SELECT PostGIS_Full_Version();
    ```
-5. **Koneksi Internal Antar Container di Coolify**:
-   - Di dalam jaringan Docker Coolify yang sama, aplikasi backend dapat terhubung ke database menggunakan DNS internal Coolify (tanpa perlu membuka port ke publik):
-     - **Host**: `<database-service-name-di-coolify>` (misal: `postgres-sewerbita`) atau IP internal container.
-     - **Port**: `5432`
+---
+
+## 🔗 Arsitektur & Cara Menghubungkan PostgreSQL dengan Web App
+
+Aplikasi peramban Web App (Frontend React/Vite SPA) **tidak terhubung langsung ke PostgreSQL secara TCP port 5432** demi keamanan kredensial dan sandboxing peramban.
+
+Koneksi menggunakan **Arsitektur 3-Tier Enterprise** standar di Coolify:
+
+```
+┌────────────────────────────────────────────────────────┐
+│ 🌐 User Browser / Client App (SewerBITA Frontend)      │
+└──────────────────────────┬─────────────────────────────┘
+                           │ HTTP REST / JSON API (Port 443)
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│ 🚀 Backend Service API (Node.js Express / Python / Go) │
+└──────────────────────────┬─────────────────────────────┘
+                           │ TCP Protocol (Port 5432 Internal Docker Network)
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│ 🗄️ PostgreSQL + PostGIS Database Container             │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 🛠️ 4 Langkah Menghubungkan Database dengan Aplikasi di Coolify:
+
+#### 1. Atur Environment Variable di Service Backend API (Coolify Dashboard)
+Buka aplikasi Backend API Anda di Coolify $\to$ Masuk ke menu **Environment Variables** $\to$ Tambahkan:
+
+```env
+# Koneksi String Database ke Service Name PostgreSQL di Coolify
+DATABASE_URL=postgresql://sewerbita_admin:<password_anda>@postgres-sewerbita:5432/sewerbita_db?schema=public
+
+# Konfigurasi Pool Connection
+DB_HOST=postgres-sewerbita
+DB_PORT=5432
+DB_NAME=sewerbita_db
+DB_USER=sewerbita_admin
+DB_PASSWORD=<password_anda>
+```
+
+#### 2. Klien Database pada Kode Backend (Node.js / Express Example)
+Di dalam kode Backend API, gunakan driver `pg` (node-postgres) atau ORM seperti `Prisma` / `Drizzle`:
+
+```typescript
+// db.ts — Contoh koneksi backend ke PostgreSQL + PostGIS
+import { Pool } from 'pg';
+
+export const dbPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 20, // Maksimum koneksi simultan
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// Query geospasial PostGIS titik Manhole & Pipa
+export const getManholesWithGIS = async () => {
+  const result = await dbPool.query(`
+    SELECT 
+      id, asset_code, name, area, condition,
+      ST_X(geom::geometry) AS longitude,
+      ST_Y(geom::geometry) AS latitude
+    FROM manhole_assets;
+  `);
+  return result.rows;
+};
+```
+
+#### 3. Hubungkan Web App Frontend (Vite React SPA) ke Backend API
+Buka aplikasi Frontend SewerBITA di Coolify $\to$ Masuk ke **Environment Variables** $\to$ Tambahkan:
+
+```env
+# URL REST API Backend di Coolify
+VITE_API_BASE_URL=https://api-sewerbita.bita.co.id
+```
+
+Di dalam kode React Frontend ([`src/services/api.ts`](file:///c:/AntiGravity%20Project/SewerBITA/src/services/api.ts)):
+
+```typescript
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api-sewerbita.bita.co.id';
+
+export const fetchAssetsFromDatabase = async () => {
+  const response = await fetch(`${API_BASE_URL}/api/assets`);
+  if (!response.ok) throw new Error('Gagal mengambil data aset dari database');
+  return response.json();
+};
+```
+
+#### 4. Keuntungan Jaringan Internal Coolify (Zero Public Exposure)
+- Service `postgres-sewerbita` **tidak perlu mengekspos Port 5432 ke internet publik**.
+- Seluruh lalu lintas query antara Backend API dan PostgreSQL berjalan di dalam **Docker Bridge Network internal Coolify**, menjamin kecepatan tinggi dan keamanan maksimal.
 
 ---
 
