@@ -9,12 +9,21 @@ export type BackupType =
   | 'Master Assets Dump'
   | 'Inspection Logs Dump';
 
+export type NASProtocol =
+  | 'SMB/CIFS'
+  | 'Synology WebDAV (HTTPS)'
+  | 'Synology WebDAV (HTTP)'
+  | 'NFS'
+  | 'SFTP';
+
 export interface NASConfig {
   host: string;
   sharePath: string;
   username: string;
   password?: string;
-  protocol: 'SMB/CIFS' | 'NFS' | 'SFTP';
+  protocol: NASProtocol;
+  webdavPort?: number;
+  useSSL?: boolean;
   autoSync: boolean;
   syncInterval: 'Hourly' | 'Daily' | 'Weekly';
   status: 'Connected' | 'Disconnected' | 'Testing';

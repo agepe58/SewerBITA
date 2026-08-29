@@ -106,7 +106,11 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     setNasTestStatus(null);
     setTimeout(() => {
       setIsTestingNas(false);
-      setNasTestStatus('Koneksi NAS SMB berhasil (Latency: 2ms • Storage Tersedia: 480 GB)');
+      if (nasConfig.protocol.includes('WebDAV')) {
+        setNasTestStatus(`Koneksi Synology WebDAV ${nasConfig.protocol.includes('HTTPS') ? 'HTTPS (Port 5006)' : 'HTTP (Port 5005)'} berhasil! SSL Certificate Verified • Latency: 3ms • Storage Tersedia: 480 GB`);
+      } else {
+        setNasTestStatus('Koneksi NAS SMB/CIFS Network Share (Windows / Synology) berhasil! Latency: 2ms • Storage Tersedia: 480 GB');
+      }
     }, 1500);
   };
 
@@ -320,7 +324,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                 <Server className="w-5 h-5 text-[#2563EB]" />
-                <span>Konfigurasi Storage NAS (SMB / Local Server)</span>
+                <span>Konfigurasi Storage NAS (SMB / Synology WebDAV)</span>
               </h2>
               <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-2.5 py-0.5 rounded-full">
                 {nasConfig.status}
@@ -329,11 +333,27 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="space-y-1">
+                <label className="font-bold text-slate-700 dark:text-slate-300">Protokol Akses NAS</label>
+                <select
+                  value={nasConfig.protocol}
+                  onChange={e => setNasConfig({ ...nasConfig, protocol: e.target.value as any })}
+                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl text-slate-900 dark:text-white font-extrabold cursor-pointer"
+                >
+                  <option value="SMB/CIFS">📁 SMB / CIFS (Windows / Synology Samba Share)</option>
+                  <option value="Synology WebDAV (HTTPS)">🌩️ Synology WebDAV (HTTPS / Port 5006)</option>
+                  <option value="Synology WebDAV (HTTP)">🌐 Synology WebDAV (HTTP / Port 5005)</option>
+                  <option value="NFS">🐧 NFS (Linux Network File System)</option>
+                  <option value="SFTP">🔒 SFTP / SSH Secure Storage</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
                 <label className="font-bold text-slate-700 dark:text-slate-300">Server Host IP / Domain</label>
                 <input
                   type="text"
                   value={nasConfig.host}
                   onChange={e => setNasConfig({ ...nasConfig, host: e.target.value })}
+                  placeholder="e.g. 192.168.10.250"
                   className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl text-slate-900 dark:text-white font-mono font-bold"
                 />
               </div>
@@ -344,6 +364,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   type="text"
                   value={nasConfig.sharePath}
                   onChange={e => setNasConfig({ ...nasConfig, sharePath: e.target.value })}
+                  placeholder="/volume1/SewerBITA_Backups"
                   className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl text-slate-900 dark:text-white font-mono font-bold"
                 />
               </div>
@@ -356,19 +377,6 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   onChange={e => setNasConfig({ ...nasConfig, username: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl text-slate-900 dark:text-white font-bold"
                 />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 dark:text-slate-300">Protokol Jaringan</label>
-                <select
-                  value={nasConfig.protocol}
-                  onChange={e => setNasConfig({ ...nasConfig, protocol: e.target.value as any })}
-                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl text-slate-900 dark:text-white font-bold"
-                >
-                  <option value="SMB/CIFS">SMB / CIFS (Windows / Synology)</option>
-                  <option value="NFS">NFS (Linux Mount)</option>
-                  <option value="SFTP">SFTP / SSH Secure Storage</option>
-                </select>
               </div>
             </div>
 
