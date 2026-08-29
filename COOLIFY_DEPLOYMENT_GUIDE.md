@@ -24,6 +24,44 @@ Aplikasi SewerBITA telah dilengkapi dengan berkas konfigurasi produksi siap paka
 
 ---
 
+## 🗄️ Rekomendasi & Konfigurasi Database di Coolify
+
+Untuk aplikasi sistem GIS dan manajemen jaringan air limbahn seperti **SewerBITA**, database yang **sangat direkomendasikan** di Coolify adalah **`PostgreSQL`** yang dilengkapi dengan ekstensi spasial **`PostGIS`**.
+
+### Mengapa PostgreSQL + PostGIS?
+- **Dukungan Geospasial Spasial Air Limbah (GIS)**: PostGIS menyediakan tipe data bawaan `ST_Point` (untuk Manhole & Stasiun Pompa), `ST_LineString` (untuk Segmen Pipa Kolektor), serta `ST_Polygon` (untuk Area/Sektor).
+- **Performa Query Spasial**: Memungkinkan pencarian radius titik node terdekat (*KNN indexing*), penelusuran topologi aliran gravitasi (*Flow Tracing*), dan kalkulasi jaringan pipa skala ribuan titik secara *real-time*.
+- **1-Click Managed Deployment di Coolify**: Coolify menyediakan dukungan deployment instan 1-klik untuk PostgreSQL lengkap dengan *persistent volume*, backup terjadwal otomatis, dan DNS internal.
+
+---
+
+### 🛠️ Langkah-Langkah Deployment PostgreSQL + PostGIS di Coolify
+
+1. **Buat Resource Database Baru di Coolify**:
+   - Di Dashboard Coolify $\to$ Masuk ke **Projects** $\to$ Klik **+ New Resource**.
+   - Pilih **Databases** $\to$ Klik **PostgreSQL**.
+2. **Atur Parameter Database**:
+   - **Database Name**: `sewerbita_db`
+   - **Postgres User**: `sewerbita_admin`
+   - **Postgres Password**: `<password_kuat_anda>`
+   - **Image Tag**: Gunakan `postgis/postgis:16-3.4-alpine` (atau `postgres:16-alpine` standar).
+3. **Klik Start / Deploy Database**.
+4. **Aktifkan Ekstensi PostGIS**:
+   - Setelah database aktif (status 🟢 `Running`), buka **Terminal / Database Client** di Coolify atau hubungkan via DBeaver/psql:
+   ```sql
+   -- Aktifkan ekstensi geospasial PostGIS
+   CREATE EXTENSION IF NOT EXISTS postgis;
+   
+   -- Verifikasi versi PostGIS yang aktif
+   SELECT PostGIS_Full_Version();
+   ```
+5. **Koneksi Internal Antar Container di Coolify**:
+   - Di dalam jaringan Docker Coolify yang sama, aplikasi backend dapat terhubung ke database menggunakan DNS internal Coolify (tanpa perlu membuka port ke publik):
+     - **Host**: `<database-service-name-di-coolify>` (misal: `postgres-sewerbita`) atau IP internal container.
+     - **Port**: `5432`
+
+---
+
 ## 🛠️ Langkah-Langkah Deployment di Dashboard Coolify
 
 ### Langkah 1: Buat Resource Aplikasi Baru
