@@ -66,23 +66,23 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto font-sans">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+      {/* Workspace Header Bar Card */}
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
-              <Boxes className="w-6 h-6" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
+              <Boxes className="w-5 h-5" />
             </div>
             <span>Master Registry Aset Jaringan Air Limbah</span>
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold mt-1">
             Katalog lengkap Manhole, Pipa Kolektor, dan Stasiun Pompa terpusat (*Single Source of Truth*).
           </p>
         </div>
 
         <button
           onClick={onOpenAddModal}
-          className="flex items-center gap-2.5 bg-[#2563EB] text-white font-black text-sm px-6 py-3.5 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 hover:scale-105 shrink-0 self-start md:self-auto cursor-pointer"
+          className="flex items-center gap-2.5 bg-[#2563EB] text-white font-black text-sm px-6 py-3.5 rounded-xl hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 shrink-0 self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-5 h-5" />
           <span>+ Tambah Aset Baru</span>

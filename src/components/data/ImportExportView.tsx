@@ -89,13 +89,16 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto font-sans">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+      {/* Workspace Header Bar Card */}
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-            <FileSpreadsheet className="w-7 h-7 text-[#2563EB]" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
             <span>Migrasi Data, Import & Export Sistem</span>
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold mt-1">
             Fasilitas import spreadsheet CSV/Excel dan export backup master data aset dan log inspeksi.
           </p>
         </div>

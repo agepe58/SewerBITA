@@ -60,26 +60,26 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto font-sans">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+      {/* Workspace Header Bar Card */}
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
-              <GitBranch className="w-6 h-6" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
+              <GitBranch className="w-5 h-5" />
             </div>
-            <span>Network Topology & Flow Tracing</span>
+            <span>Flow Topology Solver & Graph Analysis</span>
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium mt-1">
-            Penelusuran jaringan air limbah dan validasi koneksi aset.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold mt-1">
+            Simulasi alur gravitasi air limah, pelacakan hulu/hilir (*upstream/downstream tracing*), dan audit validitas konektivitas jaringan.
           </p>
         </div>
 
         <button
           onClick={handleRunValidation}
-          className="flex items-center gap-2.5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-[#0284C7] dark:text-sky-400 border border-slate-200 dark:border-slate-800 font-black text-sm px-6 py-3.5 rounded-full transition shadow-xs hover:scale-105 shrink-0 self-start md:self-auto cursor-pointer"
+          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm px-6 py-3 rounded-xl transition shadow-md cursor-pointer"
         >
-          <ShieldAlert className="w-5 h-5" />
-          <span>Jalankan Diagnostic Validator</span>
+          <ShieldAlert className="w-4 h-4 text-emerald-400" />
+          <span>Audit Validasi Topologi</span>
         </button>
       </div>
 
