@@ -10,6 +10,7 @@ import { AddAssetModal } from './components/assets/AddAssetModal';
 import { EditAssetModal } from './components/assets/EditAssetModal';
 import { InspectionView } from './components/inspections/InspectionView';
 import { NewInspectionModal } from './components/inspections/NewInspectionModal';
+import { EditInspectionModal } from './components/inspections/EditInspectionModal';
 import { QrCodeModal } from './components/qr/QrCodeModal';
 import { QrScannerModal } from './components/qr/QrScannerModal';
 import { ImportExportView } from './components/data/ImportExportView';
@@ -44,6 +45,7 @@ export const App: React.FC = () => {
   const [activeQrAssetId, setActiveQrAssetId] = useState<string | null>(null);
   const [selectedAssetIdForMap, setSelectedAssetIdForMap] = useState<string | null>(null);
   const [assetToEdit, setAssetToEdit] = useState<SewerAsset | null>(null);
+  const [inspectionToEdit, setInspectionToEdit] = useState<InspectionRecord | null>(null);
 
   // Flow Tracing State
   const [activeTraceResult, setActiveTraceResult] = useState<NetworkTraceResult | null>(null);
@@ -178,6 +180,18 @@ export const App: React.FC = () => {
     setPipes(prev => prev.filter(p => p.id !== assetId && p.fromAssetId !== assetId && p.toAssetId !== assetId));
   };
 
+  const handleSaveEditedInspection = (updated: InspectionRecord) => {
+    setInspections(prev => prev.map(i => i.id === updated.id ? updated : i));
+
+    // Synchronize asset condition if changed
+    setManholes(prev => prev.map(m => m.id === updated.assetId ? { ...m, condition: updated.condition } : m));
+    setPipes(prev => prev.map(p => p.id === updated.assetId ? { ...p, condition: updated.condition } : p));
+  };
+
+  const handleDeleteInspection = (inspectionId: string) => {
+    setInspections(prev => prev.filter(i => i.id !== inspectionId));
+  };
+
   const handleRoleChange = (newRole: UserRole) => {
     const userForRole = users.find(u => u.role === newRole) || { ...currentUser, role: newRole };
     setCurrentUser(userForRole);
@@ -309,6 +323,8 @@ export const App: React.FC = () => {
               <InspectionView
                 inspections={inspections}
                 onOpenNewModal={() => setIsNewInspectionModalOpen(true)}
+                onEditInspection={(insp) => setInspectionToEdit(insp)}
+                onDeleteInspection={handleDeleteInspection}
               />
             )}
 
@@ -376,6 +392,12 @@ export const App: React.FC = () => {
         onSavePipe={handleEditPipe}
         onSavePumpStation={handleEditPumpStation}
         areas={areas}
+      />
+
+      <EditInspectionModal
+        inspection={inspectionToEdit}
+        onClose={() => setInspectionToEdit(null)}
+        onSaveInspection={handleSaveEditedInspection}
       />
     </div>
   );
