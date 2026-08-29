@@ -297,44 +297,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* PRD Visualisasi 2: Distribusi Aset Berdasarkan Area */}
-          <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-5 flex-1 flex flex-col justify-between">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-[#0284C7]" />
-                  <span>Distribusi Aset Berdasarkan Area / Zona</span>
-                </h2>
-                <p className="text-xs text-slate-500 font-semibold mt-0.5">Sebaran kepadatan infra air limbah di seluruh zona layanan</p>
-              </div>
-              <span className="text-xs text-slate-700 font-extrabold font-mono bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                {areaDistribution.length} Zona Terdaftar
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              {areaDistribution.map(item => (
-                <div key={item.areaName} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs sm:text-sm font-extrabold text-slate-800">
-                    <span>{item.areaName}</span>
-                    <span className="font-mono text-slate-700">{item.count} Aset ({item.percentage}%)</span>
-                  </div>
-                  <div className="h-3.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/60 p-0.5">
-                    <div
-                      style={{ width: `${item.percentage}%` }}
-                      className="h-full bg-gradient-to-r from-[#2563EB] to-[#0284C7] rounded-full transition-all"
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN (5 Cols): Aktivitas Inspeksi Terbaru & Daftar Aset Bermasalah */}
-        <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
-          {/* PRD Visualisasi 4: Daftar Aset Bermasalah */}
-          <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4 flex-1">
+          {/* PRD Visualisasi 4: Daftar Aset Bermasalah (Pindah ke Kolom Kiri) */}
+          <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4 flex-1 flex flex-col justify-between">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
@@ -383,6 +347,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN (5 Cols): Distribusi Per Area & Aktivitas Inspeksi Terbaru */}
+        <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
+          {/* PRD Visualisasi 2: Distribusi Aset Berdasarkan Area (Pindah ke Kolom Kanan) */}
+          <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/80 shadow-2xs space-y-5 flex-1 flex flex-col justify-between">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-[#0284C7]" />
+                  <span>Distribusi Aset Berdasarkan Area / Zona</span>
+                </h2>
+                <p className="text-xs text-slate-500 font-semibold mt-0.5">Sebaran kepadatan infra air limbah di seluruh zona layanan</p>
+              </div>
+              <span className="text-xs text-slate-700 font-extrabold font-mono bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                {areaDistribution.length} Zona Terdaftar
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {areaDistribution.map(item => (
+                <div key={item.areaName} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs sm:text-sm font-extrabold text-slate-800">
+                    <span>{item.areaName}</span>
+                    <span className="font-mono text-slate-700">{item.count} Aset ({item.percentage}%)</span>
+                  </div>
+                  <div className="h-3.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/60 p-0.5">
+                    <div
+                      style={{ width: `${item.percentage}%` }}
+                      className="h-full bg-gradient-to-r from-[#2563EB] to-[#0284C7] rounded-full transition-all"
+                    ></div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
