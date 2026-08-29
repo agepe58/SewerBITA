@@ -262,7 +262,13 @@ export const App: React.FC = () => {
 
   // If in Landing Page mode, show landing page portal
   if (isLandingPage) {
-    return <LandingPage onEnterDashboard={() => setIsLandingPage(false)} />;
+    return (
+      <LandingPage
+        onEnterDashboard={() => setIsLandingPage(false)}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+      />
+    );
   }
 
   return (

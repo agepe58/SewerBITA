@@ -4,35 +4,59 @@ import {
   GitBranch,
   Boxes,
   ClipboardCheck,
-  ArrowRight
+  ArrowRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface LandingPageProps {
   onEnterDashboard: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({
+  onEnterDashboard,
+  isDarkMode = true,
+  onToggleDarkMode
+}) => {
   return (
     <div className="h-screen w-full bg-[#0B0F17] text-white font-sans flex flex-col items-center justify-center p-6 sm:p-10 relative overflow-hidden selection:bg-[#2563EB] selection:text-white">
       {/* Ambient background glowing lights */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-600/15 rounded-full blur-[160px] pointer-events-none"></div>
       <div className="absolute bottom-10 right-10 w-[450px] h-[450px] bg-emerald-600/10 rounded-full blur-[130px] pointer-events-none"></div>
 
-      {/* Header Bar: Top Left Logo & Top Right "Masuk ke Dashboard" Button */}
+      {/* Header Bar: Top Left Logo & Top Right Action Controls */}
       <header className="absolute top-6 left-6 right-6 sm:top-8 sm:left-10 sm:right-10 z-20 flex items-center justify-between">
         {/* Top Left Logo */}
         <div className="bg-white/95 p-2 sm:p-2.5 rounded-xl border border-white/20 shadow-md">
           <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="h-9 sm:h-11 w-auto object-contain" />
         </div>
 
-        {/* Top Right "Masuk ke Dashboard" Button */}
-        <button
-          onClick={onEnterDashboard}
-          className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-lg shadow-blue-600/35 hover:shadow-blue-600/55 hover:scale-103 cursor-pointer whitespace-nowrap group"
-        >
-          <span>Masuk ke Dashboard</span>
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-        </button>
+        {/* Top Right Controls (Dark Mode Toggle + Enter Dashboard Button) */}
+        <div className="flex items-center gap-3">
+          {onToggleDarkMode && (
+            <button
+              onClick={onToggleDarkMode}
+              className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 transition-all backdrop-blur-md cursor-pointer flex items-center justify-center shadow-md hover:scale-105"
+              title={isDarkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5 text-amber-300" />
+              ) : (
+                <Moon className="w-5 h-5 text-blue-300" />
+              )}
+            </button>
+          )}
+
+          <button
+            onClick={onEnterDashboard}
+            className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-lg shadow-blue-600/35 hover:shadow-blue-600/55 hover:scale-103 cursor-pointer whitespace-nowrap group"
+          >
+            <span>Masuk ke Dashboard</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+          </button>
+        </div>
       </header>
 
       {/* Main Content (100% Vertically and Horizontally Centered Viewport Hero) */}
