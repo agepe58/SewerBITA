@@ -9,7 +9,9 @@ import {
   Boxes,
   Eye,
   FileSpreadsheet,
-  Trash2
+  Trash2,
+  Edit3,
+  AlertTriangle
 } from 'lucide-react';
 import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset, AssetCondition } from '../../types/asset';
 
@@ -20,6 +22,8 @@ interface AssetRegistryProps {
   onOpenAddModal: () => void;
   onOpenQrModal: (assetId: string) => void;
   onNavigateToMapWithAsset: (assetId: string) => void;
+  onEditAsset: (asset: SewerAsset) => void;
+  onDeleteAsset: (assetId: string) => void;
 }
 
 export const AssetRegistry: React.FC<AssetRegistryProps> = ({
@@ -28,11 +32,14 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
   pipes,
   onOpenAddModal,
   onOpenQrModal,
-  onNavigateToMapWithAsset
+  onNavigateToMapWithAsset,
+  onEditAsset,
+  onDeleteAsset
 }) => {
   const [filterType, setFilterType] = useState<'all' | 'manhole' | 'pipe' | 'pump_station'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCondition, setFilterCondition] = useState<string>('all');
+  const [assetToDelete, setAssetToDelete] = useState<SewerAsset | null>(null);
 
   const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
 
@@ -49,6 +56,13 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
     }
     return true;
   });
+
+  const handleConfirmDelete = () => {
+    if (assetToDelete) {
+      onDeleteAsset(assetToDelete.id);
+      setAssetToDelete(null);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto text-slate-900 font-sans">
@@ -186,10 +200,10 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
                   </td>
                   <td className="p-5 font-mono text-slate-600 font-bold">{asset.nextInspectionDue}</td>
                   <td className="p-5 text-center">
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-1.5">
                       <button
                         onClick={() => onNavigateToMapWithAsset(asset.id)}
-                        className="p-2.5 bg-slate-100 hover:bg-blue-50 text-[#2563EB] rounded-full border border-slate-200 transition"
+                        className="p-2 bg-slate-100 hover:bg-blue-50 text-[#2563EB] rounded-lg border border-slate-200 transition"
                         title="Lihat di Peta GIS"
                       >
                         <MapPin className="w-4 h-4" />
@@ -197,10 +211,26 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
 
                       <button
                         onClick={() => onOpenQrModal(asset.id)}
-                        className="p-2.5 bg-slate-100 hover:bg-slate-200/70 text-slate-700 rounded-full border border-slate-200 transition"
+                        className="p-2 bg-slate-100 hover:bg-slate-200/70 text-slate-700 rounded-lg border border-slate-200 transition"
                         title="Tampilkan QR Code"
                       >
                         <QrCode className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => onEditAsset(asset)}
+                        className="p-2 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 rounded-lg border border-slate-200 transition"
+                        title="Edit Asset"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => setAssetToDelete(asset)}
+                        className="p-2 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg border border-slate-200 transition"
+                        title="Hapus Asset"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -210,6 +240,39 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {assetToDelete && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1400] flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200/90 w-full max-w-md rounded-xl shadow-2xl p-6 text-slate-900 space-y-4 font-sans">
+            <div className="flex items-center gap-3 text-rose-600 font-extrabold text-base border-b border-slate-100 pb-3">
+              <div className="p-2 bg-rose-50 rounded-xl border border-rose-100">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <span>Konfirmasi Hapus Asset</span>
+            </div>
+
+            <p className="text-sm text-slate-600 font-medium leading-relaxed">
+              Apakah Anda yakin ingin menghapus aset <strong className="text-slate-900 font-mono">{assetToDelete.assetCode} ({assetToDelete.name})</strong>? Tindakan ini akan menghapus aset secara permanen dari katalog master.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setAssetToDelete(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-100 transition text-sm"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-5 py-2 rounded-xl bg-rose-600 text-white font-extrabold hover:bg-rose-700 transition shadow-md shadow-rose-500/20 text-sm"
+              >
+                Hapus Permanen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

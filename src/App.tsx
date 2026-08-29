@@ -7,6 +7,7 @@ import { NetworkMap } from './components/map/NetworkMap';
 import { TopologyView } from './components/topology/TopologyView';
 import { AssetRegistry } from './components/assets/AssetRegistry';
 import { AddAssetModal } from './components/assets/AddAssetModal';
+import { EditAssetModal } from './components/assets/EditAssetModal';
 import { InspectionView } from './components/inspections/InspectionView';
 import { NewInspectionModal } from './components/inspections/NewInspectionModal';
 import { QrCodeModal } from './components/qr/QrCodeModal';
@@ -42,6 +43,7 @@ export const App: React.FC = () => {
   const [isQrScannerModalOpen, setIsQrScannerModalOpen] = useState(false);
   const [activeQrAssetId, setActiveQrAssetId] = useState<string | null>(null);
   const [selectedAssetIdForMap, setSelectedAssetIdForMap] = useState<string | null>(null);
+  const [assetToEdit, setAssetToEdit] = useState<SewerAsset | null>(null);
 
   // Flow Tracing State
   const [activeTraceResult, setActiveTraceResult] = useState<NetworkTraceResult | null>(null);
@@ -155,6 +157,25 @@ export const App: React.FC = () => {
     // Update asset condition state if necessary
     setManholes(prev => prev.map(m => m.id === newInsp.assetId ? { ...m, condition: newInsp.condition } : m));
     setPipes(prev => prev.map(p => p.id === newInsp.assetId ? { ...p, condition: newInsp.condition } : p));
+  };
+
+  // Handlers for asset modification (Edit & Delete)
+  const handleEditManhole = (updated: ManholeAsset) => {
+    setManholes(prev => prev.map(m => m.id === updated.id ? updated : m));
+  };
+
+  const handleEditPipe = (updated: PipeAsset) => {
+    setPipes(prev => prev.map(p => p.id === updated.id ? updated : p));
+  };
+
+  const handleEditPumpStation = (updated: PumpStationAsset) => {
+    setPumpStations(prev => prev.map(ps => ps.id === updated.id ? updated : ps));
+  };
+
+  const handleDeleteAsset = (assetId: string) => {
+    setManholes(prev => prev.filter(m => m.id !== assetId));
+    setPumpStations(prev => prev.filter(p => p.id !== assetId));
+    setPipes(prev => prev.filter(p => p.id !== assetId && p.fromAssetId !== assetId && p.toAssetId !== assetId));
   };
 
   const handleRoleChange = (newRole: UserRole) => {
@@ -279,6 +300,8 @@ export const App: React.FC = () => {
                   setSelectedAssetIdForMap(id);
                   setActiveTab('map');
                 }}
+                onEditAsset={(asset) => setAssetToEdit(asset)}
+                onDeleteAsset={handleDeleteAsset}
               />
             )}
 
@@ -344,6 +367,15 @@ export const App: React.FC = () => {
           setSelectedAssetIdForMap(id);
           setActiveTab('map');
         }}
+      />
+
+      <EditAssetModal
+        asset={assetToEdit}
+        onClose={() => setAssetToEdit(null)}
+        onSaveManhole={handleEditManhole}
+        onSavePipe={handleEditPipe}
+        onSavePumpStation={handleEditPumpStation}
+        areas={areas}
       />
     </div>
   );

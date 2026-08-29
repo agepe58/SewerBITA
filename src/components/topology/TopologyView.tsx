@@ -67,10 +67,10 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
             <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2563EB]">
               <GitBranch className="w-6 h-6" />
             </div>
-            <span>Network Topology & Flow Tracing Solver</span>
+            <span>Network Topology & Flow Tracing</span>
           </h1>
           <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">
-            Penelusuran graf terarah (*Directed Graph DAG*) jaringan air limbah dan validasi integritas koneksi aset.
+            Penelusuran jaringan air limbah dan validasi koneksi aset.
           </p>
         </div>
 
@@ -89,7 +89,7 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
           {/* Card Configurator */}
           <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/80 shadow-xs space-y-5">
             <h2 className="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-4">
-              Konfigurasi Simulator Flow Tracing
+              Konfigurasi Flow Tracing
             </h2>
 
             {/* Select Start Node */}
@@ -115,11 +115,10 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setTraceType('downstream')}
-                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition ${
-                    traceType === 'downstream'
+                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition ${traceType === 'downstream'
                       ? 'bg-blue-50/80 border-[#2563EB] text-[#2563EB] font-bold shadow-xs'
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   <ArrowDown className="w-6 h-6 text-[#2563EB]" />
                   <span className="text-sm font-extrabold">Downstream</span>
@@ -129,11 +128,10 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setTraceType('upstream')}
-                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition ${
-                    traceType === 'upstream'
+                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition ${traceType === 'upstream'
                       ? 'bg-sky-50/80 border-[#0284C7] text-[#0284C7] font-bold shadow-xs'
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   <ArrowUp className="w-6 h-6 text-[#0284C7]" />
                   <span className="text-sm font-extrabold">Upstream</span>
@@ -207,7 +205,7 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
           <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/80 shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h2 className="text-lg font-extrabold text-slate-900">Hasil Penelusuran Jalur (Network Path)</h2>
+                <h2 className="text-lg font-extrabold text-slate-900">Hasil Penelusuran Jalur</h2>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium">Urutan aset yang dilalui oleh air limbah</p>
               </div>
 
@@ -271,11 +269,10 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
                       return (
                         <div
                           key={`${id}-${index}`}
-                          className={`p-4 rounded-2xl border flex items-center justify-between text-xs transition ${
-                            isNode
+                          className={`p-4 rounded-2xl border flex items-center justify-between text-xs transition ${isNode
                               ? 'bg-slate-50/90 border-slate-200 text-slate-900 font-bold'
                               : 'bg-white border-slate-200/60 text-slate-600 pl-6'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             <span className="w-7 h-7 rounded-full bg-blue-100 text-[#2563EB] flex items-center justify-center font-mono text-xs font-black">
@@ -290,10 +287,9 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
                             </div>
                           </div>
 
-                          <span className={`px-3.5 py-1 rounded-full text-xs font-extrabold ${
-                            item.condition === 'Good' ? 'bg-[#4ADE80] text-slate-900' :
-                            item.condition === 'Warning' ? 'bg-[#FDE047] text-slate-900' : 'bg-[#F87171] text-white'
-                          }`}>
+                          <span className={`px-3.5 py-1 rounded-full text-xs font-extrabold ${item.condition === 'Good' ? 'bg-[#4ADE80] text-slate-900' :
+                              item.condition === 'Warning' ? 'bg-[#FDE047] text-slate-900' : 'bg-[#F87171] text-white'
+                            }`}>
                             {item.condition}
                           </span>
                         </div>
