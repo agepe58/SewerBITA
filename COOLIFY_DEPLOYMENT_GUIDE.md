@@ -241,6 +241,43 @@ jobs:
 
 ---
 
+## 🖥️ Pengujian Awal Menggunakan IP Lokal Server (LAN / Local Testing)
+
+Menguji aplikasi menggunakan **IP Server Lokal** terlebih dahulu di jaringan lokal (LAN) adalah **langkah terbaik untuk mengisolasi masalah**, memastikan kontainer Docker, Nginx, dan aplikasi Web App berjalan 100% normal sebelum dihubungkan ke Cloudflare Tunnel atau domain publik.
+
+### 🛠️ 3 Langkah Menguji via IP Server Lokal di Coolify:
+
+#### 1. Petakan Port Host di Dashboard Coolify
+1. Buka aplikasi **SewerBITA** di Dashboard Coolify $\to$ masuk ke menu **General Settings**.
+2. Cari bagian **Ports Exposes / Ports Mapping**:
+   - Isi dengan port lokal yang belum terpakai, contoh: **`8080:80`** *(atau `8000:80`)*.
+3. Klik **Save** $\to$ Klik **Redeploy**.
+
+#### 2. Akses Aplikasi via IP Lokal Server di Peramban
+Buka peramban di komputer yang terhubung dalam satu jaringan LAN dengan server, lalu ketik:
+```
+http://<IP_SERVER_LOKAL>:8080
+```
+*Contoh*: `http://192.168.1.50:8080` atau `http://192.168.10.250:8080`.
+
+#### 3. Uji Endpoint Health Check di IP Lokal
+Buka URL health check di peramban:
+```
+http://<IP_SERVER_LOKAL>:8080/health
+```
+- **Hasil Sukses**: Menampilkan teks polos `OK` (HTTP Status 200).
+
+---
+
+#### 📌 Setelah Pengujian IP Lokal Berhasil:
+Jika `http://<IP_SERVER_LOKAL>:8080` dapat diakses dengan lancar:
+1. Berarti aplikasi Docker & Nginx Anda **100% Sehat dan Berfungsi Sempurna**.
+2. Anda tinggal mengarahkan **Cloudflare Tunnel Public Hostname** ke target lokal tersebut:
+   - **Type**: **`HTTP`**
+   - **URL**: **`localhost:8080`** *(atau `<IP_SERVER_LOKAL>:8080`)*.
+
+---
+
 ## 📞 Troubleshooting Ringkas
 
 | Gejala Error | Penyebab Utama | Solusi Tuntas |
