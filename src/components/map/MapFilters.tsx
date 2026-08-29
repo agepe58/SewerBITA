@@ -1,5 +1,5 @@
-import React from 'react';
-import { Filter, Layers, Check, X, GitBranch } from 'lucide-react';
+import React, { useState } from 'react';
+import { Filter, Layers, Check, X, GitBranch, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import { AssetCondition } from '../../types/asset';
 
 interface MapFiltersProps {
@@ -35,16 +35,43 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
   basemap,
   onSelectBasemap
 }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   const areas = ['All Areas', 'Zone A - Sudirman', 'Zone A - Setiabudi', 'Zone A - Manggarai', 'Zone B - Tebet', 'Zone C - Pluit'];
   const conditions = ['All Conditions', 'Good', 'Fair', 'Warning', 'Critical'];
 
+  // Render Collapsed (Minimized Pill View)
+  if (isCollapsed) {
+    return (
+      <div className="absolute top-4 left-4 z-[1000]">
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="bg-white/95 backdrop-blur-md border border-slate-200/90 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-sm font-extrabold text-slate-900 hover:bg-blue-50 hover:text-[#2563EB] transition hover:scale-102 group cursor-pointer"
+          title="Perbesar / Buka Card Layer & Filter Peta GIS"
+        >
+          <SlidersHorizontal className="w-4.5 h-4.5 text-[#2563EB]" />
+          <span>Layer & Filter Peta GIS</span>
+          <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-[#2563EB] transition" />
+        </button>
+      </div>
+    );
+  }
+
+  // Render Full Expanded Card View
   return (
-    <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-md border border-slate-200/90 p-4.5 rounded-xl shadow-xl w-80 space-y-4 text-sm text-slate-800 font-sans">
+    <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-md border border-slate-200/90 p-4.5 rounded-xl shadow-xl w-80 space-y-4 text-sm text-slate-800 font-sans transition-all">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
           <Filter className="w-5 h-5 text-[#2563EB]" />
           <span>Layer & Filter Peta GIS</span>
         </div>
+        <button
+          onClick={() => setIsCollapsed(true)}
+          className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition"
+          title="Mengecilkan Card Filter"
+        >
+          <ChevronUp className="w-5 h-5 text-slate-500" />
+        </button>
       </div>
 
       {/* Active Flow Trace Badge */}
