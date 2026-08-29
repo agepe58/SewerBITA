@@ -44,12 +44,67 @@ export const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  // Master Data States
-  const [manholes, setManholes] = useState<ManholeAsset[]>(INITIAL_MANHOLES);
-  const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>(INITIAL_PUMP_STATIONS);
-  const [pipes, setPipes] = useState<PipeAsset[]>(INITIAL_PIPES);
-  const [inspections, setInspections] = useState<InspectionRecord[]>(INITIAL_INSPECTIONS);
-  const [users, setUsers] = useState<UserProfile[]>(INITIAL_USERS);
+  // Master Data States with LocalStorage Persistence
+  const [manholes, setManholes] = useState<ManholeAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_manholes');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load manholes', e); }
+    }
+    return INITIAL_MANHOLES;
+  });
+
+  const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_pump_stations');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load pumpStations', e); }
+    }
+    return INITIAL_PUMP_STATIONS;
+  });
+
+  const [pipes, setPipes] = useState<PipeAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_pipes');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load pipes', e); }
+    }
+    return INITIAL_PIPES;
+  });
+
+  const [inspections, setInspections] = useState<InspectionRecord[]>(() => {
+    const saved = localStorage.getItem('sewerbita_inspections');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load inspections', e); }
+    }
+    return INITIAL_INSPECTIONS;
+  });
+
+  const [users, setUsers] = useState<UserProfile[]>(() => {
+    const saved = localStorage.getItem('sewerbita_users');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load users', e); }
+    }
+    return INITIAL_USERS;
+  });
+
+  // Sync state changes automatically to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('sewerbita_manholes', JSON.stringify(manholes));
+  }, [manholes]);
+
+  useEffect(() => {
+    localStorage.setItem('sewerbita_pump_stations', JSON.stringify(pumpStations));
+  }, [pumpStations]);
+
+  useEffect(() => {
+    localStorage.setItem('sewerbita_pipes', JSON.stringify(pipes));
+  }, [pipes]);
+
+  useEffect(() => {
+    localStorage.setItem('sewerbita_inspections', JSON.stringify(inspections));
+  }, [inspections]);
+
+  useEffect(() => {
+    localStorage.setItem('sewerbita_users', JSON.stringify(users));
+  }, [users]);
 
   // Active User & Role
   const [currentUser, setCurrentUser] = useState<UserProfile>(INITIAL_USERS[0]);
