@@ -65,24 +65,24 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto text-slate-900 font-sans">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto font-sans">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2563EB]">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
               <Boxes className="w-6 h-6" />
             </div>
             <span>Master Registry Aset Jaringan Air Limbah</span>
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium mt-1">
             Katalog lengkap Manhole, Pipa Kolektor, dan Stasiun Pompa terpusat (*Single Source of Truth*).
           </p>
         </div>
 
         <button
           onClick={onOpenAddModal}
-          className="flex items-center gap-2.5 bg-[#2563EB] text-white font-black text-sm px-6 py-3.5 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 hover:scale-105 shrink-0 self-start md:self-auto"
+          className="flex items-center gap-2.5 bg-[#2563EB] text-white font-black text-sm px-6 py-3.5 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 hover:scale-105 shrink-0 self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-5 h-5" />
           <span>+ Tambah Aset Baru</span>
@@ -90,30 +90,30 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
       </div>
 
       {/* Control Bar: Tabs, Search, Filter */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         {/* Type Filter Tabs */}
-        <div className="flex flex-wrap bg-slate-100/90 p-1.5 rounded-full border border-slate-200/80 text-sm font-bold gap-1">
+        <div className="flex flex-wrap bg-slate-100/90 dark:bg-slate-800 p-1.5 rounded-full border border-slate-200/80 dark:border-slate-700 text-sm font-bold gap-1">
           <button
             onClick={() => setFilterType('all')}
-            className={`px-5 py-2.5 rounded-full transition ${filterType === 'all' ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'}`}
+            className={`px-5 py-2.5 rounded-full transition cursor-pointer ${filterType === 'all' ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
           >
             Semua Aset ({allAssets.length})
           </button>
           <button
             onClick={() => setFilterType('manhole')}
-            className={`px-5 py-2.5 rounded-full transition ${filterType === 'manhole' ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'}`}
+            className={`px-5 py-2.5 rounded-full transition cursor-pointer ${filterType === 'manhole' ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
           >
             Manhole ({manholes.length})
           </button>
           <button
             onClick={() => setFilterType('pipe')}
-            className={`px-5 py-2.5 rounded-full transition ${filterType === 'pipe' ? 'bg-[#0284C7] text-white shadow-sm' : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'}`}
+            className={`px-5 py-2.5 rounded-full transition cursor-pointer ${filterType === 'pipe' ? 'bg-[#0284C7] text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
           >
             Pipa ({pipes.length})
           </button>
           <button
             onClick={() => setFilterType('pump_station')}
-            className={`px-5 py-2.5 rounded-full transition ${filterType === 'pump_station' ? 'bg-[#059669] text-white shadow-sm' : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'}`}
+            className={`px-5 py-2.5 rounded-full transition cursor-pointer ${filterType === 'pump_station' ? 'bg-[#059669] text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
           >
             Stasiun Pompa ({pumpStations.length})
           </button>
@@ -129,14 +129,14 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Cari Kode Asset, Nama..."
               style={{ paddingLeft: '48px' }}
-              className="w-full bg-slate-50 text-slate-900 text-sm font-semibold rounded-full pr-4 py-3 border border-slate-200 focus:bg-white focus:outline-none focus:border-[#2563EB]"
+              className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-semibold rounded-full pr-4 py-3 border border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#2563EB]"
             />
           </div>
 
           <select
             value={filterCondition}
             onChange={e => setFilterCondition(e.target.value)}
-            className="bg-slate-50 text-slate-800 text-sm rounded-full px-5 py-3 border border-slate-200 focus:outline-none focus:border-[#2563EB] font-extrabold cursor-pointer"
+            className="bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-sm rounded-full px-5 py-3 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#2563EB] font-extrabold cursor-pointer"
           >
             <option value="all">Semua Kondisi</option>
             <option value="Good">Good</option>
@@ -148,7 +148,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
       </div>
 
       {/* Main Assets Table */}
-      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50/90 text-slate-500 font-extrabold border-b border-slate-200/80 uppercase tracking-wider text-xs">

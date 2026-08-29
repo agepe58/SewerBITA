@@ -59,46 +59,46 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto text-slate-900 font-sans">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto font-sans">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2563EB]">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
               <GitBranch className="w-6 h-6" />
             </div>
             <span>Network Topology & Flow Tracing</span>
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium mt-1">
             Penelusuran jaringan air limbah dan validasi koneksi aset.
           </p>
         </div>
 
         <button
           onClick={handleRunValidation}
-          className="flex items-center gap-2.5 bg-white hover:bg-slate-50 text-[#0284C7] border border-slate-200 font-black text-sm px-6 py-3.5 rounded-full transition shadow-xs hover:scale-105 shrink-0 self-start md:self-auto"
+          className="flex items-center gap-2.5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-[#0284C7] dark:text-sky-400 border border-slate-200 dark:border-slate-800 font-black text-sm px-6 py-3.5 rounded-full transition shadow-xs hover:scale-105 shrink-0 self-start md:self-auto cursor-pointer"
         >
           <ShieldAlert className="w-5 h-5" />
           <span>Jalankan Diagnostic Validator</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
         {/* Left Column: Trace Configurator */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-6 sm:space-y-8">
           {/* Card Configurator */}
-          <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/80 shadow-xs space-y-5">
-            <h2 className="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-4">
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">
               Konfigurasi Flow Tracing
             </h2>
 
             {/* Select Start Node */}
             <div className="space-y-2.5">
-              <label className="text-sm font-bold text-slate-800">Pilih Aset Awal (Start Node)</label>
+              <label className="text-sm font-bold text-slate-800 dark:text-slate-200">Pilih Aset Awal (Start Node)</label>
               <select
                 value={selectedStartId}
                 onChange={(e) => setSelectedStartId(e.target.value)}
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl p-3.5 text-sm focus:outline-none focus:border-[#2563EB] font-extrabold cursor-pointer"
+                className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 text-sm focus:outline-none focus:border-[#2563EB] font-extrabold cursor-pointer"
               >
                 {manholes.map(mh => (
                   <option key={mh.id} value={mh.id}>
@@ -110,32 +110,32 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
 
             {/* Select Trace Direction */}
             <div className="space-y-2.5">
-              <label className="text-sm font-bold text-slate-800">Arah Tracing Network</label>
+              <label className="text-sm font-bold text-slate-800 dark:text-slate-200">Arah Tracing Network</label>
               <div className="grid grid-cols-2 gap-3.5">
                 <button
                   type="button"
                   onClick={() => setTraceType('downstream')}
-                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition ${traceType === 'downstream'
-                      ? 'bg-blue-50/80 border-[#2563EB] text-[#2563EB] font-bold shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition cursor-pointer ${traceType === 'downstream'
+                      ? 'bg-blue-50/80 dark:bg-blue-950/60 border-[#2563EB] text-[#2563EB] dark:text-blue-400 font-bold shadow-xs'
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                 >
                   <ArrowDown className="w-6 h-6 text-[#2563EB]" />
                   <span className="text-sm font-extrabold">Downstream</span>
-                  <span className="text-xs text-slate-500 font-semibold">Menuju Pompa</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Menuju Pompa</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setTraceType('upstream')}
-                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition ${traceType === 'upstream'
-                      ? 'bg-sky-50/80 border-[#0284C7] text-[#0284C7] font-bold shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition cursor-pointer ${traceType === 'upstream'
+                      ? 'bg-sky-50/80 dark:bg-sky-950/60 border-[#0284C7] text-[#0284C7] dark:text-sky-400 font-bold shadow-xs'
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                 >
                   <ArrowUp className="w-6 h-6 text-[#0284C7]" />
                   <span className="text-sm font-extrabold">Upstream</span>
-                  <span className="text-xs text-slate-500 font-semibold">Jaringan Feeder</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Jaringan Feeder</span>
                 </button>
               </div>
             </div>
@@ -144,7 +144,7 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
             <div className="pt-2 flex gap-3">
               <button
                 onClick={handleRunTrace}
-                className="flex-1 flex items-center justify-center gap-2.5 bg-[#2563EB] text-white font-black py-4 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 text-sm hover:scale-105"
+                className="flex-1 flex items-center justify-center gap-2.5 bg-[#2563EB] text-white font-black py-4 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 text-sm hover:scale-105 cursor-pointer"
               >
                 <Play className="w-4.5 h-4.5 fill-white" />
                 <span>Simulasi Flow Trace</span>
@@ -154,21 +154,21 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
 
           {/* Validation Summary Card */}
           {validationReport && (
-            <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/80 shadow-xs space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <h2 className="text-lg font-extrabold text-slate-900">Laporan Diagnostic Topology</h2>
+            <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Laporan Diagnostic Topology</h2>
                 <span className={`px-3.5 py-1 rounded-full text-xs font-black ${validationReport.isValid ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#FEE2E2] text-[#DC2626]'}`}>
                   {validationReport.isValid ? 'Topology Valid' : 'Isu Ditemukan'}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-3.5 text-center">
-                <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
-                  <div className="text-slate-500 text-xs font-extrabold">Total Error</div>
+                <div className="bg-slate-50/80 dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                  <div className="text-slate-500 dark:text-slate-400 text-xs font-extrabold">Total Error</div>
                   <div className="text-2xl font-black text-[#DC2626] font-mono">{validationReport.errorsCount}</div>
                 </div>
-                <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
-                  <div className="text-slate-500 text-xs font-extrabold">Total Warning</div>
+                <div className="bg-slate-50/80 dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                  <div className="text-slate-500 dark:text-slate-400 text-xs font-extrabold">Total Warning</div>
                   <div className="text-2xl font-black text-[#CA8A04] font-mono">{validationReport.warningsCount}</div>
                 </div>
               </div>
@@ -181,16 +181,16 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
                   </div>
                 ) : (
                   validationReport.issues.map((issue) => (
-                    <div key={issue.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-xs space-y-1.5">
+                    <div key={issue.id} className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs space-y-1.5">
                       <div className="flex items-center gap-2">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${issue.severity === 'error' ? 'bg-[#F87171] text-white' : 'bg-[#FDE047] text-slate-900'}`}>
                           {issue.severity.toUpperCase()}
                         </span>
-                        <span className="font-mono text-slate-900 font-extrabold">{issue.issueType}</span>
+                        <span className="font-mono text-slate-900 dark:text-white font-extrabold">{issue.issueType}</span>
                       </div>
-                      <div className="text-slate-800 font-semibold text-xs">{issue.message}</div>
+                      <div className="text-slate-800 dark:text-slate-200 font-semibold text-xs">{issue.message}</div>
                       {issue.suggestedFix && (
-                        <div className="text-xs text-[#2563EB] font-bold">Solusi: {issue.suggestedFix}</div>
+                        <div className="text-xs text-[#2563EB] dark:text-blue-400 font-bold">Solusi: {issue.suggestedFix}</div>
                       )}
                     </div>
                   ))
@@ -201,12 +201,12 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
         </div>
 
         {/* Right Column: Trace Result Path Breakdown */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/80 shadow-xs space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="lg:col-span-7 space-y-6 sm:space-y-8">
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
-                <h2 className="text-lg font-extrabold text-slate-900">Hasil Penelusuran Jalur</h2>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium">Urutan aset yang dilalui oleh air limbah</p>
+                <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Hasil Penelusuran Jalur</h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Urutan aset yang dilalui oleh air limbah</p>
               </div>
 
               {traceResult && (

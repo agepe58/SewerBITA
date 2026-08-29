@@ -52,22 +52,22 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto text-slate-900 font-sans">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto font-sans">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
             <ClipboardCheck className="w-7 h-7 text-[#2563EB]" />
             <span>Manajemen Inspeksi & Riwayat Lapangan</span>
           </h1>
-          <p className="text-sm text-slate-600 font-medium mt-0.5">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
             Log inspeksi berkala, pelaporan masalah fisik (*issue tracking*), dan dokumentasi lapangan.
           </p>
         </div>
 
         <button
           onClick={onOpenNewModal}
-          className="flex items-center gap-2 bg-[#2563EB] text-white font-extrabold text-sm px-6 py-3 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20"
+          className="flex items-center gap-2 bg-[#2563EB] text-white font-extrabold text-sm px-6 py-3 rounded-full hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20 cursor-pointer"
         >
           <Plus className="w-5 h-5" />
           <span>+ Buat Laporan Inspeksi Baru</span>
@@ -75,7 +75,7 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
       </div>
 
       {/* Search & Filters */}
-      <div className="bg-white p-4.5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
           <input
@@ -84,7 +84,7 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Cari ID Aset, Catatan, Petugas..."
             style={{ paddingLeft: '48px' }}
-            className="w-full bg-slate-50 text-slate-900 text-sm font-medium rounded-full pr-4 py-2.5 border border-slate-200 focus:outline-none focus:border-[#2563EB]"
+            className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium rounded-full pr-4 py-2.5 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#2563EB]"
           />
         </div>
 
@@ -92,7 +92,7 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
           <select
             value={selectedCondition}
             onChange={e => setSelectedCondition(e.target.value)}
-            className="bg-slate-50 text-slate-800 text-sm rounded-full px-4 py-2.5 border border-slate-200 focus:outline-none focus:border-[#2563EB] font-bold cursor-pointer"
+            className="bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-sm rounded-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#2563EB] font-bold cursor-pointer"
           >
             <option value="all">Semua Hasil Kondisi</option>
             <option value="Good">Good</option>
@@ -103,24 +103,24 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
         </div>
       </div>
 
-      {/* Inspections Timeline List */}
-      <div className="space-y-4">
+      {/* Inspections Timeline List (Aesthetic Card Spacing) */}
+      <div className="space-y-5 sm:space-y-6">
         {filteredInspections.map(insp => (
           <div
             key={insp.id}
-            className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition space-y-3.5"
+            className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition space-y-4"
           >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-3.5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3.5">
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="font-mono font-black text-[#2563EB] text-base">{insp.assetCode}</span>
-                <span className="font-bold text-slate-900 text-sm">{insp.assetName}</span>
-                <span className="text-xs bg-slate-100 px-3 py-1 rounded-full text-slate-700 border border-slate-200/80 font-bold">
+                <span className="font-bold text-slate-900 dark:text-white text-sm">{insp.assetName}</span>
+                <span className="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 font-bold">
                   {insp.issueCategory}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 text-xs shrink-0">
-                <span className="text-slate-600 flex items-center gap-1.5 font-mono font-semibold">
+                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5 font-mono font-semibold">
                   <Calendar className="w-4 h-4 text-slate-400" />
                   {insp.inspectionDate}
                 </span>
@@ -133,10 +133,10 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
                   {insp.condition}
                 </span>
 
-                <div className="flex items-center gap-1 pl-2 border-l border-slate-200">
+                <div className="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700">
                   <button
                     onClick={() => onEditInspection(insp)}
-                    className="p-1.5 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-600 rounded-lg border border-slate-200 transition"
+                    className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-700 dark:hover:text-amber-300 text-slate-600 dark:text-slate-400 rounded-lg border border-slate-200 dark:border-slate-700 transition cursor-pointer"
                     title="Edit Laporan Inspeksi"
                   >
                     <Edit3 className="w-4 h-4" />
@@ -144,7 +144,7 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
 
                   <button
                     onClick={() => setInspectionToDelete(insp)}
-                    className="p-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg border border-slate-200 transition"
+                    className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 text-slate-600 dark:text-slate-400 rounded-lg border border-slate-200 dark:border-slate-700 transition cursor-pointer"
                     title="Hapus Laporan Inspeksi"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -153,24 +153,24 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
               </div>
             </div>
 
-            <p className="text-slate-800 text-sm leading-relaxed font-semibold">{insp.notes}</p>
+            <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed font-semibold">{insp.notes}</p>
 
             {insp.photos && insp.photos.length > 0 && (
               <div className="flex gap-3 pt-1">
                 {insp.photos.map((url, idx) => (
-                  <img key={idx} src={url} alt="Inspeksi Foto" className="w-36 h-28 object-cover rounded-xl border border-slate-200 shadow-xs" />
+                  <img key={idx} src={url} alt="Inspeksi Foto" className="w-36 h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs" />
                 ))}
               </div>
             )}
 
-            <div className="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-slate-100 font-medium">
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 font-medium">
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-[#0284C7]" />
-                <span>Petugas: <strong className="text-slate-900 font-bold">{insp.inspectorName}</strong> ({insp.inspectorRole})</span>
+                <span>Petugas: <strong className="text-slate-900 dark:text-white font-bold">{insp.inspectorName}</strong> ({insp.inspectorRole})</span>
               </div>
 
               {insp.actionTaken && (
-                <div className="text-[#2563EB] font-extrabold">Tindakan: {insp.actionTaken}</div>
+                <div className="text-[#2563EB] dark:text-blue-400 font-extrabold">Tindakan: {insp.actionTaken}</div>
               )}
             </div>
           </div>
