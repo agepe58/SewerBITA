@@ -30,9 +30,10 @@ import {
   BackupType,
   NASConfig,
   GoogleDriveConfig,
-  BackupHistoryRecord
+  BackupHistoryRecord,
+  BackupRetentionPolicy
 } from '../../types/backup';
-import { INITIAL_NAS_CONFIG, INITIAL_GDRIVE_CONFIG, INITIAL_BACKUP_HISTORY } from '../../services/mockBackupData';
+import { INITIAL_NAS_CONFIG, INITIAL_GDRIVE_CONFIG, INITIAL_BACKUP_HISTORY, INITIAL_RETENTION_POLICY } from '../../services/mockBackupData';
 import { UserRole } from '../../types/rbac';
 import { RBACService } from '../../services/rbacService';
 
@@ -51,6 +52,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
   // State configurations
   const [nasConfig, setNasConfig] = useState<NASConfig>(INITIAL_NAS_CONFIG);
   const [gdriveConfig, setGdriveConfig] = useState<GoogleDriveConfig>(INITIAL_GDRIVE_CONFIG);
+  const [retentionPolicy, setRetentionPolicy] = useState<BackupRetentionPolicy>(INITIAL_RETENTION_POLICY);
   const [backupHistory, setBackupHistory] = useState<BackupHistoryRecord[]>(INITIAL_BACKUP_HISTORY);
 
   // Connection Testing States
@@ -61,7 +63,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
   const [showNasPassword, setShowNasPassword] = useState(false);
 
   // Instant Backup Form State
-  const [selectedBackupType, setSelectedBackupType] = useState<BackupType>('Full System');
+  const [selectedBackupType, setSelectedBackupType] = useState<BackupType>('Full Backup');
   const [selectedDestination, setSelectedDestination] = useState<BackupDestinationType>('DualRedundant');
   const [isEncryptBackup, setIsEncryptBackup] = useState(true);
 
@@ -122,11 +124,25 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
   const handleRunManualBackup = () => {
     setIsBackupInProgress(true);
     setBackupProgressPercent(10);
-    setBackupCurrentStep('Memulai ekstraksi skema database & relasi topologi...');
+
+    const isIncremental = selectedBackupType === 'Incremental Backup';
+    const isDifferential = selectedBackupType === 'Differential Backup';
+
+    if (isIncremental) {
+      setBackupCurrentStep('Mengidentifikasi Delta WAL log sejak Full Backup terakhir (bak-20260829-020000)...');
+    } else {
+      setBackupCurrentStep('Memulai ekstraksi skema database & relasi topologi...');
+    }
 
     setTimeout(() => {
       setBackupProgressPercent(35);
-      setBackupCurrentStep('Mengekstrak 8 Manhole, 9 Pipa, 2 Stasiun Pompa & 15 Log Inspeksi...');
+      if (isIncremental) {
+        setBackupCurrentStep('Mengekstrak 14 rekaman baru/diubah (2 inspeksi baru, 1 status Manhole)...');
+      } else if (isDifferential) {
+        setBackupCurrentStep('Mengekstrak 45 rekaman terakumulasi sejak baseline Full Backup...');
+      } else {
+        setBackupCurrentStep('Mengekstrak seluruh 1420 rekaman database master & inspeksi...');
+      }
     }, 1000);
 
     setTimeout(() => {
@@ -145,17 +161,26 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       const newRecord: BackupHistoryRecord = {
         id: `bak-${Date.now()}`,
-        filename: `sewerbita_${selectedBackupType.toLowerCase().replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.sql.gz`,
+        filename: isIncremental
+          ? `sewerbita_inc_delta_${Date.now().toString().slice(-4)}_${new Date().toISOString().slice(0, 10)}.sql.gz`
+          : isDifferential
+          ? `sewerbita_diff_${new Date().toISOString().slice(0, 10)}.sql.gz`
+          : `sewerbita_full_backup_${new Date().toISOString().slice(0, 10)}.sql.gz`,
         timestamp: `${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB`,
-        sizeMb: parseFloat((Math.random() * 5 + 10).toFixed(1)),
+        sizeMb: isIncremental ? 1.2 : isDifferential ? 3.5 : 15.2,
         destination: selectedDestination,
         type: selectedBackupType,
         status: 'Success',
         md5Hash: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-        durationSeconds: 4,
-        totalRecords: 1425,
+        durationSeconds: isIncremental ? 3 : 12,
+        totalRecords: isIncremental ? 14 : isDifferential ? 45 : 1425,
         triggeredBy: 'Deni Ardiansyah (Admin Manual Trigger)',
-        notes: `Instant manual backup ke ${selectedDestination}`
+        notes: isIncremental
+          ? 'Incremental Delta snapshot (14 perubahandata baru)'
+          : `Instant ${selectedBackupType} manual snapshot ke ${selectedDestination}`,
+        parentBackupId: isIncremental || isDifferential ? 'bak-20260829-020000' : undefined,
+        deltaSequence: isIncremental ? 3 : undefined,
+        changedRecordsCount: isIncremental ? 14 : isDifferential ? 45 : undefined
       };
 
       setBackupHistory(prev => [newRecord, ...prev]);
@@ -448,6 +473,166 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
       </div>
 
+      {/* Kebijakan Retensi (Lama Penyimpanan & Batas Maksimal File Tersimpan) Card */}
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div>
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <Clock className="w-5 h-5 text-[#7C3AED]" />
+              <span>Kebijakan Retensi: Lama Penyimpanan & Batas Jumlah Berkas Backup</span>
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
+              Atur batas waktu kedaluwarsa file cadangan dan batas jumlah arsip tersimpan untuk rotasi penyimpanan otomatis.
+            </p>
+          </div>
+
+          <span className="text-xs bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 font-extrabold px-3.5 py-1.5 rounded-full border border-purple-200 dark:border-purple-800 flex items-center gap-1.5 shrink-0">
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Auto-Purge Strategy Active</span>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 text-xs">
+          {/* Option 1: Masa Simpan */}
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-700 dark:text-slate-300">Lama Masa Penyimpanan (Retention Days)</label>
+            <select
+              value={retentionPolicy.retentionDays}
+              onChange={e => setRetentionPolicy({ ...retentionPolicy, retentionDays: Number(e.target.value) })}
+              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-3 rounded-xl text-slate-900 dark:text-white font-extrabold cursor-pointer"
+            >
+              <option value={7}>7 Hari (Seminggu)</option>
+              <option value={14}>14 Hari (2 Minggu)</option>
+              <option value={30}>30 Hari (1 Bulan - Standard)</option>
+              <option value={60}>60 Hari (2 Bulan)</option>
+              <option value={90}>90 Hari (Triwulan / Audit)</option>
+              <option value={180}>180 Hari (Setengah Tahun)</option>
+              <option value={365}>365 Hari (1 Tahun Compliance)</option>
+              <option value={0}>Simpan Selamanya (Tanpa Expiry)</option>
+            </select>
+            <p className="text-[11px] text-slate-400 font-medium">Batas umur file sebelum di-purge otomatis.</p>
+          </div>
+
+          {/* Option 2: Batas File */}
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-700 dark:text-slate-300">Maksimum Jumlah File Tersimpan</label>
+            <select
+              value={retentionPolicy.maxFileCount}
+              onChange={e => setRetentionPolicy({ ...retentionPolicy, maxFileCount: Number(e.target.value) })}
+              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-3 rounded-xl text-slate-900 dark:text-white font-extrabold cursor-pointer"
+            >
+              <option value={5}>5 File Terbaru</option>
+              <option value={10}>10 File Terbaru</option>
+              <option value={20}>20 File Terbaru</option>
+              <option value={30}>30 File Terbaru (Default)</option>
+              <option value={50}>50 File Terbaru</option>
+              <option value={100}>100 File Terbaru</option>
+              <option value={0}>Tanpa Batas Jumlah File</option>
+            </select>
+            <p className="text-[11px] text-slate-400 font-medium">Batas maksimum jumlah berkas di NAS & Cloud.</p>
+          </div>
+
+          {/* Option 3: Strategi Purge */}
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-700 dark:text-slate-300">Strategi Pembersihan (Purge Action)</label>
+            <select
+              value={retentionPolicy.purgeStrategy}
+              onChange={e => setRetentionPolicy({ ...retentionPolicy, purgeStrategy: e.target.value as any })}
+              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-3 rounded-xl text-slate-900 dark:text-white font-extrabold cursor-pointer"
+            >
+              <option value="DeleteOldest">Hapus Permanen Berkas Terlama (Delete Oldest)</option>
+              <option value="ArchiveToColdStorage">Pindahkan ke Cold Storage Archive</option>
+            </select>
+            <p className="text-[11px] text-slate-400 font-medium">Tindakan saat kuota retensi terpenuhi.</p>
+          </div>
+
+          {/* Option 4: Auto Purge Checkbox */}
+          <div className="flex flex-col justify-between space-y-2 p-3 bg-purple-50/50 dark:bg-purple-950/30 rounded-xl border border-purple-100 dark:border-purple-900/60">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="autoPurgeCheck"
+                checked={retentionPolicy.autoPurgeEnabled}
+                onChange={e => setRetentionPolicy({ ...retentionPolicy, autoPurgeEnabled: e.target.checked })}
+                className="w-4 h-4 text-[#7C3AED] rounded border-slate-300 cursor-pointer"
+              />
+              <label htmlFor="autoPurgeCheck" className="font-extrabold text-slate-900 dark:text-white cursor-pointer select-none">
+                Aktifkan Auto-Purge
+              </label>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
+              Pembersihan berkas otomatis dijadwalkan setiap hari pkl 03:00 WIB.
+            </p>
+          </div>
+        </div>
+
+        <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono font-medium">
+            File Tersimpan Saat Ini: <strong className="text-slate-900 dark:text-white">{backupHistory.length} File</strong> • Status: <span className="text-emerald-600 dark:text-emerald-400 font-bold">Dalam Batas Aman ({retentionPolicy.maxFileCount || '∞'} Max)</span>
+          </div>
+
+          <button
+            onClick={() => alert(`Kebijakan retensi diperbarui: Masa simpan ${retentionPolicy.retentionDays} hari, Batas ${retentionPolicy.maxFileCount} file tersimpan.`)}
+            className="text-xs bg-[#7C3AED] hover:bg-purple-700 text-white font-extrabold px-5 py-2.5 rounded-xl transition cursor-pointer shadow-2xs"
+          >
+            Simpan Kebijakan Retensi
+          </button>
+        </div>
+      </div>
+
+      {/* Full Backup vs Incremental Backup Pipeline Strategy Explainer Card */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            <span>Strategi Pipa Pembackupan: Full Backup vs. Incremental Backup</span>
+          </h2>
+          <span className="text-xs bg-blue-50 dark:bg-blue-950 text-[#2563EB] dark:text-blue-300 font-bold px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
+            Automated Pipeline Active
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+          {/* Card 1: Full Backup */}
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                <Database className="w-4 h-4 text-[#2563EB]" />
+                <span>1. Full Backup (Baseline Snapshot)</span>
+              </span>
+              <span className="px-2.5 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded-md font-bold">
+                Daily 02:00 WIB
+              </span>
+            </div>
+            <p className="text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+              Menyalin 100% skema database, tabel master Manhole, Pipa, Stasiun Pompa, dan log inspeksi. Digunakan sebagai pondasi dasar (*Baseline*) pemulihan bencana.
+            </p>
+            <div className="pt-1 font-mono font-bold text-slate-500 dark:text-slate-400">
+              Rata-rata Ukuran: ~15 MB • Waktu: 12 Detik
+            </div>
+          </div>
+
+          {/* Card 2: Incremental Backup */}
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span>2. Incremental Backup (Delta Changes)</span>
+              </span>
+              <span className="px-2.5 py-0.5 bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 rounded-md font-bold">
+                Hourly WAL Log
+              </span>
+            </div>
+            <p className="text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+              Hanya mengekstrak data yang **berubah atau baru ditambahkan** sejak backup terakhir. Menghemat bandwidth jaringan & ruang penyimpanan NAS/Cloud hingga 90%.
+            </p>
+            <div className="pt-1 font-mono font-bold text-slate-500 dark:text-slate-400">
+              Rata-rata Ukuran: ~1.2 MB • Waktu: 2 Detik
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Trigger Instant Manual Backup Box */}
       <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 p-6 sm:p-8 rounded-xl border border-blue-800/60 text-white shadow-md space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-blue-800/60 pb-4">
@@ -457,7 +642,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               <span>Jalankan Manual Backup Darurat (Instant Snapshot)</span>
             </h2>
             <p className="text-xs text-blue-200 font-medium mt-0.5">
-              Buat snapshot komplit dari seluruh database dan log inspeksi terkini dan langsung simpan ke NAS / Cloud.
+              Pilih tipe Full Backup atau Incremental Delta Backup dan langsung unggah ke target storage.
             </p>
           </div>
 
@@ -468,16 +653,17 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs">
           <div className="space-y-1.5">
-            <label className="font-extrabold text-blue-200">Jenis Cakupan Backup</label>
+            <label className="font-extrabold text-blue-200">Jenis Tipe Backup</label>
             <select
               value={selectedBackupType}
               onChange={e => setSelectedBackupType(e.target.value as BackupType)}
               className="w-full bg-slate-900/90 border border-blue-700/80 p-3 rounded-xl text-white font-bold cursor-pointer"
             >
-              <option value="Full System">Full System (Database Schema + Master + Inspeksi)</option>
-              <option value="Master Assets">Master Assets Only (Manhole, Pipa, Stasiun Pompa)</option>
-              <option value="Inspection Logs">Inspection Logs & Field Reports Only</option>
-              <option value="Topology Schema">Topology Network Graph Schema</option>
+              <option value="Full Backup">📦 Full Backup (Salinan Baseline Lengkap Database)</option>
+              <option value="Incremental Backup">⚡ Incremental Backup (Salinan Delta Perubahan Terakhir)</option>
+              <option value="Differential Backup">📊 Differential Backup (Perubahan Sejak Full Terakhir)</option>
+              <option value="Master Assets Dump">🏗️ Master Assets Dump Only (Manhole, Pipa, Stasiun Pompa)</option>
+              <option value="Inspection Logs Dump">📋 Inspection Logs Dump Only (Catatan & Temuan Inspeksi)</option>
             </select>
           </div>
 
@@ -550,7 +736,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                 <th className="py-3 px-3">Waktu Snapshot</th>
                 <th className="py-3 px-3">Ukuran</th>
                 <th className="py-3 px-3">Target Tujuan</th>
-                <th className="py-3 px-3">Cakupan</th>
+                <th className="py-3 px-3">Tipe Backup</th>
                 <th className="py-3 px-3">Pemicu</th>
                 <th className="py-3 px-3 text-right">Aksi</th>
               </tr>
@@ -594,8 +780,21 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-3 font-bold text-slate-700 dark:text-slate-300">
-                      {record.type}
+                    <td className="py-3.5 px-3">
+                      <span className={`px-2.5 py-1 rounded-lg font-extrabold text-[11px] inline-flex items-center gap-1 ${
+                        record.type === 'Full Backup'
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                          : record.type === 'Incremental Backup'
+                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                          : record.type === 'Differential Backup'
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                          : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
+                      }`}>
+                        {record.type === 'Full Backup' && '📦 Full Baseline'}
+                        {record.type === 'Incremental Backup' && `⚡ Incremental Delta #${record.deltaSequence || 1}`}
+                        {record.type === 'Differential Backup' && '📊 Differential'}
+                        {record.type !== 'Full Backup' && record.type !== 'Incremental Backup' && record.type !== 'Differential Backup' && record.type}
+                      </span>
                     </td>
 
                     <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400 font-medium">

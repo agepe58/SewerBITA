@@ -2,7 +2,12 @@ export type BackupDestinationType = 'NAS' | 'GoogleDrive' | 'DualRedundant';
 
 export type BackupStatus = 'Success' | 'Failed' | 'In-Progress' | 'Scheduled';
 
-export type BackupType = 'Full System' | 'Master Assets' | 'Inspection Logs' | 'Topology Schema';
+export type BackupType =
+  | 'Full Backup'
+  | 'Incremental Backup'
+  | 'Differential Backup'
+  | 'Master Assets Dump'
+  | 'Inspection Logs Dump';
 
 export interface NASConfig {
   host: string;
@@ -40,4 +45,16 @@ export interface BackupHistoryRecord {
   totalRecords: number;
   triggeredBy: string;
   notes?: string;
+  parentBackupId?: string;
+  deltaSequence?: number;
+  changedRecordsCount?: number;
+}
+
+export interface BackupRetentionPolicy {
+  retentionDays: number;
+  maxFileCount: number;
+  autoPurgeEnabled: boolean;
+  purgeStrategy: 'DeleteOldest' | 'ArchiveToColdStorage';
+  lastPurgeDate?: string;
+  purgedCountTotal?: number;
 }
