@@ -8,7 +8,7 @@ Panduan ini berisi langkah-langkah lengkap untuk melakukan *deployment* aplikasi
 
 1. Server Coolify v4 telah aktif dan dapat diakses (misal: `https://coolify.yourdomain.com`).
 2. Repository GitHub resmi terhubung: [`https://github.com/agepe58/SewerBITA.git`](https://github.com/agepe58/SewerBITA.git).
-3. Domain / Subdomain tujuan telah di-*pointing* (A/AAAA Record) ke IP Server Coolify (misal: `sewerbita.bita.co.id`).
+3. Domain / Subdomain tujuan telah di-*pointing* (A/AAAA Record) ke IP Server Coolify (`https://sewer.kbi.web.id`).
 
 ---
 
@@ -129,14 +129,14 @@ export const getManholesWithGIS = async () => {
 Buka aplikasi Frontend SewerBITA di Coolify $\to$ Masuk ke **Environment Variables** $\to$ Tambahkan:
 
 ```env
-# URL REST API Backend di Coolify
-VITE_API_BASE_URL=https://api-sewerbita.bita.co.id
+# URL REST API Backend di Coolify (sesuai domain server Anda)
+VITE_API_BASE_URL=https://api.sewer.kbi.web.id
 ```
 
 Di dalam kode React Frontend ([`src/services/api.ts`](file:///c:/AntiGravity%20Project/SewerBITA/src/services/api.ts)):
 
 ```typescript
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api-sewerbita.bita.co.id';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.sewer.kbi.web.id';
 
 export const fetchAssetsFromDatabase = async () => {
   const response = await fetch(`${API_BASE_URL}/api/assets`);
@@ -169,9 +169,9 @@ export const fetchAssetsFromDatabase = async () => {
 
 ### Langkah 3: Pengaturan Domain & SSL (Traefik Proxy)
 1. Pada kolom **Domains / FQDN**:
-   - Masukkan URL domain aplikasi Anda lengkap dengan HTTPS, contoh:
-     `https://sewerbita.bita.co.id`
-2. Coolify via Traefik secara otomatis akan menerbitkan dan memperbarui sertifikat SSL Let's Encrypt secara gratis.
+   - Masukkan URL domain utama aplikasi Anda lengkap dengan HTTPS:
+     `https://sewer.kbi.web.id`
+2. Coolify via Traefik secara otomatis akan menerbitkan dan memperbarui sertifikat SSL Let's Encrypt secara gratis untuk `https://sewer.kbi.web.id`.
 
 ### Langkah 4: Pengaturan Health Check Endpoint
 1. Gulir ke bagian **Health Check**:
@@ -229,12 +229,12 @@ jobs:
 
 - **Cek Status Health Endpoint**:
   ```bash
-  curl -I https://sewerbita.bita.co.id/health
+  curl -I https://sewer.kbi.web.id/health
   # Expected Response: HTTP/1.1 200 OK (Content-Type: text/plain)
   ```
 
 - **Uji SPA Client Routing**:
-  Membuka URL langsung seperti `https://sewerbita.bita.co.id/dashboard` tidak akan menghasilkan `404 Not Found` karena `nginx.conf` telah mengonfigurasi `try_files $uri $uri/ /index.html;`.
+  Membuka URL langsung seperti `https://sewer.kbi.web.id/dashboard` tidak akan menghasilkan `404 Not Found` karena `nginx.conf` telah mengonfigurasi `try_files $uri $uri/ /index.html;`.
 
 - **Audit Backup Storage Admin**:
   Setelah dideploy, fitur **Backup & Restore (NAS SMB / Synology WebDAV & Google Drive)** di halaman khusus Admin dapat langsung dihubungkan ke server NAS lokal kantor atau GCP Cloud Storage.
