@@ -108,13 +108,14 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
         {/* Search & Condition Dropdown */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Cari Kode Asset, Nama..."
-              className="w-full bg-slate-50 text-slate-900 text-sm font-semibold rounded-full pl-12 pr-4 py-3 border border-slate-200 focus:bg-white focus:outline-none focus:border-[#2563EB]"
+              style={{ paddingLeft: '48px' }}
+              className="w-full bg-slate-50 text-slate-900 text-sm font-semibold rounded-full pr-4 py-3 border border-slate-200 focus:bg-white focus:outline-none focus:border-[#2563EB]"
             />
           </div>
 
