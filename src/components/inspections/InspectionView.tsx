@@ -63,13 +63,13 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
       {/* Search & Filters */}
       <div className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-4.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Cari ID Aset, Catatan, Petugas..."
-            className="w-full bg-slate-50 text-slate-900 text-sm font-medium rounded-full pl-10 pr-4 py-2.5 border border-slate-200 focus:outline-none focus:border-[#2563EB]"
+            className="w-full bg-slate-50 text-slate-900 text-sm font-medium rounded-full pl-12 pr-4 py-2.5 border border-slate-200 focus:outline-none focus:border-[#2563EB]"
           />
         </div>
 
