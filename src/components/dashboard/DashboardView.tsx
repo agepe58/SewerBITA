@@ -59,7 +59,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const totalActive = allAssets.filter(a => a.status === 'Active').length;
   const needingInspection = allAssets.filter(a => a.status === 'Pending Inspection' || a.condition === 'Warning' || a.condition === 'Critical').length;
-  
+
   const criticalAssets = allAssets.filter(a => a.condition === 'Critical');
   const warningAssets = allAssets.filter(a => a.condition === 'Warning');
   const totalProblematic = criticalAssets.length + warningAssets.length;
@@ -94,7 +94,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 w-full max-w-[1920px] mx-auto text-slate-900 font-sans min-h-[calc(100vh-70px)] flex flex-col">
       {/* Workspace Header Bar */}
       <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200/80 shadow-2xs space-y-1">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Executive Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
         <p className="text-xs sm:text-sm text-slate-500 font-semibold">
           Monitoring Aset, Topologi Aliran, dan Riwayat Inspeksi Lapangan PT. Bukit Indah Tirta Alam
         </p>
@@ -274,9 +274,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-black text-[#2563EB] text-sm">{asset.assetCode}</span>
-                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-black ${
-                          asset.condition === 'Critical' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
-                        }`}>
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-black ${asset.condition === 'Critical' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
+                          }`}>
                           {asset.condition}
                         </span>
                       </div>
@@ -309,12 +308,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
                   <Layers className="w-5 h-5 text-[#0284C7]" />
-                  <span>Distribusi Aset Berdasarkan Area / Zona</span>
+                  <span>Aset Berdasarkan Area</span>
                 </h2>
-                <p className="text-xs text-slate-500 font-semibold mt-0.5">Sebaran kepadatan infra air limbah di seluruh zona layanan</p>
+                <p className="text-xs text-slate-500 font-semibold mt-0.5">Sebaran infra air limbah di seluruh area</p>
               </div>
               <span className="text-xs text-slate-700 font-extrabold font-mono bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                {areaDistribution.length} Zona Terdaftar
+                {areaDistribution.length} Area Terdaftar
               </span>
             </div>
 
@@ -356,11 +355,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div key={insp.id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/70 space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-slate-900 font-mono text-sm">{insp.assetName}</span>
-                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
-                      insp.condition === 'Good' ? 'bg-emerald-100 text-emerald-800' :
-                      insp.condition === 'Fair' ? 'bg-sky-100 text-sky-800' :
-                      insp.condition === 'Warning' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
-                    }`}>
+                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${insp.condition === 'Good' ? 'bg-emerald-100 text-emerald-800' :
+                        insp.condition === 'Fair' ? 'bg-sky-100 text-sky-800' :
+                          insp.condition === 'Warning' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                      }`}>
                       {insp.condition}
                     </span>
                   </div>

@@ -7,6 +7,9 @@ export interface UserProfile {
   role: UserRole;
   avatar: string;
   department: string;
+  password?: string;
+  phone?: string;
+  status?: 'Active' | 'Inactive';
 }
 
 export type PermissionAction =

@@ -76,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'users' as NavTab,
-      label: 'User Management (RBAC)',
+      label: 'User Management',
       icon: Users,
       action: 'manage_users' as const
     }
@@ -132,11 +132,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition group ${
-                  isActive
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition group ${isActive
                     ? 'bg-white text-slate-900 font-extrabold shadow-2xs border border-slate-200/90'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-[#EAEAEB]'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2.5">
                   <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-[#2563EB]' : 'text-slate-400 group-hover:text-slate-700'}`} />
@@ -144,11 +143,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
 
                 {item.badge && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    isActive
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive
                       ? 'bg-blue-50 text-[#2563EB] border border-blue-100'
                       : 'bg-slate-200/70 text-slate-600'
-                  }`}>
+                    }`}>
                     {item.badge}
                   </span>
                 )}

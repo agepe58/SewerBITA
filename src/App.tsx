@@ -15,6 +15,8 @@ import { QrCodeModal } from './components/qr/QrCodeModal';
 import { QrScannerModal } from './components/qr/QrScannerModal';
 import { ImportExportView } from './components/data/ImportExportView';
 import { UserManagementView } from './components/rbac/UserManagementView';
+import { EditUserModal } from './components/rbac/EditUserModal';
+import { AddUserModal } from './components/rbac/AddUserModal';
 
 import { INITIAL_MANHOLES, INITIAL_PUMP_STATIONS, INITIAL_PIPES, INITIAL_INSPECTIONS, INITIAL_USERS } from './services/mockData';
 import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset } from './types/asset';
@@ -33,7 +35,7 @@ export const App: React.FC = () => {
   const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>(INITIAL_PUMP_STATIONS);
   const [pipes, setPipes] = useState<PipeAsset[]>(INITIAL_PIPES);
   const [inspections, setInspections] = useState<InspectionRecord[]>(INITIAL_INSPECTIONS);
-  const [users] = useState<UserProfile[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<UserProfile[]>(INITIAL_USERS);
 
   // Active User & Role
   const [currentUser, setCurrentUser] = useState<UserProfile>(INITIAL_USERS[0]);
@@ -46,6 +48,8 @@ export const App: React.FC = () => {
   const [selectedAssetIdForMap, setSelectedAssetIdForMap] = useState<string | null>(null);
   const [assetToEdit, setAssetToEdit] = useState<SewerAsset | null>(null);
   const [inspectionToEdit, setInspectionToEdit] = useState<InspectionRecord | null>(null);
+  const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   // Flow Tracing State
   const [activeTraceResult, setActiveTraceResult] = useState<NetworkTraceResult | null>(null);
@@ -190,6 +194,22 @@ export const App: React.FC = () => {
 
   const handleDeleteInspection = (inspectionId: string) => {
     setInspections(prev => prev.filter(i => i.id !== inspectionId));
+  };
+
+  // User management handlers
+  const handleSaveEditedUser = (updated: UserProfile) => {
+    setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
+    if (currentUser.id === updated.id) {
+      setCurrentUser(updated);
+    }
+  };
+
+  const handleAddUser = (newUser: UserProfile) => {
+    setUsers(prev => [...prev, newUser]);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    setUsers(prev => prev.filter(u => u.id !== userId));
   };
 
   const handleRoleChange = (newRole: UserRole) => {
@@ -343,6 +363,9 @@ export const App: React.FC = () => {
                 users={users}
                 currentUser={currentUser}
                 onRoleChange={handleRoleChange}
+                onEditUser={(usr) => setUserToEdit(usr)}
+                onDeleteUser={handleDeleteUser}
+                onOpenAddUserModal={() => setIsAddUserModalOpen(true)}
               />
             )}
           </main>
@@ -398,6 +421,19 @@ export const App: React.FC = () => {
         inspection={inspectionToEdit}
         onClose={() => setInspectionToEdit(null)}
         onSaveInspection={handleSaveEditedInspection}
+      />
+
+      <EditUserModal
+        user={userToEdit}
+        isOpen={!!userToEdit}
+        onClose={() => setUserToEdit(null)}
+        onSaveUser={handleSaveEditedUser}
+      />
+
+      <AddUserModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        onAddUser={handleAddUser}
       />
     </div>
   );
