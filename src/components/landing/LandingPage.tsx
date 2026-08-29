@@ -18,11 +18,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard }) =>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-600/15 rounded-full blur-[160px] pointer-events-none"></div>
       <div className="absolute bottom-10 right-10 w-[450px] h-[450px] bg-emerald-600/10 rounded-full blur-[130px] pointer-events-none"></div>
 
-      {/* Top Left Logo (Absolute so it doesn't shift vertical centering) */}
-      <header className="absolute top-6 left-6 sm:top-8 sm:left-10 z-20">
+      {/* Header Bar: Top Left Logo & Top Right "Masuk ke Dashboard" Button */}
+      <header className="absolute top-6 left-6 right-6 sm:top-8 sm:left-10 sm:right-10 z-20 flex items-center justify-between">
+        {/* Top Left Logo */}
         <div className="bg-white/95 p-2 sm:p-2.5 rounded-xl border border-white/20 shadow-md">
           <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="h-9 sm:h-11 w-auto object-contain" />
         </div>
+
+        {/* Top Right "Masuk ke Dashboard" Button */}
+        <button
+          onClick={onEnterDashboard}
+          className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-lg shadow-blue-600/35 hover:shadow-blue-600/55 hover:scale-103 cursor-pointer whitespace-nowrap group"
+        >
+          <span>Masuk ke Dashboard</span>
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+        </button>
       </header>
 
       {/* Main Content (100% Vertically and Horizontally Centered Viewport Hero) */}
@@ -37,19 +47,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard }) =>
           </h1>
 
           <p className="text-sm sm:text-base lg:text-lg text-slate-300 font-medium max-w-2xl mx-auto leading-relaxed text-center pt-1">
-            Platform intelijen terpadu untuk pemetaan peta GIS interaktif, analisis topologi alur jaringan, registrasi master aset, dan pelaporan inspeksi lapangan PT. Bukit Indah Tirta Alam.
+            Platform intelijen terpadu untuk pemetaan peta GIS interaktif, analisis topologi alur jaringan, registrasi master aset, dan pelaporan inspeksi lapangan.
           </p>
         </div>
 
-        {/* Primary Action Button (Centered with Generous Padding) */}
+        {/* Text "PT. BUKIT INDAH TIRTA ALAM" positioned in place of former button */}
         <div className="pt-2 flex justify-center w-full">
-          <button
-            onClick={onEnterDashboard}
-            className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white font-extrabold text-base sm:text-lg px-12 py-4 rounded-2xl transition-all shadow-xl shadow-blue-600/35 hover:shadow-blue-600/55 hover:scale-103 cursor-pointer group whitespace-nowrap"
-          >
-            <span>Masuk ke Dashboard</span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
-          </button>
+          <div className="text-lg sm:text-xl font-black tracking-widest text-[#3B82F6] uppercase bg-blue-950/40 border border-blue-800/60 px-7 py-3 rounded-full shadow-md backdrop-blur-md">
+            PT. BUKIT INDAH TIRTA ALAM
+          </div>
         </div>
 
         {/* Seamless Capability Indicator Grid (Centered Layout) */}
