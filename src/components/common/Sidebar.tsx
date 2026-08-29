@@ -94,14 +94,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="space-y-6">
         {/* Workspace Brand Badge */}
         <div className="flex items-center gap-3 px-2 py-1">
-          <div className="w-8 h-8 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-xs shadow-md shadow-blue-500/20">
-            <Droplets className="w-4 h-4 fill-white text-white" />
+          <div className="bg-white p-1.5 rounded-xl border border-slate-200/90 dark:border-slate-700 shadow-2xs shrink-0 flex items-center justify-center">
+            <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="h-8 sm:h-9 w-auto object-contain" />
           </div>
           <div>
             <div className={`font-black text-sm tracking-tight leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
               SewerBITA
             </div>
-            <div className="text-[11px] text-slate-500 font-semibold leading-tight">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold leading-tight">
               PT. Bukit Indah Tirta Alam
             </div>
           </div>
