@@ -21,12 +21,12 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built production assets from build stage
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Expose ports 80 and 3000 for Coolify / Traefik Reverse Proxy
-EXPOSE 80 3000
+# Expose ports 80, 3000, and 3005 for Coolify / Traefik Reverse Proxy
+EXPOSE 80 3000 3005
 
 # Health check specification for Coolify PaaS monitoring
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:80/health || wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:3005/health || wget --quiet --tries=1 --spider http://localhost:80/health || exit 1
 
 # Launch Nginx in foreground mode
 CMD ["nginx", "-g", "daemon off;"]
