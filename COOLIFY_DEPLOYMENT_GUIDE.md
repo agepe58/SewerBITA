@@ -245,9 +245,46 @@ jobs:
 
 | Gejala Error | Penyebab Utama | Solusi Tuntas |
 | :--- | :--- | :--- |
+| `HTTP 502 Bad Gateway (Cloudflare Tunnel)` | Mismatch protokol HTTP/HTTPS atau Port Mapping antara Cloudflare Tunnel & Coolify Container | Ikuti solusi lengkap **Solusi Khusus 502 Cloudflare Tunnel** di bawah |
 | `Health Check Failed` | Endpoint `/health` tidak merespon | Pastikan Port Exposes diisi `80` dan path diisi `/health` |
 | `404 Not Found on Refresh` | Nginx tidak mengalihkan halaman SPA | Pastikan `nginx.conf` menyertakan `try_files $uri $uri/ /index.html;` |
 | `SSL Certificate Pending` | DNS A-Record belum mengarah ke IP Coolify | Periksa DNS A-Record di Cloudflare/Provider Domain Anda |
+
+---
+
+### 🌐 Solusi Khusus: Mengatasi HTTP 502 Bad Gateway dengan Cloudflare Tunnel (`cloudflared`)
+
+Error **502 Bad Gateway** saat menggunakan Cloudflare Tunnel biasanya disebabkan oleh 3 hal:
+1. Cloudflare Tunnel dikonfigurasi ke **`HTTPS`** bukannya **`HTTP`** ke server asal port 80/Traefik.
+2. Cloudflare Tunnel mengarah ke Port Host yang belum di-*mapping* di Coolify.
+3. *Host Header* tidak cocok dengan yang diharapkan oleh Traefik / Nginx Coolify.
+
+#### Solusi 1: Pengaturan Public Hostname di Dashboard Cloudflare Zero Trust (Sangat Direkomendasikan)
+1. Buka **Cloudflare Zero Trust Dashboard** (`dash.teams.cloudflare.com`) $\to$ **Networks** $\to$ **Tunnels**.
+2. Pilih Tunnel Anda $\to$ Klik **Configure** $\to$ Masuk ke tab **Public Hostnames**.
+3. Edit Hostname `sewer.kbi.web.id`:
+   - **Subdomain**: `sewer`
+   - **Domain**: `kbi.web.id`
+   - **Type**: **`HTTP`** *(PENTING: Gunakan HTTP, BUKAN HTTPS! Karena SSL di-handle di edge Cloudflare)*
+   - **URL**: **`localhost:80`** (atau `127.0.0.1:80` jika Traefik mendengarkan port 80 server).
+4. Klik **Additional application settings** $\to$ **HTTP Settings**:
+   - **HTTP Host Header**: Masukkan `sewer.kbi.web.id` (atau biarkan kosong).
+5. Klik **Save Hostname**.
+
+#### Solusi 2: Hubungkan Cloudflare Tunnel Langsung ke Mapped Port Container (Bypass Traefik Proxy)
+Jika Anda ingin Cloudflare Tunnel langsung mengarah ke container Nginx SewerBITA tanpa lewat Traefik:
+1. Buka aplikasi SewerBITA di Dashboard Coolify $\to$ **General Settings**.
+2. Di bagian **Ports Exposes / Custom Ports Mapping**: Isikan port host, misalnya `8080:80`.
+3. Klik **Save & Redeploy**.
+4. Di Cloudflare Tunnel Public Hostname:
+   - **Type**: `HTTP`
+   - **URL**: `localhost:8080` (ganti `8080` sesuai port host yang Anda petakan di Coolify).
+
+#### Solusi 3: Jika Cloudflare Tunnel diarahkan ke HTTPS (Port 443)
+Jika Anda memilih Type `HTTPS://localhost:443` di Cloudflare Tunnel:
+1. Masuk ke **Public Hostname Settings** $\to$ **TLS Settings**.
+2. Aktifkan **`No TLS Verify` = ON (Enabled)**. *(Menghindari kesalahan sertifikat SSL self-signed internal Traefik)*.
+3. Klik **Save Hostname**.
 
 ---
 © 2026 PT. Bukit Indah Tirta Alam • SewerBITA Production Coolify Deployment Guide
