@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, QrCode, Bell, UserCheck, ChevronDown, ShieldAlert, Sparkles, LogOut } from 'lucide-react';
+import { Search, QrCode, Bell, UserCheck, ChevronDown, ShieldAlert, Sparkles, LogOut, Sun, Moon } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types/rbac';
 
 interface HeaderProps {
@@ -8,6 +8,8 @@ interface HeaderProps {
   onOpenQrScanner: () => void;
   onSearchAsset: (query: string) => void;
   onLogout: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,7 +17,9 @@ export const Header: React.FC<HeaderProps> = ({
   onRoleChange,
   onOpenQrScanner,
   onSearchAsset,
-  onLogout
+  onLogout,
+  isDarkMode = false,
+  onToggleDarkMode
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -30,7 +34,9 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-18 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs gap-3 font-sans">
+    <header className={`h-18 backdrop-blur-md border-b px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs gap-3 font-sans transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#111827]/95 border-slate-800 text-slate-100' : 'bg-white/90 border-slate-100 text-slate-900'
+    }`}>
       {/* Left: Dual-Function Global Search Box */}
       <form onSubmit={handleSearchSubmit} className="relative w-64 sm:w-96 lg:w-[480px] shrink">
         {/* Left Magnifying Glass Search Icon */}
@@ -43,7 +49,11 @@ export const Header: React.FC<HeaderProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Cari ID Aset, Manhole, Pipa, Area..."
           style={{ paddingLeft: '50px', paddingRight: '52px' }}
-          className="w-full bg-[#F8FAFC] text-slate-900 text-sm font-medium rounded-full py-2.5 border border-slate-200 focus:bg-white focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition shadow-2xs"
+          className={`w-full text-sm font-medium rounded-full py-2.5 border transition shadow-2xs ${
+            isDarkMode
+              ? 'bg-slate-900 text-slate-100 border-slate-700 focus:bg-slate-950 focus:border-[#2563EB]'
+              : 'bg-[#F8FAFC] text-slate-900 border-slate-200 focus:bg-white focus:border-[#2563EB]'
+          }`}
         />
 
         {/* Right QR Code Scanner Button (Dual Function Search Box) */}
@@ -59,8 +69,25 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Action Tools */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Dark / Light Mode Toggle Button */}
+        {onToggleDarkMode && (
+          <button
+            onClick={onToggleDarkMode}
+            className={`p-2.5 rounded-full border transition cursor-pointer flex items-center justify-center ${
+              isDarkMode
+                ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700'
+                : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200/80'
+            }`}
+            title={isDarkMode ? 'Beralih ke Light Mode' : 'Beralih ke Dark Mode'}
+          >
+            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        )}
+
         {/* Notifications */}
-        <button className="relative p-2.5 text-slate-600 hover:text-slate-900 rounded-full bg-slate-100 border border-slate-200 transition cursor-pointer">
+        <button className={`relative p-2.5 rounded-full border transition cursor-pointer ${
+          isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
+        }`}>
           <Bell className="w-4 h-4" />
           <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#EF4444] rounded-full animate-ping"></span>
           <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#EF4444] rounded-full"></span>
@@ -70,19 +97,23 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="relative">
           <button
             onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 px-4 py-2 rounded-full border border-slate-200 text-sm transition cursor-pointer"
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm transition cursor-pointer ${
+              isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 border-slate-200 text-slate-900 hover:bg-slate-200/80'
+            }`}
           >
             <UserCheck className="w-4 h-4 text-[#0284C7]" />
             <div className="text-left hidden sm:block">
               <div className="text-xs text-slate-400 leading-none font-medium">Role Aktif</div>
-              <div className="font-bold text-slate-900">{currentUser.role}</div>
+              <div className="font-bold">{currentUser.role}</div>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
           </button>
 
           {isRoleDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl py-1 z-50">
-              <div className="px-3.5 py-2 text-xs text-slate-400 border-b border-slate-100 font-bold">
+            <div className={`absolute right-0 mt-2 w-52 border rounded-2xl shadow-xl py-1 z-50 ${
+              isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}>
+              <div className="px-3.5 py-2 text-xs text-slate-400 border-b border-slate-800 font-bold">
                 Simulasi Peran Pengguna (RBAC)
               </div>
               {roles.map((role) => (
@@ -92,8 +123,10 @@ export const Header: React.FC<HeaderProps> = ({
                     onRoleChange(role);
                     setIsRoleDropdownOpen(false);
                   }}
-                  className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                    currentUser.role === role ? 'text-[#2563EB] font-extrabold bg-blue-50/50' : 'text-slate-800 font-medium'
+                  className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between transition cursor-pointer ${
+                    currentUser.role === role
+                      ? 'text-[#2563EB] font-extrabold bg-blue-50/20'
+                      : isDarkMode ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-800 font-medium'
                   }`}
                 >
                   <span>{role}</span>
@@ -105,14 +138,14 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* User Profile Badge */}
-        <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
+        <div className={`flex items-center gap-2.5 pl-3 border-l ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
           <img
             src={currentUser.avatar}
             alt={currentUser.name}
             className="w-9 h-9 rounded-full border border-blue-200 object-cover shadow-xs"
           />
           <div className="hidden xl:block text-left">
-            <div className="text-sm font-extrabold text-slate-900 leading-tight">{currentUser.name}</div>
+            <div className="text-sm font-extrabold leading-tight">{currentUser.name}</div>
             <div className="text-xs text-slate-500 font-medium leading-tight">{currentUser.department}</div>
           </div>
         </div>

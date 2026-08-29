@@ -34,6 +34,20 @@
   --text-subtle: #94A3B8;
 }
 
+.dark {
+  --bg-app: #0B0F17;
+  --bg-surface: #111827;
+  --bg-surface-hover: #1E293B;
+  --bg-card: #1E293B;
+  --bg-card-header: #0F172A;
+  --border-color: #334155;
+  --border-light: #475569;
+
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-subtle: #64748B;
+}
+
 /* Custom Light Leaflet Styling */
 .leaflet-container {
   background-color: #F8FAFC !important;

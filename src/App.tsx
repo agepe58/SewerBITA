@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Sidebar, NavTab } from './components/common/Sidebar';
 import { Header } from './components/common/Header';
 import { LandingPage } from './components/landing/LandingPage';
@@ -26,9 +26,22 @@ import { NetworkGraphEngine } from './services/graphEngine';
 import { NetworkTraceResult } from './types/topology';
 
 export const App: React.FC = () => {
-  // App view state
+  // App view & Theme state
   const [isLandingPage, setIsLandingPage] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('sewerbita_theme') === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('sewerbita_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('sewerbita_theme', 'light');
+    }
+  }, [isDarkMode]);
 
   // Master Data States
   const [manholes, setManholes] = useState<ManholeAsset[]>(INITIAL_MANHOLES);
@@ -253,19 +266,26 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#F4F5F7] p-2 sm:p-3 lg:p-4 flex flex-col justify-center items-center font-sans text-slate-900 selection:bg-[#2563EB] selection:text-white">
+    <div className={`min-h-screen w-full p-2 sm:p-3 lg:p-4 flex flex-col justify-center items-center font-sans selection:bg-[#2563EB] selection:text-white transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#0B0F17] text-slate-100 dark' : 'bg-[#F4F5F7] text-slate-900'
+    }`}>
       {/* Ramp HQ / Notion Clean Workspace Shell */}
-      <div className="w-full max-w-[1920px] bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden flex min-h-[96vh] h-full">
+      <div className={`w-full max-w-[1920px] rounded-2xl shadow-sm border overflow-hidden flex min-h-[96vh] h-full transition-colors duration-300 ${
+        isDarkMode ? 'bg-[#111827] border-slate-800' : 'bg-white border-slate-200/80'
+      }`}>
         {/* Sidebar Navigation */}
         <Sidebar
           activeTab={activeTab}
           onSelectTab={setActiveTab}
           currentUserRole={currentUser.role}
           onLogout={() => setIsLandingPage(true)}
+          isDarkMode={isDarkMode}
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#F8FAFC]">
+        <div className={`flex-1 flex flex-col min-w-0 transition-colors duration-300 ${
+          isDarkMode ? 'bg-[#0B0F17]' : 'bg-[#F8FAFC]'
+        }`}>
           {/* Top Header */}
           <Header
             currentUser={currentUser}
@@ -273,6 +293,8 @@ export const App: React.FC = () => {
             onOpenQrScanner={() => setIsQrScannerModalOpen(true)}
             onSearchAsset={handleSearchAsset}
             onLogout={() => setIsLandingPage(true)}
+            isDarkMode={isDarkMode}
+            onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           />
 
           {/* Tab Router Views */}
