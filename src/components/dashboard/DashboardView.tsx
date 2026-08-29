@@ -181,8 +181,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* PRD SECTION 7.1.2 — VISUALISASI & DASHBOARD FEEDS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
-        {/* LEFT COLUMN (7 Cols): Kondisi Aset & Distribusi Per Area */}
-        <div className="lg:col-span-7 space-y-6 flex flex-col justify-between">
+        {/* LEFT COLUMN (7 Cols): Kondisi Aset & Daftar Aset Bermasalah */}
+        <div className="lg:col-span-7 space-y-6 flex flex-col">
           {/* PRD Visualisasi 1: Ringkasan Kondisi Aset */}
           <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -248,7 +248,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* PRD Visualisasi 4: Daftar Aset Bermasalah (Pindah ke Kolom Kiri) */}
-          <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-4 flex-1 flex flex-col justify-between">
+          <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-4 flex flex-col">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
@@ -302,9 +302,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* RIGHT COLUMN (5 Cols): Distribusi Per Area & Aktivitas Inspeksi Terbaru */}
-        <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
+        <div className="lg:col-span-5 space-y-6 flex flex-col">
           {/* PRD Visualisasi 2: Distribusi Aset Berdasarkan Area (Pindah ke Kolom Kanan) */}
-          <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-5 flex-1 flex flex-col justify-between">
+          <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-5 flex flex-col">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
