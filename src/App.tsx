@@ -17,6 +17,7 @@ import { ImportExportView } from './components/data/ImportExportView';
 import { UserManagementView } from './components/rbac/UserManagementView';
 import { EditUserModal } from './components/rbac/EditUserModal';
 import { AddUserModal } from './components/rbac/AddUserModal';
+import { BackupRestoreView } from './components/admin/BackupRestoreView';
 
 import { INITIAL_MANHOLES, INITIAL_PUMP_STATIONS, INITIAL_PIPES, INITIAL_INSPECTIONS, INITIAL_USERS } from './services/mockData';
 import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset } from './types/asset';
@@ -396,6 +397,15 @@ export const App: React.FC = () => {
                 onEditUser={(usr) => setUserToEdit(usr)}
                 onDeleteUser={handleDeleteUser}
                 onOpenAddUserModal={() => setIsAddUserModalOpen(true)}
+              />
+            )}
+
+            {activeTab === 'backup' && (
+              <BackupRestoreView
+                currentUserRole={currentUser.role}
+                onRestoreDataToSystem={(record) => {
+                  alert(`Data sistem berhasil dipulihkan dari arsip snapshot '${record.filename}'.`);
+                }}
               />
             )}
           </main>

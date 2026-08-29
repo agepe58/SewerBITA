@@ -11,7 +11,8 @@ import {
   Activity,
   Layers,
   ChevronRight,
-  LogOut
+  LogOut,
+  HardDriveDownload
 } from 'lucide-react';
 import { UserRole } from '../../types/rbac';
 import { RBACService } from '../../services/rbacService';
@@ -23,7 +24,8 @@ export type NavTab =
   | 'assets'
   | 'inspections'
   | 'data'
-  | 'users';
+  | 'users'
+  | 'backup';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -83,6 +85,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'User Management',
       icon: Users,
       action: 'manage_users' as const
+    },
+    {
+      id: 'backup' as NavTab,
+      label: 'Backup & Restore (NAS/Drive)',
+      icon: HardDriveDownload,
+      action: 'manage_backups' as const,
+      badge: 'Admin'
     }
   ];
 

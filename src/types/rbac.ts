@@ -23,7 +23,8 @@ export type PermissionAction =
   | 'create_inspection'
   | 'export_data'
   | 'import_data'
-  | 'manage_users';
+  | 'manage_users'
+  | 'manage_backups';
 
 export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
   Admin: [
@@ -38,6 +39,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'export_data',
     'import_data',
     'manage_users',
+    'manage_backups',
   ],
   Engineer: [
     'view_dashboard',
