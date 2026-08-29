@@ -92,68 +92,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 w-full max-w-[1920px] mx-auto text-slate-900 font-sans min-h-[calc(100vh-70px)] flex flex-col">
-      {/* Workspace Header & Action Bar */}
-      <div className="bg-white p-6 sm:p-7 rounded-xl border border-slate-200/80 shadow-2xs space-y-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-slate-100 p-2.5 flex items-center justify-center border border-slate-200 shadow-2xs shrink-0">
-              <img src="/favicon.jpg" alt="PT. BITA Icon" className="w-full h-full object-contain rounded-xl" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">Executive Dashboard</h1>
-                <span className="bg-[#2563EB]/10 text-[#2563EB] text-xs font-extrabold px-3 py-1 rounded-full border border-blue-200">
-                  PRD Section 7.1 Compliant
-                </span>
-              </div>
-              <p className="text-sm sm:text-base text-slate-500 font-semibold mt-1">
-                Monitoring Aset, Topologi Aliran, dan Riwayat Inspeksi Lapangan PT. Bukit Indah Tirta Alam
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
-            <button
-              onClick={onOpenAddAssetModal}
-              className="flex items-center gap-2 bg-[#2563EB] text-white font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl hover:bg-blue-700 transition shadow-xs hover:scale-102"
-            >
-              <Plus className="w-4.5 h-4.5" />
-              <span>+ Tambah Aset Baru</span>
-            </button>
-
-            <button
-              onClick={onOpenNewInspectionModal}
-              className="flex items-center gap-2 bg-[#18181B] text-white font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl hover:bg-slate-800 transition shadow-xs hover:scale-102"
-            >
-              <ClipboardCheck className="w-4.5 h-4.5" />
-              <span>Input Inspeksi</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Quick View Filter Tabs */}
-        <div className="flex items-center gap-2.5 border-t border-slate-100 pt-4 overflow-x-auto text-xs sm:text-sm font-extrabold">
-          <button onClick={() => onNavigate('map')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 text-[#2563EB] border border-blue-100 hover:bg-blue-100 transition shadow-2xs">
-            <MapPin className="w-4 h-4 text-[#2563EB]" />
-            <span>Peta GIS Interaktif →</span>
-          </button>
-
-          <button onClick={() => onNavigate('topology')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-100 hover:bg-purple-100 transition shadow-2xs">
-            <GitBranch className="w-4 h-4 text-purple-600" />
-            <span>Flow Topology Solver →</span>
-          </button>
-
-          <button onClick={() => onNavigate('assets')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200/80 transition">
-            <Boxes className="w-4 h-4 text-slate-500" />
-            <span>Katalog Master Aset →</span>
-          </button>
-        </div>
+      {/* Workspace Header Bar */}
+      <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200/80 shadow-2xs space-y-1">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Executive Dashboard</h1>
+        <p className="text-xs sm:text-sm text-slate-500 font-semibold">
+          Monitoring Aset, Topologi Aliran, dan Riwayat Inspeksi Lapangan PT. Bukit Indah Tirta Alam
+        </p>
       </div>
 
-      {/* PRD SECTION 7.1.1 — 7 STATISTIK ASET (7 KPI Metric Cards Grid) */}
+      {/* Ringkasan Statistik Aset (7 KPI Metric Cards Grid) */}
       <div className="space-y-3">
         <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-400 px-1">
-          7.1.1 Ringkasan Statistik Aset (PRD Standard)
+          Ringkasan Statistik Aset
         </h2>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 sm:gap-4.5">
