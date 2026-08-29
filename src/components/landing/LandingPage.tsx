@@ -91,18 +91,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </p>
         </div>
 
-        {/* Text "PT. BUKIT INDAH TIRTA ALAM" positioned in place of former button */}
-        <div className="pt-2 flex justify-center w-full">
-          <div className={`text-lg sm:text-xl font-black tracking-widest uppercase px-7 py-3 rounded-full shadow-md backdrop-blur-md border transition-colors ${
-            isDarkMode
-              ? 'text-[#3B82F6] bg-blue-950/40 border-blue-800/60'
-              : 'text-[#2563EB] bg-blue-50 border-blue-200'
-          }`}>
+        {/* Clean Corporate Name Text (Without Button Box) with generous spacing */}
+        <div className="pt-2 pb-6 sm:pb-10 flex justify-center w-full">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-[0.22em] uppercase text-[#2563EB] dark:text-[#60A5FA] drop-shadow-xs">
             PT. BUKIT INDAH TIRTA ALAM
-          </div>
+          </h2>
         </div>
 
-        {/* Seamless Capability Indicator Grid (Centered Layout) */}
+        {/* Seamless Capability Indicator Grid (Centered Layout with Separator Line) */}
         <div className={`pt-8 border-t grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 text-center w-full max-w-4xl mx-auto transition-colors ${
           isDarkMode ? 'border-slate-800/80' : 'border-slate-300/80'
         }`}>
