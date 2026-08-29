@@ -147,19 +147,22 @@ export const fetchAssetsFromDatabase = async () => {
 
 #### 5. Cara Memeriksa Koneksi Database dan Web App Sudah Terhubung (4 Metode Audit)
 
-##### Metode A: Cek Endpoint Status Health Database di Backend API
-Setiap layanan backend enterprise menyediakan endpoint verifikasi koneksi database:
-- **Akses Endpoint**: `https://api.sewer.kbi.web.id/api/health` (atau `http://192.168.10.236:3005/api/health`)
-- **Respon Sukses Terhubung (JSON)**:
-  ```json
-  {
-    "status": "healthy",
-    "database": "connected",
-    "postgis_version": "POSTGIS=\"3.4.0\"...",
-    "database_name": "sewerbita_db",
-    "timestamp": "2026-08-30T00:51:00Z"
-  }
-  ```
+##### Metode A: Cek Endpoint Status Health Web App Frontend & Backend API
+- **Endpoint Health Web App Frontend (Nginx SPA)**:
+  - **Akses Endpoint**: `https://sewer.kbi.web.id/health` (atau `http://192.168.10.236:3005/health`)
+  - **Respon Sukses**: Teks `OK` (HTTP 200) yang mengonfirmasi kontainer Nginx dan peramban SPA 100% aktif.
+- **Endpoint Health Backend API Service (Jika Memakai Backend Terpisah)**:
+  - **Akses Endpoint**: `https://api.sewer.kbi.web.id/api/health`
+  - **Respon Sukses Terhubung (JSON)**:
+    ```json
+    {
+      "status": "healthy",
+      "database": "connected",
+      "postgis_version": "POSTGIS=\"3.4.0\"...",
+      "database_name": "sewerbita_db",
+      "timestamp": "2026-08-30T00:51:00Z"
+    }
+    ```
 
 ##### Metode B: Inspeksi Tab Network pada Browser DevTools (F12)
 1. Buka Web App SewerBITA di peramban (`https://sewer.kbi.web.id` atau `http://192.168.10.236:3005`).
