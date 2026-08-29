@@ -295,6 +295,7 @@ export const App: React.FC = () => {
             onLogout={() => setIsLandingPage(true)}
             isDarkMode={isDarkMode}
             onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+            onOpenEditProfile={() => setUserToEdit(currentUser)}
           />
 
           {/* Tab Router Views */}
