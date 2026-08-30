@@ -509,14 +509,14 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               onChange={e => setRetentionPolicy({ ...retentionPolicy, retentionDays: Number(e.target.value) })}
               className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-3 rounded-xl text-slate-900 dark:text-white font-extrabold cursor-pointer"
             >
-              <option value={7}>7 Hari (Seminggu)</option>
-              <option value={14}>14 Hari (2 Minggu)</option>
-              <option value={30}>30 Hari (1 Bulan - Standard)</option>
-              <option value={60}>60 Hari (2 Bulan)</option>
-              <option value={90}>90 Hari (Triwulan / Audit)</option>
-              <option value={180}>180 Hari (Setengah Tahun)</option>
-              <option value={365}>365 Hari (1 Tahun Compliance)</option>
-              <option value={0}>Simpan Selamanya (Tanpa Expiry)</option>
+              <option value={7}>7 Hari</option>
+              <option value={14}>14 Hari</option>
+              <option value={30}>30 Hari</option>
+              <option value={60}>60 Hari</option>
+              <option value={90}>90 Hari</option>
+              <option value={180}>180 Hari</option>
+              <option value={365}>365 Hari</option>
+              <option value={0}>Simpan Selamanya</option>
             </select>
             <p className="text-[11px] text-slate-400 font-medium">Batas umur file sebelum di-purge otomatis.</p>
           </div>
@@ -548,7 +548,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               onChange={e => setRetentionPolicy({ ...retentionPolicy, purgeStrategy: e.target.value as any })}
               className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-3 rounded-xl text-slate-900 dark:text-white font-extrabold cursor-pointer"
             >
-              <option value="DeleteOldest">Hapus Permanen Berkas Terlama (Delete Oldest)</option>
+              <option value="DeleteOldest">Hapus Permanen Berkas Terlama </option>
               <option value="ArchiveToColdStorage">Pindahkan ke Cold Storage Archive</option>
             </select>
             <p className="text-[11px] text-slate-400 font-medium">Tindakan saat kuota retensi terpenuhi.</p>
@@ -613,7 +613,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               </span>
             </div>
             <p className="text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-              Menyalin 100% skema database, tabel master Manhole, Pipa, Stasiun Pompa, dan log inspeksi. Digunakan sebagai pondasi dasar (*Baseline*) pemulihan bencana.
+              Menyalin 100% skema database, tabel master Manhole, Pipa, Stasiun Pompa, dan log inspeksi. Digunakan sebagai pondasi dasar pemulihan.
             </p>
             <div className="pt-1 font-mono font-bold text-slate-500 dark:text-slate-400">
               Rata-rata Ukuran: ~15 MB • Waktu: 12 Detik
