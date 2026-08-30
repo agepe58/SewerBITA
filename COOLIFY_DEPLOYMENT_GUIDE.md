@@ -179,13 +179,18 @@ export const fetchAssetsFromDatabase = async () => {
    - ✅ `"Database pool initialized successfully. Connected to postgres-sewerbita:5432/sewerbita_db"`
    - ❌ `"Connection refused"` atau `"FATAL: password authentication failed"` $\to$ Ada kesalahan pada kredensial `DATABASE_URL`.
 
-##### Metode D: Uji Query psql via Terminal PostgreSQL Coolify
+##### Metode D: Uji Query psql & Eksekusi Skema Database Real (`server/schema.sql`)
 1. Buka Dashboard Coolify $\to$ Masuk ke resource **PostgreSQL Container** (`postgres-sewerbita`).
-2. Pilih tab **Terminal** $\to$ Jalankan query pengujian psql:
+2. Pilih tab **Terminal** $\to$ Jalankan skrip inisialisasi DDL Skema Real:
    ```sql
-   psql -U sewerbita_admin -d sewerbita_db -c "SELECT COUNT(*) FROM manhole_assets;"
+   -- Eksekusi skema database real PostGIS (Tabel Manhole, Pipa, Stasiun Pompa, Inspeksi, & User)
+   psql -U sewerbita_admin -d sewerbita_db -f /app/server/schema.sql
    ```
-3. Jika jumlah baris aset berhasil ditampilkan $\to$ PostgreSQL aktif dan siap menyimpan data aset jaringan air limbah!
+3. Jalankan query pengujian psql:
+   ```sql
+   SELECT asset_code, name, area, ST_AsText(geom) FROM manhole_assets;
+   ```
+4. Jika baris aset dan koordinat spasial PostGIS ditampilkan $\to$ Database PostgreSQL 100% aktif dan terhubung secara real ke seluruh perangkat (Desktop PC, HP Android, & Tablet)!
 
 ---
 

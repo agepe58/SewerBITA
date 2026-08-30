@@ -25,6 +25,7 @@ import { InspectionRecord } from './types/inspection';
 import { UserRole, UserProfile } from './types/rbac';
 import { NetworkGraphEngine } from './services/graphEngine';
 import { NetworkTraceResult } from './types/topology';
+import { apiClient } from './services/api';
 
 export const App: React.FC = () => {
   // App view & Theme state
@@ -121,6 +122,27 @@ export const App: React.FC = () => {
     localStorage.setItem('sewerbita_users', JSON.stringify(users));
   }, [users]);
 
+  // Load Real Data from Backend PostgreSQL API on App Startup
+  useEffect(() => {
+    const loadRealDatabaseData = async () => {
+      const assetData = await apiClient.getAssets();
+      if (assetData) {
+        if (assetData.manholes && assetData.manholes.length > 0) setManholes(assetData.manholes);
+        if (assetData.pumpStations && assetData.pumpStations.length > 0) setPumpStations(assetData.pumpStations);
+        if (assetData.pipes && assetData.pipes.length > 0) setPipes(assetData.pipes);
+      }
+      const inspectionData = await apiClient.getInspections();
+      if (inspectionData && inspectionData.length > 0) {
+        setInspections(inspectionData);
+      }
+      const userData = await apiClient.getUsers();
+      if (userData && userData.length > 0) {
+        setUsers(userData);
+      }
+    };
+    loadRealDatabaseData();
+  }, []);
+
   // Active User & Role
   const [currentUser, setCurrentUser] = useState<UserProfile>(INITIAL_USERS[0]);
 
@@ -143,7 +165,7 @@ export const App: React.FC = () => {
     return new NetworkGraphEngine(manholes, pumpStations, pipes);
   }, [manholes, pumpStations, pipes]);
 
-  // Handlers for data modification
+  // Handlers for data modification with Backend API sync
   const handleAddManhole = (
     newMh: Omit<ManholeAsset, 'id'>,
     intermediateInfo?: { upstreamId: string; downstreamId: string }
@@ -153,6 +175,8 @@ export const App: React.FC = () => {
       ...newMh,
       id: newMhId
     };
+
+    apiClient.createAsset('manhole', createdMh);
 
     let updatedPipes = [...pipes];
 
@@ -193,6 +217,10 @@ export const App: React.FC = () => {
           lengthMeters: halfLength
         };
 
+        apiClient.createAsset('pipe', pipeA);
+        apiClient.createAsset('pipe', pipeB);
+        apiClient.deleteAsset(oldPipe.id);
+
         updatedPipes = pipes.filter((_, idx) => idx !== existingPipeIndex).concat([pipeA, pipeB]);
         setPipes(updatedPipes);
       }
@@ -226,6 +254,7 @@ export const App: React.FC = () => {
       ...newPipe,
       id: `p-${Date.now()}`
     };
+    apiClient.createAsset('pipe', created);
     setPipes(prev => [created, ...prev]);
   };
 
@@ -234,6 +263,7 @@ export const App: React.FC = () => {
       ...newPs,
       id: `ps-${Date.now()}`
     };
+    apiClient.createAsset('pumpStation', created);
     setPumpStations(prev => [created, ...prev]);
   };
 
@@ -242,6 +272,7 @@ export const App: React.FC = () => {
       ...newInsp,
       id: `insp-${Date.now()}`
     };
+    apiClient.createInspection(created);
     setInspections(prev => [created, ...prev]);
 
     // Update asset condition state if necessary
@@ -251,24 +282,29 @@ export const App: React.FC = () => {
 
   // Handlers for asset modification (Edit & Delete)
   const handleEditManhole = (updated: ManholeAsset) => {
+    apiClient.updateAsset(updated.id, 'manhole', updated);
     setManholes(prev => prev.map(m => m.id === updated.id ? updated : m));
   };
 
   const handleEditPipe = (updated: PipeAsset) => {
+    apiClient.updateAsset(updated.id, 'pipe', updated);
     setPipes(prev => prev.map(p => p.id === updated.id ? updated : p));
   };
 
   const handleEditPumpStation = (updated: PumpStationAsset) => {
+    apiClient.updateAsset(updated.id, 'pumpStation', updated);
     setPumpStations(prev => prev.map(ps => ps.id === updated.id ? updated : ps));
   };
 
   const handleDeleteAsset = (assetId: string) => {
+    apiClient.deleteAsset(assetId);
     setManholes(prev => prev.filter(m => m.id !== assetId));
     setPumpStations(prev => prev.filter(p => p.id !== assetId));
     setPipes(prev => prev.filter(p => p.id !== assetId && p.fromAssetId !== assetId && p.toAssetId !== assetId));
   };
 
   const handleSaveEditedInspection = (updated: InspectionRecord) => {
+    apiClient.updateInspection(updated.id, updated);
     setInspections(prev => prev.map(i => i.id === updated.id ? updated : i));
 
     // Synchronize asset condition if changed
@@ -277,11 +313,13 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteInspection = (inspectionId: string) => {
+    apiClient.deleteInspection(inspectionId);
     setInspections(prev => prev.filter(i => i.id !== inspectionId));
   };
 
   // User management handlers
   const handleSaveEditedUser = (updated: UserProfile) => {
+    apiClient.updateUser(updated.id, updated);
     setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
     if (currentUser.id === updated.id) {
       setCurrentUser(updated);
@@ -289,10 +327,12 @@ export const App: React.FC = () => {
   };
 
   const handleAddUser = (newUser: UserProfile) => {
+    apiClient.createUser(newUser);
     setUsers(prev => [...prev, newUser]);
   };
 
   const handleDeleteUser = (userId: string) => {
+    apiClient.deleteUser(userId);
     setUsers(prev => prev.filter(u => u.id !== userId));
   };
 
