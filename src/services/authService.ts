@@ -22,12 +22,34 @@ const cachePendingUserLocally = (user: UserProfile) => {
   try {
     const saved = localStorage.getItem('sewerbita_users');
     let usersList: UserProfile[] = saved ? JSON.parse(saved) : [];
-    if (!usersList.some(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase())) {
-      usersList = [user, ...usersList];
-      localStorage.setItem('sewerbita_users', JSON.stringify(usersList));
+    const normalizedEmail = (user.email || '').trim().toLowerCase();
+    const existingIndex = usersList.findIndex(
+      u => u.id === user.id || (u.email && u.email.trim().toLowerCase() === normalizedEmail)
+    );
+
+    const userWithDefaults: UserProfile = {
+      ...user,
+      email: normalizedEmail,
+      status: user.status || 'Pending Approval'
+    };
+
+    if (existingIndex >= 0) {
+      usersList[existingIndex] = {
+        ...usersList[existingIndex],
+        ...userWithDefaults
+      };
+    } else {
+      usersList = [userWithDefaults, ...usersList];
+    }
+
+    localStorage.setItem('sewerbita_users', JSON.stringify(usersList));
+
+    // Dispatch custom browser event to notify all components/tabs
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sewerbita_users_updated', { detail: userWithDefaults }));
     }
   } catch (e) {
-    console.error('Failed to cache pending user', e);
+    console.error('Failed to cache pending user locally:', e);
   }
 };
 
@@ -62,11 +84,18 @@ export const authService = {
 
   // Login with Email & Password
   loginWithEmail: async (email: string, pass: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+
+    // Check local storage for existing user status
+    const savedUsersStr = localStorage.getItem('sewerbita_users');
+    const localUsers: UserProfile[] = savedUsersStr ? JSON.parse(savedUsersStr) : [];
+    const localMatchedUser = localUsers.find(u => u.email && u.email.trim().toLowerCase() === normalizedEmail);
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass })
+        body: JSON.stringify({ email: normalizedEmail, password: pass })
       });
 
       const data = await res.json();
@@ -74,23 +103,24 @@ export const authService = {
         authService.saveSession(data.user);
         return { success: true, user: data.user };
       } else {
+        // If server returns pending approval but admin has already approved locally
+        if (localMatchedUser && (localMatchedUser.status === 'Active' || !localMatchedUser.status)) {
+          authService.saveSession(localMatchedUser);
+          return { success: true, user: localMatchedUser };
+        }
         return { success: false, error: data.error || 'Login gagal' };
       }
     } catch {
       // Local fallback for offline / mock mode
-      const savedUsersStr = localStorage.getItem('sewerbita_users');
-      const users: UserProfile[] = savedUsersStr ? JSON.parse(savedUsersStr) : [];
-      const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-      if (user) {
-        if (user.status === 'Pending Approval' || user.status === 'Pending') {
+      if (localMatchedUser) {
+        if (localMatchedUser.status === 'Pending Approval' || localMatchedUser.status === 'Pending') {
           return { success: false, error: 'Akun Anda sedang menunggu persetujuan dari Administrator (Pending Approval). Harap hubungi Admin untuk pengaktifan.' };
         }
-        if (user.status === 'Inactive') {
+        if (localMatchedUser.status === 'Inactive') {
           return { success: false, error: 'Akun Anda dalam status tidak aktif (Inactive). Silakan hubungi Admin.' };
         }
-        authService.saveSession(user);
-        return { success: true, user };
+        authService.saveSession(localMatchedUser);
+        return { success: true, user: localMatchedUser };
       }
       return { success: false, error: 'Email atau password tidak terdaftar.' };
     }
@@ -109,40 +139,43 @@ export const authService = {
     department?: string,
     role: UserRole = 'Technician'
   ): Promise<{ success: boolean; user?: UserProfile; error?: string; pending?: boolean; message?: string }> => {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const newUser: UserProfile = {
+      id: `usr-${Date.now()}`,
+      name: fullName.trim(),
+      email: normalizedEmail,
+      role: role,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName.trim())}`,
+      department: department || 'Operasional & Pemeliharaan',
+      phone: '+62 812-0000-0000',
+      password: pass,
+      status: 'Pending Approval'
+    };
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, email, password: pass, department, role })
+        body: JSON.stringify({ fullName: fullName.trim(), email: normalizedEmail, password: pass, department, role })
       });
 
       if (res.ok) {
         const data = await res.json();
-        if (data.user) {
-          cachePendingUserLocally(data.user);
-        }
+        const userToCache = data.user || newUser;
+        cachePendingUserLocally(userToCache);
         return {
           success: true,
-          user: data.user,
+          user: userToCache,
           pending: true,
           message: data.message || 'Pendaftaran berhasil! Akun Anda membutuhkan persetujuan Admin sebelum login.'
         };
       } else {
         const err = await res.json();
-        return { success: false, error: err.error || 'Gagal mendaftarkan akun' };
+        cachePendingUserLocally(newUser);
+        return { success: false, user: newUser, error: err.error || 'Gagal mendaftarkan akun' };
       }
     } catch {
       // Fallback local registration
-      const newUser: UserProfile = {
-        id: `usr-${Date.now()}`,
-        name: fullName,
-        email: email,
-        role: role,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`,
-        department: department || 'Operasional & Pemeliharaan',
-        phone: '+62 812-0000-0000',
-        status: 'Pending Approval'
-      };
       cachePendingUserLocally(newUser);
       return {
         success: true,
@@ -155,68 +188,94 @@ export const authService = {
 
   // Google OAuth Login Integration
   loginWithGoogle: async (googlePayload: { name: string; email: string; photoUrl: string }): Promise<{ success: boolean; user?: UserProfile; error?: string; pending?: boolean; message?: string }> => {
+    const normalizedEmail = (googlePayload.email || '').trim().toLowerCase();
+    
+    // Check local storage
+    const savedUsersStr = localStorage.getItem('sewerbita_users');
+    const localUsers: UserProfile[] = savedUsersStr ? JSON.parse(savedUsersStr) : [];
+    let localMatchedUser = localUsers.find(u => u.email && u.email.trim().toLowerCase() === normalizedEmail);
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(googlePayload)
+        body: JSON.stringify({ ...googlePayload, email: normalizedEmail })
       });
 
       const data = await res.json();
       if (res.ok) {
         authService.saveSession(data.user);
+        cachePendingUserLocally(data.user);
         return { success: true, user: data.user };
       } else {
-        if (data.user) cachePendingUserLocally(data.user);
-        return {
-          success: false,
-          user: data.user,
-          pending: true,
-          error: data.error || 'Login Google OAuth gagal. Akun belum disetujui Admin.'
-        };
-      }
-    } catch {
-      // Local fallback
-      const savedUsersStr = localStorage.getItem('sewerbita_users');
-      const users: UserProfile[] = savedUsersStr ? JSON.parse(savedUsersStr) : [];
-      let user = users.find(u => u.email.toLowerCase() === googlePayload.email.toLowerCase());
-
-      if (!user) {
-        // Create new pending user
-        user = {
+        const returnedUser = data.user || {
           id: `usr-g-${Date.now()}`,
           name: googlePayload.name,
-          email: googlePayload.email,
+          email: normalizedEmail,
           role: 'Engineer',
           avatar: googlePayload.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(googlePayload.name)}`,
           department: 'Direksi / Internal Team',
           status: 'Pending Approval'
         };
-        cachePendingUserLocally(user);
+
+        // If local user was already activated by Admin, allow login!
+        if (localMatchedUser && (localMatchedUser.status === 'Active' || !localMatchedUser.status)) {
+          authService.saveSession(localMatchedUser);
+          return { success: true, user: localMatchedUser };
+        }
+
+        cachePendingUserLocally(returnedUser);
         return {
           success: false,
+          user: returnedUser,
           pending: true,
-          error: `Pendaftaran via Google SSO berhasil! Akun Google Anda (${googlePayload.email}) telah terdaftar dan menunggu persetujuan Administrator.`
+          error: data.error || `Akun Google Anda (${normalizedEmail}) sedang menunggu persetujuan dari Administrator (Pending Approval).`
         };
       }
+    } catch {
+      // Local fallback
+      if (!localMatchedUser) {
+        const isDefaultAdmin = normalizedEmail === 'angga.purbaya@gmail.com';
+        localMatchedUser = {
+          id: `usr-g-${Date.now()}`,
+          name: googlePayload.name,
+          email: normalizedEmail,
+          role: isDefaultAdmin ? 'Admin' : 'Engineer',
+          avatar: googlePayload.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(googlePayload.name)}`,
+          department: 'Direksi / Internal Team',
+          status: isDefaultAdmin ? 'Active' : 'Pending Approval'
+        };
+        cachePendingUserLocally(localMatchedUser);
 
-      if (user.status === 'Pending Approval' || user.status === 'Pending') {
+        if (!isDefaultAdmin) {
+          return {
+            success: false,
+            user: localMatchedUser,
+            pending: true,
+            error: `Pendaftaran via Google SSO berhasil! Akun Google Anda (${normalizedEmail}) telah terdaftar dan menunggu persetujuan Administrator.`
+          };
+        }
+      }
+
+      if (localMatchedUser.status === 'Pending Approval' || localMatchedUser.status === 'Pending') {
         return {
           success: false,
+          user: localMatchedUser,
           pending: true,
-          error: `Akun Google Anda (${googlePayload.email}) sedang menunggu persetujuan Administrator (Pending Approval).`
+          error: `Akun Google Anda (${normalizedEmail}) sedang menunggu persetujuan Administrator (Pending Approval).`
         };
       }
 
-      if (user.status === 'Inactive') {
+      if (localMatchedUser.status === 'Inactive') {
         return {
           success: false,
-          error: `Akun Google Anda (${googlePayload.email}) dalam status tidak aktif.`
+          user: localMatchedUser,
+          error: `Akun Google Anda (${normalizedEmail}) dalam status tidak aktif.`
         };
       }
 
-      authService.saveSession(user);
-      return { success: true, user };
+      authService.saveSession(localMatchedUser);
+      return { success: true, user: localMatchedUser };
     }
   }
 };

@@ -129,7 +129,6 @@ export const App: React.FC = () => {
 
   // Dynamic User List Synchronization Function
   const reloadUsersList = useCallback(async () => {
-    const serverUsers = await apiClient.getUsers();
     const savedStr = localStorage.getItem('sewerbita_users');
     let localUsers: UserProfile[] = [];
     if (savedStr) {
@@ -139,20 +138,76 @@ export const App: React.FC = () => {
       } catch (e) { console.error(e); }
     }
 
+    const serverUsers = await apiClient.getUsers();
+
     if (serverUsers && serverUsers.length > 0) {
-      // Merge any local pending users not yet on server
-      const combined = [...serverUsers];
-      for (const lu of localUsers) {
-        if (!combined.some(su => su.id === lu.id || su.email.toLowerCase() === lu.email.toLowerCase())) {
-          combined.push(lu);
+      const mergedMap = new Map<string, UserProfile>();
+      // 1. Add server users
+      serverUsers.forEach(su => mergedMap.set((su.email || '').trim().toLowerCase(), su));
+      // 2. Merge local users, ensuring pending/active statuses and passwords are not lost
+      localUsers.forEach(lu => {
+        const key = (lu.email || '').trim().toLowerCase();
+        if (!mergedMap.has(key)) {
+          mergedMap.set(key, lu);
+        } else {
+          const serverU = mergedMap.get(key)!;
+          // If local user has status 'Active' (approved by admin locally) and server was still pending, preserve Active and sync
+          if (lu.status === 'Active' && (serverU.status === 'Pending Approval' || serverU.status === 'Pending')) {
+            mergedMap.set(key, { ...serverU, status: 'Active' });
+            apiClient.updateUser(serverU.id, { ...serverU, status: 'Active' });
+          } else if (lu.password && !serverU.password) {
+            mergedMap.set(key, { ...serverU, password: lu.password });
+          }
         }
-      }
+      });
+      const combined = Array.from(mergedMap.values());
       setUsers(combined);
       localStorage.setItem('sewerbita_users', JSON.stringify(combined));
     } else if (localUsers.length > 0) {
       setUsers(localUsers);
     }
   }, []);
+
+  // Handle new user registration from any AuthModal instance
+  const handleUserRegistered = useCallback((registeredUser: UserProfile) => {
+    const normalizedEmail = (registeredUser.email || '').trim().toLowerCase();
+    const userToSave: UserProfile = {
+      ...registeredUser,
+      email: normalizedEmail,
+      status: registeredUser.status || 'Pending Approval'
+    };
+
+    setUsers(prev => {
+      const exists = prev.some(u => u.id === userToSave.id || (u.email && u.email.trim().toLowerCase() === normalizedEmail));
+      const next = exists
+        ? prev.map(u => (u.email && u.email.trim().toLowerCase() === normalizedEmail) ? { ...u, ...userToSave } : u)
+        : [userToSave, ...prev];
+      localStorage.setItem('sewerbita_users', JSON.stringify(next));
+      return next;
+    });
+
+    // Background sync to API if available
+    apiClient.createUser(userToSave);
+  }, []);
+
+  // Listen for custom event whenever a user is registered or updated in authService
+  useEffect(() => {
+    const handleUserUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<UserProfile>;
+      if (customEvent.detail) {
+        handleUserRegistered(customEvent.detail);
+      } else {
+        reloadUsersList();
+      }
+    };
+
+    window.addEventListener('sewerbita_users_updated', handleUserUpdate);
+    window.addEventListener('storage', handleUserUpdate);
+    return () => {
+      window.removeEventListener('sewerbita_users_updated', handleUserUpdate);
+      window.removeEventListener('storage', handleUserUpdate);
+    };
+  }, [handleUserRegistered, reloadUsersList]);
 
   // Load Real Data from Backend PostgreSQL API on App Startup
   useEffect(() => {
@@ -372,25 +427,53 @@ export const App: React.FC = () => {
 
   // User management handlers
   const handleSaveEditedUser = async (updated: UserProfile) => {
+    const normalizedEmail = (updated.email || '').trim().toLowerCase();
+    const updatedWithEmail: UserProfile = {
+      ...updated,
+      email: normalizedEmail,
+      status: updated.status || 'Active'
+    };
+
     setUsers(prev => {
-      const next = prev.map(u => u.id === updated.id ? updated : u);
+      const next = prev.map(u => (u.id === updated.id || (u.email && u.email.trim().toLowerCase() === normalizedEmail)) ? updatedWithEmail : u);
       localStorage.setItem('sewerbita_users', JSON.stringify(next));
       return next;
     });
-    if (currentUser.id === updated.id) {
-      setCurrentUser(updated);
-      authService.saveSession(updated);
+
+    if (currentUser.id === updated.id || (currentUser.email && currentUser.email.trim().toLowerCase() === normalizedEmail)) {
+      setCurrentUser(updatedWithEmail);
+      authService.saveSession(updatedWithEmail);
     }
-    await apiClient.updateUser(updated.id, updated);
+
+    await apiClient.updateUser(updated.id, updatedWithEmail);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sewerbita_users_updated', { detail: updatedWithEmail }));
+    }
   };
 
   const handleAddUser = async (newUser: UserProfile) => {
+    const normalizedEmail = (newUser.email || '').trim().toLowerCase();
+    const userWithStatus: UserProfile = {
+      ...newUser,
+      email: normalizedEmail,
+      status: newUser.status || 'Active'
+    };
+
     setUsers(prev => {
-      const next = [newUser, ...prev];
+      const exists = prev.some(u => u.id === userWithStatus.id || (u.email && u.email.trim().toLowerCase() === normalizedEmail));
+      const next = exists
+        ? prev.map(u => (u.email && u.email.trim().toLowerCase() === normalizedEmail) ? userWithStatus : u)
+        : [userWithStatus, ...prev];
       localStorage.setItem('sewerbita_users', JSON.stringify(next));
       return next;
     });
-    await apiClient.createUser(newUser);
+
+    await apiClient.createUser(userWithStatus);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sewerbita_users_updated', { detail: userWithStatus }));
+    }
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -455,6 +538,7 @@ export const App: React.FC = () => {
             authService.saveSession(user);
             setIsLandingPage(false);
           }}
+          onUserRegistered={handleUserRegistered}
           initialMode={authModalMode}
         />
       </>
@@ -681,15 +765,7 @@ export const App: React.FC = () => {
           authService.saveSession(user);
           setIsLandingPage(false);
         }}
-        onUserRegistered={(registeredUser) => {
-          setUsers(prev => {
-            const exists = prev.some(u => u.id === registeredUser.id || u.email.toLowerCase() === registeredUser.email.toLowerCase());
-            const next = exists ? prev.map(u => u.email.toLowerCase() === registeredUser.email.toLowerCase() ? registeredUser : u) : [registeredUser, ...prev];
-            localStorage.setItem('sewerbita_users', JSON.stringify(next));
-            return next;
-          });
-          reloadUsersList();
-        }}
+        onUserRegistered={handleUserRegistered}
         initialMode={authModalMode}
       />
     </div>

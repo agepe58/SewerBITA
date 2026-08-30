@@ -142,9 +142,10 @@ export const apiClient = {
       if (!Array.isArray(data)) return null;
       return data.map((u: any) => ({
         ...u,
+        email: (u.email || '').trim().toLowerCase(),
         name: u.name || u.fullName || u.full_name || u.email?.split('@')[0] || 'Pengguna',
         avatar: u.avatar || u.avatarUrl || u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.email || 'user')}`,
-        status: u.status ? u.status : 'Pending Approval'
+        status: u.status || 'Active'
       }));
     } catch {
       return null;
@@ -155,6 +156,8 @@ export const apiClient = {
     try {
       const payload = {
         ...data,
+        email: (data.email || '').trim().toLowerCase(),
+        status: data.status || 'Active',
         fullName: data.name,
         avatarUrl: data.avatar
       };
@@ -179,6 +182,8 @@ export const apiClient = {
     try {
       const payload = {
         ...data,
+        email: (data.email || '').trim().toLowerCase(),
+        status: data.status || 'Active',
         fullName: data.name,
         avatarUrl: data.avatar
       };

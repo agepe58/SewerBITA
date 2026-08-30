@@ -330,7 +330,7 @@ app.delete('/api/inspections/:id', async (req, res) => {
 // --------------------------------------------------------------------
 app.get('/api/users', async (req, res) => {
   try {
-    const q = 'SELECT id, full_name AS "name", email, role, department, phone, COALESCE(status, \'Pending Approval\') AS status, avatar_url AS "avatar" FROM user_profiles ORDER BY created_at DESC;';
+    const q = 'SELECT id, full_name AS "name", email, role, department, phone, COALESCE(status, \'Active\') AS status, avatar_url AS "avatar" FROM user_profiles ORDER BY created_at DESC;';
     const result = await pool.query(q);
     res.json(result.rows);
   } catch (err) {
@@ -342,26 +342,32 @@ app.post('/api/users', async (req, res) => {
   const data = req.body;
   try {
     const nameVal = data.name || data.fullName || 'User Baru';
+    const emailVal = (data.email || '').trim().toLowerCase();
     const avatarVal = data.avatar || data.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(nameVal)}`;
+    const statusVal = data.status || 'Active';
+    const roleVal = data.role || 'Technician';
+    const deptVal = data.department || 'Operasional & Pemeliharaan';
+    const phoneVal = data.phone || '';
+    const idVal = data.id || `usr-${Date.now()}`;
+
     const q = `
       INSERT INTO user_profiles 
       (id, full_name, email, role, department, phone, status, avatar_url)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (email) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        role = EXCLUDED.role,
+        department = EXCLUDED.department,
+        phone = EXCLUDED.phone,
+        status = EXCLUDED.status,
+        avatar_url = EXCLUDED.avatar_url
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
-    const values = [
-      data.id || `usr-${Date.now()}`,
-      nameVal,
-      data.email,
-      data.role || 'Technician',
-      data.department || 'Operasional & Pemeliharaan',
-      data.phone || '',
-      data.status || 'Active',
-      avatarVal
-    ];
+    const values = [idVal, nameVal, emailVal, roleVal, deptVal, phoneVal, statusVal, avatarVal];
     const result = await pool.query(q, values);
     res.status(201).json(result.rows[0]);
   } catch (err) {
+    console.error('Error creating/upserting user:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -371,17 +377,39 @@ app.put('/api/users/:id', async (req, res) => {
   const data = req.body;
   try {
     const nameVal = data.name || data.fullName || '';
+    const emailVal = (data.email || '').trim().toLowerCase();
     const avatarVal = data.avatar || data.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(nameVal)}`;
+    const statusVal = data.status || 'Active';
+    const roleVal = data.role || 'Technician';
+    const deptVal = data.department || 'Operasional & Pemeliharaan';
+    const phoneVal = data.phone || '';
+
     const q = `
       UPDATE user_profiles SET
         full_name = $1, email = $2, role = $3, department = $4, phone = $5, status = $6, avatar_url = $7
-      WHERE id = $8
+      WHERE id = $8 OR LOWER(email) = LOWER($2)
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
-    const values = [nameVal, data.email, data.role, data.department, data.phone, data.status, avatarVal, id];
+    const values = [nameVal, emailVal, roleVal, deptVal, phoneVal, statusVal, avatarVal, id];
     const result = await pool.query(q, values);
+
+    if (result.rows.length === 0) {
+      // Auto-insert if not exists yet
+      const insertQ = `
+        INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (email) DO UPDATE SET
+          full_name = EXCLUDED.full_name, role = EXCLUDED.role, department = EXCLUDED.department,
+          phone = EXCLUDED.phone, status = EXCLUDED.status, avatar_url = EXCLUDED.avatar_url
+        RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
+      `;
+      const insertRes = await pool.query(insertQ, [id, nameVal, emailVal, roleVal, deptVal, phoneVal, statusVal, avatarVal]);
+      return res.json(insertRes.rows[0]);
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('Error updating user:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -402,8 +430,9 @@ app.delete('/api/users/:id', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const q = 'SELECT id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar" FROM user_profiles WHERE LOWER(email) = LOWER($1);';
-    const result = await pool.query(q, [email]);
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const q = 'SELECT id, full_name AS "name", email, role, department, phone, COALESCE(status, \'Active\') AS status, avatar_url AS "avatar" FROM user_profiles WHERE LOWER(email) = LOWER($1);';
+    const result = await pool.query(q, [normalizedEmail]);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Email atau password tidak terdaftar.' });
     }
@@ -429,9 +458,14 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Alamat email tidak valid. Wajib menggunakan format email sah (contoh: nama@perusahaan.com).' });
     }
 
-    const checkQ = 'SELECT id FROM user_profiles WHERE LOWER(email) = LOWER($1);';
-    const checkRes = await pool.query(checkQ, [email]);
+    const normalizedEmail = email.trim().toLowerCase();
+    const checkQ = 'SELECT id, status FROM user_profiles WHERE LOWER(email) = LOWER($1);';
+    const checkRes = await pool.query(checkQ, [normalizedEmail]);
     if (checkRes.rows.length > 0) {
+      const existing = checkRes.rows[0];
+      if (existing.status === 'Pending Approval' || existing.status === 'Pending') {
+        return res.status(400).json({ error: 'Email sudah terdaftar dan saat ini sedang menunggu persetujuan Administrator.' });
+      }
       return res.status(400).json({ error: 'Email sudah terdaftar. Silakan login.' });
     }
 
@@ -442,7 +476,7 @@ app.post('/api/auth/register', async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, 'Pending Approval', $6)
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
-    const values = [newId, fullName, email, role || 'Technician', department || 'Operasional', avatarUrl];
+    const values = [newId, fullName.trim(), normalizedEmail, role || 'Technician', department || 'Operasional', avatarUrl];
     const result = await pool.query(q, values);
     res.status(201).json({
       message: 'Pendaftaran akun berhasil! Akun Anda saat ini dalam status Pending Approval. Harap tunggu persetujuan Administrator sebelum login.',
@@ -450,6 +484,7 @@ app.post('/api/auth/register', async (req, res) => {
       pending: true
     });
   } catch (err) {
+    console.error('Error in /api/auth/register:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -461,44 +496,48 @@ app.post('/api/auth/google', async (req, res) => {
       return res.status(400).json({ error: 'Email Google wajib diisi.' });
     }
 
-    const checkQ = 'SELECT id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar" FROM user_profiles WHERE LOWER(email) = LOWER($1);';
-    const checkRes = await pool.query(checkQ, [email]);
+    const normalizedEmail = email.trim().toLowerCase();
+    const checkQ = 'SELECT id, full_name AS "name", email, role, department, phone, COALESCE(status, \'Pending Approval\') AS status, avatar_url AS "avatar" FROM user_profiles WHERE LOWER(email) = LOWER($1);';
+    const checkRes = await pool.query(checkQ, [normalizedEmail]);
     
     if (checkRes.rows.length > 0) {
       const existingUser = checkRes.rows[0];
       if (existingUser.status === 'Pending' || existingUser.status === 'Pending Approval') {
         return res.status(403).json({
-          error: `Akun Google Anda (${email}) sedang menunggu persetujuan dari Administrator (Pending Approval).`,
+          error: `Akun Google Anda (${normalizedEmail}) sedang menunggu persetujuan dari Administrator (Pending Approval).`,
           user: existingUser,
           pending: true
         });
       }
       if (existingUser.status === 'Inactive') {
-        return res.status(403).json({ error: `Akun Google Anda (${email}) dalam status tidak aktif.` });
+        return res.status(403).json({ error: `Akun Google Anda (${normalizedEmail}) dalam status tidak aktif.` });
       }
       return res.json({ message: 'Login Google berhasil', user: existingUser });
     }
 
     // Default admin angga.purbaya@gmail.com is Active automatically
-    const isDefaultAdmin = email.toLowerCase() === 'angga.purbaya@gmail.com';
+    const isDefaultAdmin = normalizedEmail === 'angga.purbaya@gmail.com';
     const initialStatus = isDefaultAdmin ? 'Active' : 'Pending Approval';
-    const defaultRole = (email.toLowerCase().includes('admin') || isDefaultAdmin) ? 'Admin' : 'Engineer';
+    const defaultRole = (normalizedEmail.includes('admin') || isDefaultAdmin) ? 'Admin' : 'Engineer';
 
     const newId = `usr-google-${Date.now().toString().slice(-4)}`;
-    const userName = (name && name.trim()) ? name.trim() : email.split('@')[0];
+    const userName = (name && name.trim()) ? name.trim() : normalizedEmail.split('@')[0];
     const avatarUrl = photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`;
 
     const q = `
       INSERT INTO user_profiles (id, full_name, email, role, department, status, avatar_url)
       VALUES ($1, $2, $3, $4, 'Google Single Sign-On', $5, $6)
+      ON CONFLICT (email) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        avatar_url = EXCLUDED.avatar_url
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
-    const values = [newId, userName, email, defaultRole, initialStatus, avatarUrl];
+    const values = [newId, userName, normalizedEmail, defaultRole, initialStatus, avatarUrl];
     const result = await pool.query(q, values);
 
     if (!isDefaultAdmin) {
       return res.status(403).json({
-        error: `Pendaftaran via Google SSO berhasil! Akun Google Anda (${email}) telah terdaftar dan membutuhkan persetujuan Administrator sebelum dapat masuk.`,
+        error: `Pendaftaran via Google SSO berhasil! Akun Google Anda (${normalizedEmail}) telah terdaftar dan membutuhkan persetujuan Administrator sebelum dapat masuk.`,
         user: result.rows[0],
         pending: true
       });
