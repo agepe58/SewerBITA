@@ -144,7 +144,7 @@ export const apiClient = {
         ...u,
         name: u.name || u.fullName || u.full_name || u.email?.split('@')[0] || 'Pengguna',
         avatar: u.avatar || u.avatarUrl || u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.email || 'user')}`,
-        status: u.status || 'Active'
+        status: u.status ? u.status : 'Pending Approval'
       }));
     } catch {
       return null;

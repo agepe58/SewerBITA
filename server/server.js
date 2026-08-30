@@ -303,7 +303,7 @@ app.delete('/api/inspections/:id', async (req, res) => {
 // --------------------------------------------------------------------
 app.get('/api/users', async (req, res) => {
   try {
-    const q = 'SELECT id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar" FROM user_profiles ORDER BY created_at DESC;';
+    const q = 'SELECT id, full_name AS "name", email, role, department, phone, COALESCE(status, \'Pending Approval\') AS status, avatar_url AS "avatar" FROM user_profiles ORDER BY created_at DESC;';
     const result = await pool.query(q);
     res.json(result.rows);
   } catch (err) {

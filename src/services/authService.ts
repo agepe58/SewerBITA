@@ -168,7 +168,12 @@ export const authService = {
         return { success: true, user: data.user };
       } else {
         if (data.user) cachePendingUserLocally(data.user);
-        return { success: false, error: data.error || 'Login Google OAuth gagal. Akun belum disetujui Admin.' };
+        return {
+          success: false,
+          user: data.user,
+          pending: true,
+          error: data.error || 'Login Google OAuth gagal. Akun belum disetujui Admin.'
+        };
       }
     } catch {
       // Local fallback
