@@ -51,7 +51,7 @@ export const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load manholes', e); }
     }
     return INITIAL_MANHOLES;
@@ -62,7 +62,7 @@ export const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load pumpStations', e); }
     }
     return INITIAL_PUMP_STATIONS;
@@ -73,7 +73,7 @@ export const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load pipes', e); }
     }
     return INITIAL_PIPES;
@@ -84,7 +84,7 @@ export const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load inspections', e); }
     }
     return INITIAL_INSPECTIONS;
@@ -127,12 +127,12 @@ export const App: React.FC = () => {
     const loadRealDatabaseData = async () => {
       const assetData = await apiClient.getAssets();
       if (assetData) {
-        if (assetData.manholes && assetData.manholes.length > 0) setManholes(assetData.manholes);
-        if (assetData.pumpStations && assetData.pumpStations.length > 0) setPumpStations(assetData.pumpStations);
-        if (assetData.pipes && assetData.pipes.length > 0) setPipes(assetData.pipes);
+        setManholes(assetData.manholes || []);
+        setPumpStations(assetData.pumpStations || []);
+        setPipes(assetData.pipes || []);
       }
       const inspectionData = await apiClient.getInspections();
-      if (inspectionData && inspectionData.length > 0) {
+      if (inspectionData) {
         setInspections(inspectionData);
       }
       const userData = await apiClient.getUsers();

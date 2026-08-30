@@ -124,23 +124,12 @@ CREATE TRIGGER trigger_pump_station_geom
 BEFORE INSERT OR UPDATE ON pump_station_assets
 FOR EACH ROW EXECUTE FUNCTION update_asset_geom();
 
--- 8. Seed Initial Default Data
-INSERT INTO manhole_assets (id, asset_code, name, area, latitude, longitude, depth_meters, diameter_mm, material, status, condition, next_inspection_due)
-VALUES 
-    ('mh-101', 'MH-KBI-01', 'Manhole Utama KBI Sektor A', 'KBI Sektor A', -6.2088, 106.8456, 2.5, 600, 'Precast Concrete', 'Active', 'Good', '2026-09-15')
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO pump_station_assets (id, asset_code, name, area, latitude, longitude, flow_capacity_lps, total_pumps, active_pumps, power_source, generator_backup, status, condition, next_inspection_due)
-VALUES 
-    ('ps-01', 'PS-KBI-MAIN', 'Stasiun Pompa Utama KBI Sektor A', 'KBI Sektor A', -6.2105, 106.8480, 200.0, 3, 2, 'PLN Grid + Genset', '200 kVA Genset', 'Active', 'Good', '2026-09-20')
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO pipe_assets (id, asset_code, name, area, from_asset_id, to_asset_id, length_meters, diameter_mm, material, slope_percent, status, condition, next_inspection_due)
-VALUES 
-    ('p-101', 'P-MH-KBI-01_PS-KBI-MAIN', 'Pipa Kolektor MH-KBI-01 -> PS-KBI-MAIN', 'KBI Sektor A', 'mh-101', 'ps-01', 120.0, 400, 'HDPE', 0.8, 'Active', 'Good', '2026-09-25')
-ON CONFLICT (id) DO NOTHING;
-
+-- 8. Seed Initial Full Admin User
 INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
 VALUES 
-    ('usr-01', 'Deni Ardiansyah', 'deni@bita.co.id', 'Admin', 'Sistem Informasi & Infrastruktur', '+62 812-3456-7890', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
-ON CONFLICT (id) DO NOTHING;
+    ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
+ON CONFLICT (id) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    email = EXCLUDED.email,
+    role = EXCLUDED.role,
+    department = EXCLUDED.department;
