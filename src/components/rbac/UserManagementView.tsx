@@ -20,7 +20,20 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   onOpenAddUserModal
 }) => {
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Active' | 'Inactive'>('All');
   const roles: UserRole[] = ['Admin', 'Engineer', 'Technician', 'Management'];
+
+  // Calculate pending count
+  const pendingCount = users.filter(u => u.status === 'Pending Approval' || u.status === 'Pending').length;
+  const activeCount = users.filter(u => u.status === 'Active' || !u.status).length;
+  const inactiveCount = users.filter(u => u.status === 'Inactive').length;
+
+  const filteredUsers = users.filter(u => {
+    if (statusFilter === 'Pending') return u.status === 'Pending Approval' || u.status === 'Pending';
+    if (statusFilter === 'Active') return u.status === 'Active' || !u.status;
+    if (statusFilter === 'Inactive') return u.status === 'Inactive';
+    return true;
+  });
 
   const allActions: { key: PermissionAction; label: string }[] = [
     { key: 'view_dashboard', label: 'Melihat Dashboard Executive' },
@@ -72,11 +85,65 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <h2 className="text-base font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center justify-between">
-              <span>Daftar Pengguna Terdaftar ({users.length})</span>
+              <span>Daftar Pengguna ({filteredUsers.length})</span>
             </h2>
 
+            {/* Status Filter Tab Pills */}
+            <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-[11px] font-extrabold">
+              <button
+                onClick={() => setStatusFilter('All')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition cursor-pointer ${
+                  statusFilter === 'All'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Semua ({users.length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('Pending')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+                  statusFilter === 'Pending'
+                    ? 'bg-amber-500 text-white shadow-2xs font-black'
+                    : 'text-amber-700 dark:text-amber-300 hover:bg-amber-100/50'
+                }`}
+              >
+                <span>Pending</span>
+                {pendingCount > 0 && (
+                  <span className="bg-amber-700 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setStatusFilter('Active')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition cursor-pointer ${
+                  statusFilter === 'Active'
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100/50'
+                }`}
+              >
+                Aktif ({activeCount})
+              </button>
+              <button
+                onClick={() => setStatusFilter('Inactive')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition cursor-pointer ${
+                  statusFilter === 'Inactive'
+                    ? 'bg-slate-600 text-white shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Non-Aktif ({inactiveCount})
+              </button>
+            </div>
+
             <div className="space-y-3.5">
-              {users.map(usr => (
+              {filteredUsers.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400 font-semibold border border-dashed rounded-xl">
+                  Tidak ada pengguna dengan status '{statusFilter}'.
+                </div>
+              ) : (
+                filteredUsers.map(usr => (
                 <div key={usr.id} className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <img src={usr.avatar} alt={usr.name} className="w-10 h-10 rounded-full object-cover border border-blue-200 dark:border-blue-800 shadow-xs shrink-0" />
@@ -138,7 +205,8 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                     </button>
                   </div>
                 </div>
-              ))}
+              ))
+            )}
             </div>
           </div>
         </div>
