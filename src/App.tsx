@@ -668,6 +668,15 @@ export const App: React.FC = () => {
           authService.saveSession(user);
           setIsLandingPage(false);
         }}
+        onUserRegistered={(registeredUser) => {
+          setUsers(prev => {
+            const exists = prev.some(u => u.id === registeredUser.id || u.email.toLowerCase() === registeredUser.email.toLowerCase());
+            const next = exists ? prev.map(u => u.email.toLowerCase() === registeredUser.email.toLowerCase() ? registeredUser : u) : [registeredUser, ...prev];
+            localStorage.setItem('sewerbita_users', JSON.stringify(next));
+            return next;
+          });
+          reloadUsersList();
+        }}
         initialMode={authModalMode}
       />
     </div>

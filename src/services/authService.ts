@@ -159,9 +159,10 @@ export const authService = {
         if (data.pending) {
           if (data.user) cachePendingUserLocally(data.user);
           return {
-            success: false,
+            success: true,
             pending: true,
-            error: data.message || `Akun Google Anda (${googlePayload.email}) membutuhkan persetujuan Administrator.`
+            user: data.user,
+            message: data.message || `⚠️ Pendaftaran via Google SSO Berhasil! Akun Google Anda (${googlePayload.email}) dalam status Pending Approval. Harap tunggu persetujuan Administrator.`
           };
         }
         authService.saveSession(data.user);
@@ -189,9 +190,10 @@ export const authService = {
         };
         cachePendingUserLocally(user);
         return {
-          success: false,
+          success: true,
           pending: true,
-          error: `Akun Google Anda (${googlePayload.email}) telah terdaftar dan menunggu persetujuan Administrator.`
+          user,
+          message: `⚠️ Pendaftaran via Google SSO Berhasil! Akun Google Anda (${googlePayload.email}) telah terdaftar dan menunggu persetujuan Administrator.`
         };
       }
 

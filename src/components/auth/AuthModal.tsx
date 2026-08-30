@@ -7,6 +7,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: UserProfile) => void;
+  onUserRegistered?: (user: UserProfile) => void;
   initialMode?: 'login' | 'register';
 }
 
@@ -14,6 +15,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  onUserRegistered,
   initialMode = 'login'
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
@@ -33,7 +35,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regDepartment, setRegDepartment] = useState('Operasional Jaringan');
-  const [regRole, setRegRole] = useState<UserRole>('Engineer');
+  const [regRole, setRegRole] = useState<UserRole>('Technician');
 
   // Google OAuth Modal Simulator State
   const [isGooglePopupOpen, setIsGooglePopupOpen] = useState(false);
@@ -89,6 +91,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(false);
 
     if (result.success) {
+      if (result.user && onUserRegistered) {
+        onUserRegistered(result.user);
+      }
       setSuccessMessage(result.message || '⚠️ Pendaftaran Berhasil! Akun Anda saat ini dalam status Pending Approval. Harap tunggu persetujuan dari Administrator sebelum melakukan login.');
       setMode('login');
       setLoginEmail(regEmail);
@@ -107,11 +112,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(false);
 
     if (result.success && result.user) {
-      setSuccessMessage(`Berhasil login via Google SSO sebagai ${result.user.name}!`);
-      setTimeout(() => {
-        onSuccess(result.user!);
-        onClose();
-      }, 800);
+      if (result.pending) {
+        if (onUserRegistered) onUserRegistered(result.user);
+        setSuccessMessage(result.message || `⚠️ Pendaftaran via Google SSO Berhasil! Akun Google Anda (${result.user.email}) dalam status Pending Approval. Harap tunggu persetujuan Administrator.`);
+        setMode('login');
+        setLoginEmail(result.user.email);
+      } else {
+        setSuccessMessage(`Berhasil login via Google SSO sebagai ${result.user.name}!`);
+        setTimeout(() => {
+          onSuccess(result.user!);
+          onClose();
+        }, 800);
+      }
     } else {
       setErrorMessage(result.error || 'Login Google OAuth gagal. Akun mungkin belum disetujui Admin.');
     }
