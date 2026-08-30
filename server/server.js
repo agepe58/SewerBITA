@@ -16,13 +16,40 @@ const pool = new Pool({
   ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
-// Test Database Connection
+// Test Database Connection and Auto-Initialize Required Tables
+const initDb = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_profiles (
+          id VARCHAR(100) PRIMARY KEY,
+          full_name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          role VARCHAR(50) NOT NULL DEFAULT 'Technician',
+          department VARCHAR(100) NOT NULL DEFAULT 'Operasional & Pemeliharaan',
+          phone VARCHAR(50),
+          status VARCHAR(50) NOT NULL DEFAULT 'Pending Approval',
+          avatar_url TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`
+      INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
+      VALUES ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
+      ON CONFLICT (email) DO NOTHING;
+    `);
+    console.log('✅ PostgreSQL user_profiles table initialized & auto-healed successfully!');
+  } catch (err) {
+    console.error('⚠️ DB Init Warning:', err.message);
+  }
+};
+
 pool.connect((err, client, release) => {
   if (err) {
     console.error('❌ Failed to connect to PostgreSQL Database:', err.message);
   } else {
     console.log('✅ Connected to PostgreSQL + PostGIS Database successfully!');
     release();
+    initDb();
   }
 });
 
