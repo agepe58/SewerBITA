@@ -90,16 +90,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const result = await authService.registerUser(regFullName, regEmail, regPassword, regDepartment, regRole);
     setLoading(false);
 
-    if (result.success && result.user) {
-      if (onUserRegistered) {
+    if (result.success) {
+      if (result.user && onUserRegistered) {
         onUserRegistered(result.user);
       }
-      authService.saveSession(result.user);
-      setSuccessMessage(result.message || `Pendaftaran akun ${result.user.name} berhasil! Masuk ke sistem...`);
-      setTimeout(() => {
-        onSuccess(result.user!);
-        onClose();
-      }, 800);
+      setSuccessMessage(result.message || `⚠️ Pendaftaran Berhasil! Akun Anda (${regEmail}) saat ini dalam status Pending Approval. Harap tunggu persetujuan Administrator sebelum melakukan login.`);
+      setMode('login');
+      setLoginEmail(regEmail);
     } else {
       setErrorMessage(result.error || 'Gagal mendaftarkan akun.');
     }
@@ -115,17 +112,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(false);
 
     if (result.success && result.user) {
-      if (onUserRegistered) {
-        onUserRegistered(result.user);
-      }
-      authService.saveSession(result.user);
-      setSuccessMessage(`Berhasil otentikasi Google SSO sebagai ${result.user.name}!`);
+      setSuccessMessage(`Berhasil login via Google SSO sebagai ${result.user.name}!`);
       setTimeout(() => {
         onSuccess(result.user!);
         onClose();
       }, 800);
     } else {
-      setErrorMessage(result.error || 'Login Google OAuth gagal.');
+      setErrorMessage(result.error || 'Login Google OAuth gagal. Akun mungkin belum disetujui Admin.');
     }
   };
 

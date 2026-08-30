@@ -158,13 +158,20 @@ export const App: React.FC = () => {
     const loadRealDatabaseData = async () => {
       const assetData = await apiClient.getAssets();
       if (assetData) {
-        setManholes(assetData.manholes || []);
-        setPumpStations(assetData.pumpStations || []);
-        setPipes(assetData.pipes || []);
+        const m = assetData.manholes || [];
+        const ps = assetData.pumpStations || [];
+        const p = assetData.pipes || [];
+        setManholes(m);
+        setPumpStations(ps);
+        setPipes(p);
+        localStorage.setItem('sewerbita_manholes', JSON.stringify(m));
+        localStorage.setItem('sewerbita_pump_stations', JSON.stringify(ps));
+        localStorage.setItem('sewerbita_pipes', JSON.stringify(p));
       }
       const inspectionData = await apiClient.getInspections();
       if (inspectionData) {
         setInspections(inspectionData);
+        localStorage.setItem('sewerbita_inspections', JSON.stringify(inspectionData));
       }
       await reloadUsersList();
     };
