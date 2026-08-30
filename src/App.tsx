@@ -148,6 +148,7 @@ export const App: React.FC = () => {
         }
       }
       setUsers(combined);
+      localStorage.setItem('sewerbita_users', JSON.stringify(combined));
     } else if (localUsers.length > 0) {
       setUsers(localUsers);
     }
@@ -178,10 +179,14 @@ export const App: React.FC = () => {
     loadRealDatabaseData();
   }, [reloadUsersList]);
 
-  // Re-sync users whenever user management tab opens
+  // Re-sync users whenever user management tab is active (auto poll every 4 seconds)
   useEffect(() => {
     if (activeTab === 'users') {
       reloadUsersList();
+      const interval = setInterval(() => {
+        reloadUsersList();
+      }, 4000);
+      return () => clearInterval(interval);
     }
   }, [activeTab, reloadUsersList]);
 
@@ -588,6 +593,7 @@ export const App: React.FC = () => {
                 onEditUser={(usr) => setUserToEdit(usr)}
                 onDeleteUser={handleDeleteUser}
                 onOpenAddUserModal={() => setIsAddUserModalOpen(true)}
+                onRefreshUsers={reloadUsersList}
               />
             )}
 

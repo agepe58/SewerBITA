@@ -430,13 +430,21 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/google', async (req, res) => {
   const { name, email, photoUrl } = req.body;
   try {
+    if (!email) {
+      return res.status(400).json({ error: 'Email Google wajib diisi.' });
+    }
+
     const checkQ = 'SELECT id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar" FROM user_profiles WHERE LOWER(email) = LOWER($1);';
     const checkRes = await pool.query(checkQ, [email]);
     
     if (checkRes.rows.length > 0) {
       const existingUser = checkRes.rows[0];
       if (existingUser.status === 'Pending' || existingUser.status === 'Pending Approval') {
-        return res.status(403).json({ error: `Akun Google Anda (${email}) sedang menunggu persetujuan dari Administrator (Pending Approval).` });
+        return res.status(403).json({
+          error: `Akun Google Anda (${email}) sedang menunggu persetujuan dari Administrator (Pending Approval).`,
+          user: existingUser,
+          pending: true
+        });
       }
       if (existingUser.status === 'Inactive') {
         return res.status(403).json({ error: `Akun Google Anda (${email}) dalam status tidak aktif.` });
@@ -450,12 +458,15 @@ app.post('/api/auth/google', async (req, res) => {
     const defaultRole = (email.toLowerCase().includes('admin') || isDefaultAdmin) ? 'Admin' : 'Engineer';
 
     const newId = `usr-google-${Date.now().toString().slice(-4)}`;
+    const userName = (name && name.trim()) ? name.trim() : email.split('@')[0];
+    const avatarUrl = photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`;
+
     const q = `
       INSERT INTO user_profiles (id, full_name, email, role, department, status, avatar_url)
       VALUES ($1, $2, $3, $4, 'Google Single Sign-On', $5, $6)
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
-    const values = [newId, name, email, defaultRole, initialStatus, photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`];
+    const values = [newId, userName, email, defaultRole, initialStatus, avatarUrl];
     const result = await pool.query(q, values);
 
     if (!isDefaultAdmin) {
@@ -468,6 +479,7 @@ app.post('/api/auth/google', async (req, res) => {
 
     res.status(201).json({ message: 'Registrasi Google berhasil', user: result.rows[0] });
   } catch (err) {
+    console.error('Error in /api/auth/google:', err);
     res.status(500).json({ error: err.message });
   }
 });

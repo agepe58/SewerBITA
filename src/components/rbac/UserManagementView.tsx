@@ -9,6 +9,7 @@ interface UserManagementViewProps {
   onEditUser: (user: UserProfile) => void;
   onDeleteUser: (userId: string) => void;
   onOpenAddUserModal: () => void;
+  onRefreshUsers?: () => void;
 }
 
 export const UserManagementView: React.FC<UserManagementViewProps> = ({
@@ -17,7 +18,8 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   onRoleChange,
   onEditUser,
   onDeleteUser,
-  onOpenAddUserModal
+  onOpenAddUserModal,
+  onRefreshUsers
 }) => {
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Active' | 'Inactive'>('All');
@@ -34,6 +36,11 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     if (statusFilter === 'Inactive') return u.status === 'Inactive';
     return true;
   });
+
+  const handleFilterClick = (filter: 'All' | 'Pending' | 'Active' | 'Inactive') => {
+    setStatusFilter(filter);
+    if (onRefreshUsers) onRefreshUsers();
+  };
 
   const allActions: { key: PermissionAction; label: string }[] = [
     { key: 'view_dashboard', label: 'Melihat Dashboard Executive' },
@@ -71,13 +78,25 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onOpenAddUserModal}
-          className="flex items-center gap-2.5 bg-[#2563EB] text-white font-black text-sm px-6 py-3.5 rounded-xl hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 shrink-0 self-start md:self-auto cursor-pointer"
-        >
-          <Plus className="w-5 h-5" />
-          <span>+ Tambah Pengguna Baru</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          {onRefreshUsers && (
+            <button
+              onClick={onRefreshUsers}
+              className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-extrabold text-xs px-4 py-3.5 rounded-xl transition cursor-pointer border border-slate-200 dark:border-slate-700"
+              title="Refresh Data Pengguna dari Server PostgreSQL"
+            >
+              <Users className="w-4 h-4 text-blue-500 animate-spin-slow" />
+              <span>🔄 Sync Server</span>
+            </button>
+          )}
+          <button
+            onClick={onOpenAddUserModal}
+            className="flex items-center gap-2.5 bg-[#2563EB] text-white font-black text-sm px-6 py-3.5 rounded-xl hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 shrink-0 self-start md:self-auto cursor-pointer"
+          >
+            <Plus className="w-5 h-5" />
+            <span>+ Tambah Pengguna Baru</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
@@ -91,7 +110,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
             {/* Status Filter Tab Pills */}
             <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-[11px] font-extrabold">
               <button
-                onClick={() => setStatusFilter('All')}
+                onClick={() => handleFilterClick('All')}
                 className={`flex-1 py-1.5 px-2 rounded-lg transition cursor-pointer ${
                   statusFilter === 'All'
                     ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
@@ -101,7 +120,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 Semua ({users.length})
               </button>
               <button
-                onClick={() => setStatusFilter('Pending')}
+                onClick={() => handleFilterClick('Pending')}
                 className={`flex-1 py-1.5 px-2 rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
                   statusFilter === 'Pending'
                     ? 'bg-amber-500 text-white shadow-2xs font-black'
@@ -116,7 +135,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 )}
               </button>
               <button
-                onClick={() => setStatusFilter('Active')}
+                onClick={() => handleFilterClick('Active')}
                 className={`flex-1 py-1.5 px-2 rounded-lg transition cursor-pointer ${
                   statusFilter === 'Active'
                     ? 'bg-emerald-600 text-white shadow-2xs'
@@ -126,7 +145,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 Aktif ({activeCount})
               </button>
               <button
-                onClick={() => setStatusFilter('Inactive')}
+                onClick={() => handleFilterClick('Inactive')}
                 className={`flex-1 py-1.5 px-2 rounded-lg transition cursor-pointer ${
                   statusFilter === 'Inactive'
                     ? 'bg-slate-600 text-white shadow-2xs'
