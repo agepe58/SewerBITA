@@ -129,17 +129,27 @@ export const App: React.FC = () => {
 
   // Dynamic User List Synchronization Function
   const reloadUsersList = useCallback(async () => {
-    const userData = await apiClient.getUsers();
-    if (userData && userData.length > 0) {
-      setUsers(userData);
-    } else {
-      const saved = localStorage.getItem('sewerbita_users');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) setUsers(parsed);
-        } catch (e) { console.error(e); }
+    const serverUsers = await apiClient.getUsers();
+    const savedStr = localStorage.getItem('sewerbita_users');
+    let localUsers: UserProfile[] = [];
+    if (savedStr) {
+      try {
+        const parsed = JSON.parse(savedStr);
+        if (Array.isArray(parsed)) localUsers = parsed;
+      } catch (e) { console.error(e); }
+    }
+
+    if (serverUsers && serverUsers.length > 0) {
+      // Merge any local pending users not yet on server
+      const combined = [...serverUsers];
+      for (const lu of localUsers) {
+        if (!combined.some(su => su.id === lu.id || su.email.toLowerCase() === lu.email.toLowerCase())) {
+          combined.push(lu);
+        }
       }
+      setUsers(combined);
+    } else if (localUsers.length > 0) {
+      setUsers(localUsers);
     }
   }, []);
 
@@ -349,22 +359,35 @@ export const App: React.FC = () => {
   };
 
   // User management handlers
-  const handleSaveEditedUser = (updated: UserProfile) => {
-    apiClient.updateUser(updated.id, updated);
-    setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
+  const handleSaveEditedUser = async (updated: UserProfile) => {
+    setUsers(prev => {
+      const next = prev.map(u => u.id === updated.id ? updated : u);
+      localStorage.setItem('sewerbita_users', JSON.stringify(next));
+      return next;
+    });
     if (currentUser.id === updated.id) {
       setCurrentUser(updated);
+      authService.saveSession(updated);
     }
+    await apiClient.updateUser(updated.id, updated);
   };
 
-  const handleAddUser = (newUser: UserProfile) => {
-    apiClient.createUser(newUser);
-    setUsers(prev => [...prev, newUser]);
+  const handleAddUser = async (newUser: UserProfile) => {
+    setUsers(prev => {
+      const next = [newUser, ...prev];
+      localStorage.setItem('sewerbita_users', JSON.stringify(next));
+      return next;
+    });
+    await apiClient.createUser(newUser);
   };
 
-  const handleDeleteUser = (userId: string) => {
-    apiClient.deleteUser(userId);
-    setUsers(prev => prev.filter(u => u.id !== userId));
+  const handleDeleteUser = async (userId: string) => {
+    setUsers(prev => {
+      const next = prev.filter(u => u.id !== userId);
+      localStorage.setItem('sewerbita_users', JSON.stringify(next));
+      return next;
+    });
+    await apiClient.deleteUser(userId);
   };
 
   const handleRoleChange = (newRole: UserRole) => {

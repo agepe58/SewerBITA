@@ -130,7 +130,14 @@ export const apiClient = {
     try {
       const res = await fetch(`${API_BASE_URL}/api/users`);
       if (!res.ok) return null;
-      return await res.json();
+      const data = await res.json();
+      if (!Array.isArray(data)) return null;
+      return data.map((u: any) => ({
+        ...u,
+        name: u.name || u.fullName || u.full_name || u.email?.split('@')[0] || 'Pengguna',
+        avatar: u.avatar || u.avatarUrl || u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.email || 'user')}`,
+        status: u.status || 'Active'
+      }));
     } catch {
       return null;
     }
@@ -138,13 +145,23 @@ export const apiClient = {
 
   createUser: async (data: UserProfile) => {
     try {
+      const payload = {
+        ...data,
+        fullName: data.name,
+        avatarUrl: data.avatar
+      };
       const res = await fetch(`${API_BASE_URL}/api/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
       if (!res.ok) return null;
-      return await res.json();
+      const u = await res.json();
+      return {
+        ...u,
+        name: u.name || u.fullName || u.full_name || 'Pengguna',
+        avatar: u.avatar || u.avatarUrl || u.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'
+      };
     } catch {
       return null;
     }
@@ -152,13 +169,23 @@ export const apiClient = {
 
   updateUser: async (id: string, data: UserProfile) => {
     try {
+      const payload = {
+        ...data,
+        fullName: data.name,
+        avatarUrl: data.avatar
+      };
       const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
       if (!res.ok) return null;
-      return await res.json();
+      const u = await res.json();
+      return {
+        ...u,
+        name: u.name || u.fullName || u.full_name || 'Pengguna',
+        avatar: u.avatar || u.avatarUrl || u.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'
+      };
     } catch {
       return null;
     }

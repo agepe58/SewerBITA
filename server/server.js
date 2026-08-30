@@ -303,7 +303,7 @@ app.delete('/api/inspections/:id', async (req, res) => {
 // --------------------------------------------------------------------
 app.get('/api/users', async (req, res) => {
   try {
-    const q = 'SELECT id, full_name AS "fullName", email, role, department, phone, status, avatar_url AS "avatarUrl" FROM user_profiles ORDER BY created_at DESC;';
+    const q = 'SELECT id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar" FROM user_profiles ORDER BY created_at DESC;';
     const result = await pool.query(q);
     res.json(result.rows);
   } catch (err) {
@@ -314,21 +314,23 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users', async (req, res) => {
   const data = req.body;
   try {
+    const nameVal = data.name || data.fullName || 'User Baru';
+    const avatarVal = data.avatar || data.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(nameVal)}`;
     const q = `
       INSERT INTO user_profiles 
       (id, full_name, email, role, department, phone, status, avatar_url)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *;
+      RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
     const values = [
       data.id || `usr-${Date.now()}`,
-      data.fullName,
+      nameVal,
       data.email,
       data.role || 'Technician',
       data.department || 'Operasional & Pemeliharaan',
       data.phone || '',
       data.status || 'Active',
-      data.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250'
+      avatarVal
     ];
     const result = await pool.query(q, values);
     res.status(201).json(result.rows[0]);
@@ -341,12 +343,15 @@ app.put('/api/users/:id', async (req, res) => {
   const { id } = req.params;
   const data = req.body;
   try {
+    const nameVal = data.name || data.fullName || '';
+    const avatarVal = data.avatar || data.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(nameVal)}`;
     const q = `
       UPDATE user_profiles SET
         full_name = $1, email = $2, role = $3, department = $4, phone = $5, status = $6, avatar_url = $7
-      WHERE id = $8 RETURNING *;
+      WHERE id = $8
+      RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
-    const values = [data.fullName, data.email, data.role, data.department, data.phone, data.status, data.avatarUrl, id];
+    const values = [nameVal, data.email, data.role, data.department, data.phone, data.status, avatarVal, id];
     const result = await pool.query(q, values);
     res.json(result.rows[0]);
   } catch (err) {
