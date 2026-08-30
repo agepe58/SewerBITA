@@ -1,32 +1,38 @@
-# Multi-stage Production Dockerfile for SewerBITA (Vite React SPA)
+# Multi-stage Production Dockerfile for SewerBITA (Unified React SPA + Express PostgreSQL REST API)
 
-# Stage 1: Build Environment
+# Stage 1: Build React Frontend
 FROM node:20-alpine AS build-stage
 WORKDIR /app
-
-# Copy package descriptors and install clean dependencies
 COPY package.json package-lock.json ./
 RUN npm ci
-
-# Copy full application codebase and build production bundle
 COPY . .
 RUN npm run build
 
-# Stage 2: Production Nginx Web Server
-FROM nginx:alpine AS production-stage
+# Stage 2: Production Unified Node.js Server
+FROM node:20-alpine AS production-stage
+WORKDIR /app
 
-# Copy custom Nginx SPA & Health Check configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy server package descriptors and install clean dependencies
+COPY server/package.json ./server/package.json
+RUN npm install --prefix server --omit=dev
 
-# Copy built production assets from build stage
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# Copy built frontend assets to /app/dist
+COPY --from=build-stage /app/dist /app/dist
 
-# Expose ports 80, 3000, and 3005 for Coolify / Traefik Reverse Proxy
-EXPOSE 80 3000 3005
+# Copy backend server code and database schema
+COPY server /app/server
 
-# Health check specification for Coolify PaaS monitoring
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3005/health || wget --quiet --tries=1 --spider http://localhost:80/health || exit 1
+# Environment configuration
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Launch Nginx in foreground mode
-CMD ["nginx", "-g", "daemon off;"]
+# Expose ports for Coolify / Traefik Reverse Proxy
+EXPOSE 3000 80 3005
+
+# Healthcheck targeting /health and /api/health
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+
+# Launch Express server which handles both REST API and SPA static assets
+CMD ["node", "server/server.js"]
+

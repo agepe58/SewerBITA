@@ -4,11 +4,18 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 // Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
+
+// --------------------------------------------------------------------
+// 0. HEALTH CHECK ROUTE ALIAS
+// --------------------------------------------------------------------
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // PostgreSQL Connection Pool Setup
 const pool = new Pool({
@@ -549,6 +556,23 @@ app.post('/api/auth/google', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// --------------------------------------------------------------------
+// 9. SERVE PRODUCTION STATIC FRONTEND (SPA ROUTING)
+// --------------------------------------------------------------------
+const path = require('path');
+const fs = require('fs');
+const distPath = path.join(__dirname, '../dist');
+
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 // Start Server
 app.listen(PORT, () => {

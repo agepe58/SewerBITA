@@ -2,9 +2,6 @@ import { UserProfile, UserRole } from '../types/rbac';
 
 const getApiBaseUrl = (): string => {
   if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  if (typeof window !== 'undefined' && window.location.hostname.includes('sewer.kbi.web.id')) {
-    return 'https://api.sewer.kbi.web.id';
-  }
   return '';
 };
 
