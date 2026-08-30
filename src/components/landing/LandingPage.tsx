@@ -93,19 +93,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           }`}>
             Platform intelijen terpadu untuk pemetaan peta GIS interaktif, analisis topologi alur jaringan, registrasi master aset, dan pelaporan inspeksi lapangan.
           </p>
-
-          {/* Primary Login Button CTA */}
-          {onOpenAuthModal && (
-            <div className="pt-3">
-              <button
-                onClick={onOpenAuthModal}
-                className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white font-black text-sm sm:text-base px-8 py-3.5 rounded-xl transition-all shadow-xl shadow-blue-600/40 hover:shadow-blue-600/60 hover:scale-105 cursor-pointer group"
-              >
-                <span>🔑 Masuk ke Sistem (Login)</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Clean Corporate Name Text (Without Button Box) with generous spacing */}

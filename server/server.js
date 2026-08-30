@@ -392,6 +392,11 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   const { fullName, email, password, department, role } = req.body;
   try {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email || !emailRegex.test(email.trim())) {
+      return res.status(400).json({ error: 'Alamat email tidak valid. Wajib menggunakan format email sah (contoh: nama@perusahaan.com).' });
+    }
+
     const checkQ = 'SELECT id FROM user_profiles WHERE LOWER(email) = LOWER($1);';
     const checkRes = await pool.query(checkQ, [email]);
     if (checkRes.rows.length > 0) {

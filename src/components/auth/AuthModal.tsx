@@ -65,6 +65,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(regEmail.trim())) {
+      setErrorMessage('Alamat email tidak valid. Wajib menggunakan alamat email aktif yang sah (contoh: nama@perusahaan.com).');
+      return;
+    }
+
     if (!regFullName || !regEmail || !regPassword) {
       setErrorMessage('Harap isi seluruh kolom pendaftaran.');
       return;

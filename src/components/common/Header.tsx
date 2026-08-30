@@ -83,50 +83,6 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#EF4444] rounded-full"></span>
         </button>
 
-        {/* Role Switcher Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm transition cursor-pointer ${
-              isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 border-slate-200 text-slate-900 hover:bg-slate-200/80'
-            }`}
-          >
-            <UserCheck className="w-4 h-4 text-[#0284C7]" />
-            <div className="text-left hidden sm:block">
-              <div className="text-xs text-slate-400 leading-none font-medium">Role Aktif</div>
-              <div className="font-bold">{currentUser.role}</div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
-          </button>
-
-          {isRoleDropdownOpen && (
-            <div className={`absolute right-0 mt-2 w-52 border rounded-2xl shadow-xl py-1 z-50 ${
-              isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
-            }`}>
-              <div className="px-3.5 py-2 text-xs text-slate-400 border-b border-slate-800 font-bold">
-                Simulasi Peran Pengguna (RBAC)
-              </div>
-              {roles.map((role) => (
-                <button
-                  key={role}
-                  onClick={() => {
-                    onRoleChange(role);
-                    setIsRoleDropdownOpen(false);
-                  }}
-                  className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between transition cursor-pointer ${
-                    currentUser.role === role
-                      ? 'text-[#2563EB] font-extrabold bg-blue-50/20'
-                      : isDarkMode ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-800 font-medium'
-                  }`}
-                >
-                  <span>{role}</span>
-                  {currentUser.role === role && <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* User Profile Badge with Dropdown (Dark mode, Edit profile, Logout) */}
         <div className={`relative border-l pl-3 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
           <button
