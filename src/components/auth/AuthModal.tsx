@@ -118,6 +118,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         onClose();
       }, 800);
     } else {
+      if (result.user && onUserRegistered) {
+        onUserRegistered(result.user);
+      }
       setErrorMessage(result.error || 'Login Google OAuth gagal. Akun mungkin belum disetujui Admin.');
     }
   };
