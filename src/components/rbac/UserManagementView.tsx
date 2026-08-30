@@ -137,47 +137,47 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
               </button>
             </div>
 
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               {filteredUsers.length === 0 ? (
-                <div className="p-8 text-center text-xs text-slate-400 font-semibold border border-dashed rounded-xl">
+                <div className="p-10 text-center text-xs text-slate-400 font-semibold border border-dashed rounded-2xl bg-slate-50/50 dark:bg-slate-800/30">
                   Tidak ada pengguna dengan status '{statusFilter}'.
                 </div>
               ) : (
                 filteredUsers.map(usr => (
-                <div key={usr.id} className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <img src={usr.avatar} alt={usr.name} className="w-10 h-10 rounded-full object-cover border border-blue-200 dark:border-blue-800 shadow-xs shrink-0" />
-                    <div className="min-w-0">
-                      <div className="font-extrabold text-slate-900 dark:text-white text-sm truncate flex items-center gap-1.5">
+                <div key={usr.id} className="bg-slate-50 dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-md">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <img src={usr.avatar} alt={usr.name} className="w-11 h-11 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800 shadow-xs shrink-0" />
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base truncate flex items-center gap-2">
                         <span>{usr.name}</span>
                         {usr.id === currentUser.id && (
-                          <span className="text-[10px] bg-blue-100 text-[#2563EB] dark:bg-blue-950 dark:text-blue-300 font-bold px-2 py-0.5 rounded-full">Anda</span>
+                          <span className="text-[10px] bg-blue-100 text-[#2563EB] dark:bg-blue-950 dark:text-blue-300 font-extrabold px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 shrink-0">Anda</span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400 font-medium truncate">{usr.email}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold truncate">{usr.department}</div>
+                      <div className="text-xs text-slate-600 dark:text-slate-300 font-medium truncate">{usr.email}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-bold truncate">{usr.department}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-slate-700/60 w-full sm:w-auto justify-end">
                     {usr.status === 'Pending Approval' || usr.status === 'Pending' ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800 animate-pulse">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 animate-pulse shrink-0">
                           Pending Approval
                         </span>
                         {currentUser.role === 'Admin' && (
                           <button
                             onClick={() => onEditUser({ ...usr, status: 'Active' })}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-lg shadow-md transition flex items-center gap-1 cursor-pointer"
+                            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5 cursor-pointer shrink-0"
                             title="Setujui dan Aktifkan Akun Pengguna Ini"
                           >
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-4 h-4" />
                             <span>Setujui</span>
                           </button>
                         )}
                       </div>
                     ) : (
-                      <span className={`px-3 py-1 rounded-full text-xs font-extrabold shadow-2xs ${usr.role === 'Admin' ? 'bg-[#2563EB] text-white' :
+                      <span className={`px-3.5 py-1.5 rounded-full text-xs font-black shadow-2xs ${usr.role === 'Admin' ? 'bg-[#2563EB] text-white' :
                           usr.role === 'Engineer' ? 'bg-[#0284C7] text-white' :
                             usr.role === 'Technician' ? 'bg-[#16A34A] text-white' : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
                         }`}>
@@ -187,7 +187,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 
                     <button
                       onClick={() => onEditUser(usr)}
-                      className="p-1.5 bg-white dark:bg-slate-900 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-700 dark:hover:text-amber-300 text-slate-600 dark:text-slate-400 rounded-lg border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                      className="p-2 bg-white dark:bg-slate-900 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-700 dark:hover:text-amber-300 text-slate-600 dark:text-slate-400 rounded-xl border border-slate-200 dark:border-slate-700 transition cursor-pointer"
                       title="Edit User (Nama, Password, Role, Departemen)"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -196,7 +196,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                     <button
                       onClick={() => setUserToDelete(usr)}
                       disabled={usr.id === currentUser.id}
-                      className={`p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 transition cursor-pointer ${
+                      className={`p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 transition cursor-pointer ${
                         usr.id === currentUser.id ? 'opacity-40 cursor-not-allowed text-slate-300 dark:text-slate-600' : 'hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 text-slate-600 dark:text-slate-400'
                       }`}
                       title={usr.id === currentUser.id ? 'Tidak dapat menghapus akun Anda sendiri' : 'Hapus Pengguna'}

@@ -105,79 +105,93 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Ringkasan Statistik Aset (7 KPI Metric Cards Grid) */}
       <div className="space-y-4 mb-2">
-        <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400 px-1">
+        <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">
           Ringkasan Statistik Aset
         </h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-5 sm:gap-6">
           {/* 1. Total Manhole */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 card-hover flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 card-hover flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <span>Total Manhole</span>
-              <MapPin className="w-4.5 h-4.5 text-[#2563EB]" />
+              <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB]">
+                <MapPin className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{totalManholes}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">Struktur Titik Node</div>
+            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tight my-1">{totalManholes}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 font-bold truncate">Struktur Titik Node</div>
           </div>
 
           {/* 2. Total Pipa */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 card-hover flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 card-hover flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <span>Total Pipa</span>
-              <GitBranch className="w-4.5 h-4.5 text-[#0284C7]" />
+              <div className="p-2 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-[#0284C7]">
+                <GitBranch className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{totalPipes}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">Segmen Pipa Kolektor</div>
+            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tight my-1">{totalPipes}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 font-bold truncate">Segmen Pipa Kolektor</div>
           </div>
 
           {/* 3. Total Stasiun Pompa */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 card-hover flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 card-hover flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <span>Stasiun Pompa</span>
-              <Zap className="w-4.5 h-4.5 text-[#059669]" />
+              <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#059669]">
+                <Zap className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{totalPumpStations}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">Outlet Pompa Utama</div>
+            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tight my-1">{totalPumpStations}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 font-bold truncate">Outlet Pompa Utama</div>
           </div>
 
           {/* 4. Total Aset Aktif */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 card-hover flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 card-hover flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between text-xs font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
               <span>Aset Aktif</span>
-              <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
+              <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">{totalActive}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">{getPercentage(totalActive)}% Normal</div>
+            <div className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight my-1">{totalActive}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 font-bold truncate">{getPercentage(totalActive)}% Normal</div>
           </div>
 
           {/* 5. Aset Membutuhkan Inspeksi */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 card-hover flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 card-hover flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between text-xs font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
               <span>Butuh Inspeksi</span>
-              <Clock className="w-4.5 h-4.5 text-amber-600" />
+              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600">
+                <Clock className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight">{needingInspection}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">Pending / Review</div>
+            <div className="text-3xl sm:text-4xl font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight my-1">{needingInspection}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 font-bold truncate">Pending / Review</div>
           </div>
 
           {/* 6. Aset Bermasalah */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 card-hover flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 card-hover flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between text-xs font-extrabold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
               <span>Bermasalah</span>
-              <AlertTriangle className="w-4.5 h-4.5 text-rose-600" />
+              <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight">{totalProblematic}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">{criticalAssets.length} Critical • {warningAssets.length} Warning</div>
+            <div className="text-3xl sm:text-4xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight my-1">{totalProblematic}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 font-bold truncate">{criticalAssets.length} Critical • {warningAssets.length} Warning</div>
           </div>
 
           {/* 7. Aset Overdue Inspection */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 card-hover flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 card-hover flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between text-xs font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
               <span>Overdue</span>
-              <AlertCircle className="w-4.5 h-4.5 text-purple-600" />
+              <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600">
+                <AlertCircle className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-purple-600 dark:text-purple-400 font-mono tracking-tight">{overdueInspectionCount}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">Jatuh Tempo Lewat</div>
+            <div className="text-3xl sm:text-4xl font-black text-purple-600 dark:text-purple-400 font-mono tracking-tight my-1">{overdueInspectionCount}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 font-bold truncate">Jatuh Tempo Lewat</div>
           </div>
         </div>
       </div>

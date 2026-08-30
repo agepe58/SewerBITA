@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Sidebar, NavTab } from './components/common/Sidebar';
 import { Header } from './components/common/Header';
 import { LandingPage } from './components/landing/LandingPage';
@@ -31,7 +31,10 @@ import { AuthModal } from './components/auth/AuthModal';
 
 export const App: React.FC = () => {
   // App view & Theme state
-  const [isLandingPage, setIsLandingPage] = useState<boolean>(true);
+  const [isLandingPage, setIsLandingPage] = useState<boolean>(() => {
+    const activeSession = authService.getCurrentSession();
+    return !activeSession; // Stay on dashboard if session exists!
+  });
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('sewerbita_theme') === 'dark';
@@ -124,6 +127,22 @@ export const App: React.FC = () => {
     localStorage.setItem('sewerbita_users', JSON.stringify(users));
   }, [users]);
 
+  // Dynamic User List Synchronization Function
+  const reloadUsersList = useCallback(async () => {
+    const userData = await apiClient.getUsers();
+    if (userData && userData.length > 0) {
+      setUsers(userData);
+    } else {
+      const saved = localStorage.getItem('sewerbita_users');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) setUsers(parsed);
+        } catch (e) { console.error(e); }
+      }
+    }
+  }, []);
+
   // Load Real Data from Backend PostgreSQL API on App Startup
   useEffect(() => {
     const loadRealDatabaseData = async () => {
@@ -137,13 +156,17 @@ export const App: React.FC = () => {
       if (inspectionData) {
         setInspections(inspectionData);
       }
-      const userData = await apiClient.getUsers();
-      if (userData && userData.length > 0) {
-        setUsers(userData);
-      }
+      await reloadUsersList();
     };
     loadRealDatabaseData();
-  }, []);
+  }, [reloadUsersList]);
+
+  // Re-sync users whenever user management tab opens
+  useEffect(() => {
+    if (activeTab === 'users') {
+      reloadUsersList();
+    }
+  }, [activeTab, reloadUsersList]);
 
   // Active User & Role Session Initialization
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
