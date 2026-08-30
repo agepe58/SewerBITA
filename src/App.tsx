@@ -217,52 +217,18 @@ export const App: React.FC = () => {
         const m = assetData.manholes || [];
         const ps = assetData.pumpStations || [];
         const p = assetData.pipes || [];
-
-        if (m.length > 0 || ps.length > 0 || p.length > 0) {
-          setManholes(m);
-          setPumpStations(ps);
-          setPipes(p);
-          localStorage.setItem('sewerbita_manholes', JSON.stringify(m));
-          localStorage.setItem('sewerbita_pump_stations', JSON.stringify(ps));
-          localStorage.setItem('sewerbita_pipes', JSON.stringify(p));
-        } else {
-          // If server database is currently empty, migrate existing local assets from client to PostgreSQL
-          const localMStr = localStorage.getItem('sewerbita_manholes');
-          const localPSStr = localStorage.getItem('sewerbita_pump_stations');
-          const localPStr = localStorage.getItem('sewerbita_pipes');
-          try {
-            const localM: ManholeAsset[] = localMStr ? JSON.parse(localMStr) : [];
-            const localPS: PumpStationAsset[] = localPSStr ? JSON.parse(localPSStr) : [];
-            const localP: PipeAsset[] = localPStr ? JSON.parse(localPStr) : [];
-
-            if (localM.length > 0 || localPS.length > 0 || localP.length > 0) {
-              setManholes(localM);
-              setPumpStations(localPS);
-              setPipes(localP);
-              // Push to PostgreSQL server
-              for (const item of localM) { apiClient.createAsset('manhole', item); }
-              for (const item of localPS) { apiClient.createAsset('pumpStation', item); }
-              for (const item of localP) { apiClient.createAsset('pipe', item); }
-            }
-          } catch (e) { console.error('Error migrating local assets to server:', e); }
-        }
+        setManholes(m);
+        setPumpStations(ps);
+        setPipes(p);
+        localStorage.setItem('sewerbita_manholes', JSON.stringify(m));
+        localStorage.setItem('sewerbita_pump_stations', JSON.stringify(ps));
+        localStorage.setItem('sewerbita_pipes', JSON.stringify(p));
       }
 
       const inspectionData = await apiClient.getInspections();
       if (inspectionData) {
-        if (inspectionData.length > 0) {
-          setInspections(inspectionData);
-          localStorage.setItem('sewerbita_inspections', JSON.stringify(inspectionData));
-        } else {
-          const localInspStr = localStorage.getItem('sewerbita_inspections');
-          try {
-            const localInsp: InspectionRecord[] = localInspStr ? JSON.parse(localInspStr) : [];
-            if (localInsp.length > 0) {
-              setInspections(localInsp);
-              for (const insp of localInsp) { apiClient.createInspection(insp); }
-            }
-          } catch (e) { console.error('Error migrating inspections to server:', e); }
-        }
+        setInspections(inspectionData);
+        localStorage.setItem('sewerbita_inspections', JSON.stringify(inspectionData));
       }
       await reloadUsersList();
     };

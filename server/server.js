@@ -139,64 +139,7 @@ const initDb = async () => {
       ON CONFLICT (email) DO NOTHING;
     `);
 
-    // 8. Auto-Seed Initial Network GIS Assets If Empty
-    const checkCount = await pool.query('SELECT COUNT(*) FROM manhole_assets;');
-    if (parseInt(checkCount.rows[0].count) === 0) {
-      console.log('🌱 Seeding initial sewer network GIS assets to PostgreSQL...');
-      
-      // Seed Manholes
-      await pool.query(`
-        INSERT INTO manhole_assets (id, asset_code, name, area, latitude, longitude, depth_meters, diameter_mm, material, status, condition, next_inspection_due)
-        VALUES
-          ('mh-101', 'MH-101', 'Manhole Simpang Sudirman A1', 'Zone A - Sudirman', -6.2088, 106.8226, 3.5, 1000, 'Precast Concrete', 'Active', 'Good', '2026-11-15'),
-          ('mh-102', 'MH-102', 'Manhole Sudirman Central A2', 'Zone A - Sudirman', -6.2105, 106.8238, 3.8, 1000, 'Precast Concrete', 'Active', 'Fair', '2026-10-20'),
-          ('mh-103', 'MH-103', 'Manhole Kolektor Setiabudi B1', 'Zone A - Setiabudi', -6.2128, 106.8255, 4.2, 1200, 'Precast Concrete', 'Active', 'Warning', '2026-09-10'),
-          ('mh-104', 'MH-104', 'Manhole Simpang Manggarai C1', 'Zone A - Manggarai', -6.2152, 106.8280, 4.8, 1500, 'Precast Concrete', 'Active', 'Critical', '2026-08-25'),
-          ('mh-105', 'MH-105', 'Manhole Feeder Tebet Barat 01', 'Zone B - Tebet', -6.2180, 106.8310, 3.2, 800, 'HDPE', 'Active', 'Good', '2026-11-10'),
-          ('mh-106', 'MH-106', 'Manhole Feeder Tebet Tengah 02', 'Zone B - Tebet', -6.2205, 106.8335, 3.4, 800, 'HDPE', 'Active', 'Good', '2026-10-01'),
-          ('mh-107', 'MH-107', 'Manhole Header Pluit Utara 01', 'Zone C - Pluit', -6.2050, 106.8210, 3.0, 1000, 'Precast Concrete', 'Active', 'Good', '2026-11-18'),
-          ('mh-108', 'MH-108', 'Manhole Distribusi Pluit Selatan 02', 'Zone C - Pluit', -6.2070, 106.8195, 3.2, 800, 'Precast Concrete', 'Active', 'Warning', '2026-08-15')
-        ON CONFLICT (id) DO NOTHING;
-      `);
-
-      // Seed Pump Stations
-      await pool.query(`
-        INSERT INTO pump_station_assets (id, asset_code, name, area, latitude, longitude, flow_capacity_lps, total_pumps, active_pumps, power_source, generator_backup, status, condition, next_inspection_due)
-        VALUES
-          ('ps-001', 'PS-001', 'Stasiun Pompa Utama Manggarai', 'Zone A - Manggarai', -6.2168, 106.8298, 450.0, 4, 3, 'PLN Primary + Dual Genset Backup', 'Dual Genset 250 kVA', 'Active', 'Good', '2026-09-20'),
-          ('ps-002', 'PS-002', 'Stasiun Pompa Booster Tebet South', 'Zone B - Tebet', -6.2230, 106.8360, 220.0, 2, 2, 'PLN Primary + Genset Backup', 'Genset 150 kVA', 'Active', 'Fair', '2026-10-25')
-        ON CONFLICT (id) DO NOTHING;
-      `);
-
-      // Seed Pipes
-      await pool.query(`
-        INSERT INTO pipe_assets (id, asset_code, name, area, from_asset_id, to_asset_id, length_meters, diameter_mm, material, slope_percent, status, condition, next_inspection_due)
-        VALUES
-          ('p-001', 'P-001', 'Pipa Main Trunk Pluit North 01', 'Zone C - Pluit', 'mh-107', 'mh-108', 280.0, 600, 'HDPE', 0.8, 'Active', 'Good', '2026-11-18'),
-          ('p-002', 'P-002', 'Pipa Collector Pluit to Sudirman 02', 'Zone A - Sudirman', 'mh-108', 'mh-101', 350.0, 600, 'HDPE', 0.9, 'Active', 'Warning', '2026-08-15'),
-          ('p-003', 'P-003', 'Pipa Utama Sudirman Segment A1-A2', 'Zone A - Sudirman', 'mh-101', 'mh-102', 240.0, 800, 'Precast Concrete', 1.1, 'Active', 'Good', '2026-11-15'),
-          ('p-004', 'P-004', 'Pipa Sudirman to Setiabudi Segment A2-B1', 'Zone A - Setiabudi', 'mh-102', 'mh-103', 310.0, 800, 'Precast Concrete', 1.0, 'Active', 'Fair', '2026-10-20'),
-          ('p-005', 'P-005', 'Pipa Kolektor Setiabudi to Manggarai', 'Zone A - Manggarai', 'mh-103', 'mh-104', 420.0, 1000, 'Precast Concrete', 1.2, 'Active', 'Critical', '2026-08-25'),
-          ('p-006', 'P-006', 'Pipa Terminal Manggarai to Pump Station PS-001', 'Zone A - Manggarai', 'mh-104', 'ps-001', 260.0, 1200, 'Precast Concrete', 1.5, 'Active', 'Good', '2026-11-20'),
-          ('p-007', 'P-007', 'Pipa Feeder Tebet West to Central', 'Zone B - Tebet', 'mh-105', 'mh-106', 380.0, 500, 'HDPE', 0.7, 'Active', 'Good', '2026-11-10'),
-          ('p-008', 'P-008', 'Pipa Feeder Tebet to Booster Pump PS-002', 'Zone B - Tebet', 'mh-106', 'ps-002', 390.0, 500, 'HDPE', 0.8, 'Active', 'Fair', '2026-10-01'),
-          ('p-009', 'P-009', 'Pipa Pressurized Sub-Trunk PS-002 to PS-001', 'Zone B - Tebet', 'ps-002', 'ps-001', 920.0, 700, 'Ductile Iron', 0.5, 'Active', 'Good', '2026-10-25')
-        ON CONFLICT (id) DO NOTHING;
-      `);
-
-      // Seed Inspection Records
-      await pool.query(`
-        INSERT INTO inspection_records (id, asset_id, asset_code, asset_type, inspector_name, inspection_date, condition, issue_category, notes, action_required, photo_url)
-        VALUES
-          ('insp-001', 'mh-104', 'MH-104', 'Manhole', 'Budi Santoso', '2026-08-01', 'Critical', 'Overflow', 'Terjadi penyumbatan sedimen berat di mulut pipa outlet. Retakan terlihat pada struktur dinding bagian atas.', 'Jadwal flushing dan pengerukan sedimen darurat dibuat.', 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=600&q=80'),
-          ('insp-002', 'mh-103', 'MH-103', 'Manhole', 'Ahmad Rizki', '2026-06-10', 'Warning', 'Sedimentation', 'Endapan pasir dan lemak mencatatkan ketebalan ~20cm di dasar manhole. Aliran air lambat.', 'Pembersihan jetting berkala.', 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80'),
-          ('insp-003', 'ps-001', 'PS-001', 'Pump Station', 'Eko Prasetyo', '2026-08-20', 'Good', 'Normal / Routine', 'Pemeriksaan rutin 3 unit pompa submersible berjalan optimal. Tingkat getaran dan oli normal.', 'Lanjutkan monitoring mingguan.', NULL)
-        ON CONFLICT (id) DO NOTHING;
-      `);
-      console.log('✅ Initial sewer network GIS assets successfully seeded to PostgreSQL!');
-    }
-
-    console.log('✅ PostgreSQL Schema & Tables (manhole, pump_station, pipe, inspection, users) initialized & auto-healed successfully!');
+    console.log('✅ PostgreSQL Schema & Tables (manhole, pump_station, pipe, inspection, users) initialized for production!');
   } catch (err) {
     console.error('⚠️ DB Init Warning:', err.message);
   }
