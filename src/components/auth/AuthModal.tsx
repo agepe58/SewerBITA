@@ -90,13 +90,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const result = await authService.registerUser(regFullName, regEmail, regPassword, regDepartment, regRole);
     setLoading(false);
 
-    if (result.success) {
-      if (result.user && onUserRegistered) {
+    if (result.success && result.user) {
+      if (onUserRegistered) {
         onUserRegistered(result.user);
       }
-      setSuccessMessage(result.message || '⚠️ Pendaftaran Berhasil! Akun Anda saat ini dalam status Pending Approval. Harap tunggu persetujuan dari Administrator sebelum melakukan login.');
-      setMode('login');
-      setLoginEmail(regEmail);
+      authService.saveSession(result.user);
+      setSuccessMessage(result.message || `Pendaftaran akun ${result.user.name} berhasil! Masuk ke sistem...`);
+      setTimeout(() => {
+        onSuccess(result.user!);
+        onClose();
+      }, 800);
     } else {
       setErrorMessage(result.error || 'Gagal mendaftarkan akun.');
     }
@@ -112,20 +115,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(false);
 
     if (result.success && result.user) {
-      if (result.pending) {
-        if (onUserRegistered) onUserRegistered(result.user);
-        setSuccessMessage(result.message || `⚠️ Pendaftaran via Google SSO Berhasil! Akun Google Anda (${result.user.email}) dalam status Pending Approval. Harap tunggu persetujuan Administrator.`);
-        setMode('login');
-        setLoginEmail(result.user.email);
-      } else {
-        setSuccessMessage(`Berhasil login via Google SSO sebagai ${result.user.name}!`);
-        setTimeout(() => {
-          onSuccess(result.user!);
-          onClose();
-        }, 800);
+      if (onUserRegistered) {
+        onUserRegistered(result.user);
       }
+      authService.saveSession(result.user);
+      setSuccessMessage(`Berhasil otentikasi Google SSO sebagai ${result.user.name}!`);
+      setTimeout(() => {
+        onSuccess(result.user!);
+        onClose();
+      }, 800);
     } else {
-      setErrorMessage(result.error || 'Login Google OAuth gagal. Akun mungkin belum disetujui Admin.');
+      setErrorMessage(result.error || 'Login Google OAuth gagal.');
     }
   };
 
@@ -406,6 +406,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
+            </button>
+
+            {/* Divider */}
+            <div className="relative flex items-center justify-center my-3">
+              <div className="border-t border-slate-200 dark:border-slate-800 w-full"></div>
+              <span className="bg-white dark:bg-slate-900 px-3 text-[10px] uppercase font-bold text-slate-400 shrink-0">
+                Atau Daftar Dengan
+              </span>
+              <div className="border-t border-slate-200 dark:border-slate-800 w-full"></div>
+            </div>
+
+            {/* Google OAuth SSO Button on Register tab */}
+            <button
+              type="button"
+              onClick={() => setIsGooglePopupOpen(true)}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <svg className="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Sign in / Register with Google</span>
             </button>
           </form>
         )}

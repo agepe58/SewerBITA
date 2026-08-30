@@ -412,15 +412,15 @@ app.post('/api/auth/register', async (req, res) => {
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`;
     const q = `
       INSERT INTO user_profiles (id, full_name, email, role, department, status, avatar_url)
-      VALUES ($1, $2, $3, $4, $5, 'Pending Approval', $6)
+      VALUES ($1, $2, $3, $4, $5, 'Active', $6)
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
     const values = [newId, fullName, email, role || 'Technician', department || 'Operasional', avatarUrl];
     const result = await pool.query(q, values);
     res.status(201).json({
-      message: 'Pendaftaran berhasil! Akun Anda saat ini dalam status Pending Approval. Harap tunggu persetujuan Administrator sebelum login.',
+      message: 'Pendaftaran akun berhasil! Silakan masuk dengan email dan password Anda.',
       user: result.rows[0],
-      pending: true
+      pending: false
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -435,38 +435,26 @@ app.post('/api/auth/google', async (req, res) => {
     
     if (checkRes.rows.length > 0) {
       const existingUser = checkRes.rows[0];
-      if (existingUser.status === 'Pending' || existingUser.status === 'Pending Approval') {
-        return res.status(403).json({ error: `Akun Google Anda (${email}) sedang menunggu persetujuan dari Administrator (Pending Approval).` });
-      }
       if (existingUser.status === 'Inactive') {
         return res.status(403).json({ error: `Akun Google Anda (${email}) dalam status tidak aktif.` });
       }
       return res.json({ message: 'Login Google berhasil', user: existingUser });
     }
 
-    // Default admin angga.purbaya@gmail.com is Active automatically
+    // New Google OAuth User Signup -> Active automatically
     const isDefaultAdmin = email.toLowerCase() === 'angga.purbaya@gmail.com';
-    const initialStatus = isDefaultAdmin ? 'Active' : 'Pending Approval';
     const defaultRole = (email.toLowerCase().includes('admin') || isDefaultAdmin) ? 'Admin' : 'Engineer';
 
     const newId = `usr-google-${Date.now().toString().slice(-4)}`;
     const q = `
       INSERT INTO user_profiles (id, full_name, email, role, department, status, avatar_url)
-      VALUES ($1, $2, $3, $4, 'Google Single Sign-On', $5, $6)
+      VALUES ($1, $2, $3, $4, 'Google Single Sign-On', 'Active', $5)
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
-    const values = [newId, name, email, defaultRole, initialStatus, photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`];
+    const values = [newId, name, email, defaultRole, photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`];
     const result = await pool.query(q, values);
 
-    if (!isDefaultAdmin) {
-      return res.status(201).json({
-        message: 'Registrasi via Google berhasil! Akun Anda membutuhkan persetujuan Administrator sebelum dapat masuk.',
-        user: result.rows[0],
-        pending: true
-      });
-    }
-
-    res.status(201).json({ message: 'Registrasi Google berhasil', user: result.rows[0] });
+    res.status(201).json({ message: 'Registrasi via Google berhasil', user: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

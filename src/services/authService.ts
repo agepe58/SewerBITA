@@ -116,15 +116,15 @@ export const authService = {
         return {
           success: true,
           user: data.user,
-          pending: true,
-          message: data.message || 'Pendaftaran berhasil! Akun Anda membutuhkan persetujuan Admin sebelum login.'
+          pending: false,
+          message: data.message || 'Pendaftaran berhasil! Akun Anda telah aktif dan dapat langsung digunakan.'
         };
       } else {
         const err = await res.json();
         return { success: false, error: err.error || 'Gagal mendaftarkan akun' };
       }
     } catch {
-      // Fallback local registration with Pending Approval
+      // Fallback local registration
       const newUser: UserProfile = {
         id: `usr-${Date.now()}`,
         name: fullName,
@@ -133,14 +133,14 @@ export const authService = {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`,
         department: department || 'Operasional & Pemeliharaan',
         phone: '+62 812-0000-0000',
-        status: 'Pending Approval'
+        status: 'Active'
       };
       cachePendingUserLocally(newUser);
       return {
         success: true,
         user: newUser,
-        pending: true,
-        message: 'Pendaftaran berhasil! Akun Anda membutuhkan persetujuan Administrator sebelum login.'
+        pending: false,
+        message: 'Pendaftaran berhasil! Akun Anda telah terdaftar dan aktif.'
       };
     }
   },
@@ -156,15 +156,6 @@ export const authService = {
 
       if (res.ok) {
         const data = await res.json();
-        if (data.pending) {
-          if (data.user) cachePendingUserLocally(data.user);
-          return {
-            success: true,
-            pending: true,
-            user: data.user,
-            message: data.message || `⚠️ Pendaftaran via Google SSO Berhasil! Akun Google Anda (${googlePayload.email}) dalam status Pending Approval. Harap tunggu persetujuan Administrator.`
-          };
-        }
         authService.saveSession(data.user);
         return { success: true, user: data.user };
       } else {
@@ -178,30 +169,23 @@ export const authService = {
       let user = users.find(u => u.email.toLowerCase() === googlePayload.email.toLowerCase());
 
       if (!user) {
-        // Create new pending user
+        // Create new active user
         user = {
           id: `usr-g-${Date.now()}`,
           name: googlePayload.name,
           email: googlePayload.email,
-          role: 'Technician',
+          role: 'Engineer',
           avatar: googlePayload.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(googlePayload.name)}`,
           department: 'Direksi / Internal Team',
-          status: 'Pending Approval'
+          status: 'Active'
         };
         cachePendingUserLocally(user);
-        return {
-          success: true,
-          pending: true,
-          user,
-          message: `⚠️ Pendaftaran via Google SSO Berhasil! Akun Google Anda (${googlePayload.email}) telah terdaftar dan menunggu persetujuan Administrator.`
-        };
       }
 
-      if (user.status === 'Pending Approval' || user.status === 'Pending') {
+      if (user.status === 'Inactive') {
         return {
           success: false,
-          pending: true,
-          error: `Akun Google Anda (${googlePayload.email}) dalam status Pending Approval. Harap hubungi Admin.`
+          error: `Akun Google Anda (${googlePayload.email}) dalam status tidak aktif.`
         };
       }
 
