@@ -37,6 +37,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Google OAuth Modal Simulator State
   const [isGooglePopupOpen, setIsGooglePopupOpen] = useState(false);
+  const [isCustomGoogleInput, setIsCustomGoogleInput] = useState(false);
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+  const [customGoogleName, setCustomGoogleName] = useState('');
 
   if (!isOpen) return null;
 
@@ -420,43 +423,118 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </p>
 
             <div className="space-y-2">
-              <button
-                onClick={() => handleGoogleOAuthSelect({
-                  name: 'Angga Purbaya',
-                  email: 'angga.purbaya@gmail.com',
-                  photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-                })}
-                className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-left cursor-pointer"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
-                  alt="Angga Purbaya"
-                  className="w-9 h-9 rounded-full object-cover border"
-                />
-                <div>
-                  <div className="text-xs font-extrabold text-slate-900 dark:text-white">Angga Purbaya</div>
-                  <div className="text-[11px] text-slate-500 font-medium">angga.purbaya@gmail.com</div>
-                </div>
-              </button>
+              {!isCustomGoogleInput ? (
+                <>
+                  <button
+                    onClick={() => handleGoogleOAuthSelect({
+                      name: 'Angga Purbaya',
+                      email: 'angga.purbaya@gmail.com',
+                      photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+                    })}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-left cursor-pointer"
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
+                      alt="Angga Purbaya"
+                      className="w-9 h-9 rounded-full object-cover border"
+                    />
+                    <div>
+                      <div className="text-xs font-extrabold text-slate-900 dark:text-white">Angga Purbaya</div>
+                      <div className="text-[11px] text-slate-500 font-medium">angga.purbaya@gmail.com</div>
+                    </div>
+                  </button>
 
-              <button
-                onClick={() => handleGoogleOAuthSelect({
-                  name: 'Angga Purbaya (BITA Admin)',
-                  email: 'angga.purbaya@bita.co.id',
-                  photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80'
-                })}
-                className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-left cursor-pointer"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80"
-                  alt="Angga Purbaya (BITA)"
-                  className="w-9 h-9 rounded-full object-cover border"
-                />
-                <div>
-                  <div className="text-xs font-extrabold text-slate-900 dark:text-white">Angga Purbaya (BITA Admin)</div>
-                  <div className="text-[11px] text-slate-500 font-medium">angga.purbaya@bita.co.id</div>
-                </div>
-              </button>
+                  <button
+                    onClick={() => handleGoogleOAuthSelect({
+                      name: 'Angga Purbaya (BITA Admin)',
+                      email: 'angga.purbaya@bita.co.id',
+                      photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80'
+                    })}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-left cursor-pointer"
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80"
+                      alt="Angga Purbaya (BITA)"
+                      className="w-9 h-9 rounded-full object-cover border"
+                    />
+                    <div>
+                      <div className="text-xs font-extrabold text-slate-900 dark:text-white">Angga Purbaya (BITA Admin)</div>
+                      <div className="text-[11px] text-slate-500 font-medium">angga.purbaya@bita.co.id</div>
+                    </div>
+                  </button>
+
+                  {/* Option to enter another custom Google account */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomGoogleInput(true)}
+                    className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-blue-300 dark:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-950/40 text-[#2563EB] dark:text-[#60A5FA] text-xs font-extrabold transition cursor-pointer mt-3"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>+ Gunakan Akun Google Lainnya</span>
+                  </button>
+                </>
+              ) : (
+                /* Custom Google Account Entry Form */
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    if (!emailRegex.test(customGoogleEmail.trim())) {
+                      alert('Harap masukkan alamat email Google yang valid.');
+                      return;
+                    }
+                    handleGoogleOAuthSelect({
+                      name: customGoogleName.trim() || customGoogleEmail.split('@')[0],
+                      email: customGoogleEmail.trim(),
+                      photoUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(customGoogleEmail)}`
+                    });
+                  }}
+                  className="space-y-3 pt-1"
+                >
+                  <div>
+                    <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1">
+                      Alamat Email Google
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={customGoogleEmail}
+                      onChange={e => setCustomGoogleEmail(e.target.value)}
+                      placeholder="contoh: nama.anda@gmail.com"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-extrabold text-slate-900 dark:text-white focus:outline-none focus:border-[#2563EB]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1">
+                      Nama Akun Google
+                    </label>
+                    <input
+                      type="text"
+                      value={customGoogleName}
+                      onChange={e => setCustomGoogleName(e.target.value)}
+                      placeholder="Nama Lengkap Anda..."
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-extrabold text-slate-900 dark:text-white focus:outline-none focus:border-[#2563EB]"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomGoogleInput(false)}
+                      className="flex-1 py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-extrabold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-black shadow-md transition cursor-pointer"
+                    >
+                      Lanjutkan Sign In
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>
