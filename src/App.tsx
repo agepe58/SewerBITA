@@ -26,6 +26,8 @@ import { UserRole, UserProfile } from './types/rbac';
 import { NetworkGraphEngine } from './services/graphEngine';
 import { NetworkTraceResult } from './types/topology';
 import { apiClient } from './services/api';
+import { authService } from './services/authService';
+import { AuthModal } from './components/auth/AuthModal';
 
 export const App: React.FC = () => {
   // App view & Theme state
@@ -143,8 +145,14 @@ export const App: React.FC = () => {
     loadRealDatabaseData();
   }, []);
 
-  // Active User & Role
-  const [currentUser, setCurrentUser] = useState<UserProfile>(INITIAL_USERS[0]);
+  // Active User & Role Session Initialization
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
+    return authService.getCurrentSession() || INITIAL_USERS[0];
+  });
+
+  // Auth Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
 
   // Modals state
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
@@ -374,11 +382,24 @@ export const App: React.FC = () => {
   // If in Landing Page mode, show landing page portal
   if (isLandingPage) {
     return (
-      <LandingPage
-        onEnterDashboard={() => setIsLandingPage(false)}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-      />
+      <>
+        <LandingPage
+          onEnterDashboard={() => setIsLandingPage(false)}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+          onOpenAuthModal={() => { setAuthModalMode('login'); setIsAuthModalOpen(true); }}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={(user) => {
+            setCurrentUser(user);
+            authService.saveSession(user);
+            setIsLandingPage(false);
+          }}
+          initialMode={authModalMode}
+        />
+      </>
     );
   }
 
@@ -409,10 +430,17 @@ export const App: React.FC = () => {
             onRoleChange={handleRoleChange}
             onOpenQrScanner={() => setIsQrScannerModalOpen(true)}
             onSearchAsset={handleSearchAsset}
-            onLogout={() => setIsLandingPage(true)}
+            onLogout={() => {
+              authService.logout();
+              setIsLandingPage(true);
+            }}
             isDarkMode={isDarkMode}
             onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
             onOpenEditProfile={() => setUserToEdit(currentUser)}
+            onOpenAuthModal={() => {
+              setAuthModalMode('login');
+              setIsAuthModalOpen(true);
+            }}
           />
 
           {/* Tab Router Views */}
@@ -584,6 +612,17 @@ export const App: React.FC = () => {
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
         onAddUser={handleAddUser}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(user) => {
+          setCurrentUser(user);
+          authService.saveSession(user);
+          setIsLandingPage(false);
+        }}
+        initialMode={authModalMode}
       />
     </div>
   );

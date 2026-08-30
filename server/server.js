@@ -364,6 +364,72 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
+// --------------------------------------------------------------------
+// 8. AUTHENTICATION REST API ENDPOINTS
+// --------------------------------------------------------------------
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const q = 'SELECT id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar" FROM user_profiles WHERE LOWER(email) = LOWER($1);';
+    const result = await pool.query(q, [email]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Email tidak terdaftar' });
+    }
+    res.json({ message: 'Login berhasil', user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  const { fullName, email, password, department, role } = req.body;
+  try {
+    const checkQ = 'SELECT id FROM user_profiles WHERE LOWER(email) = LOWER($1);';
+    const checkRes = await pool.query(checkQ, [email]);
+    if (checkRes.rows.length > 0) {
+      return res.status(400).json({ error: 'Email sudah terdaftar. Silakan login.' });
+    }
+
+    const newId = `usr-${Date.now()}`;
+    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`;
+    const q = `
+      INSERT INTO user_profiles (id, full_name, email, role, department, status, avatar_url)
+      VALUES ($1, $2, $3, $4, $5, 'Active', $6)
+      RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
+    `;
+    const values = [newId, fullName, email, role || 'Technician', department || 'Operasional', avatarUrl];
+    const result = await pool.query(q, values);
+    res.status(201).json({ message: 'Pendaftaran berhasil', user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  const { name, email, photoUrl } = req.body;
+  try {
+    const checkQ = 'SELECT id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar" FROM user_profiles WHERE LOWER(email) = LOWER($1);';
+    const checkRes = await pool.query(checkQ, [email]);
+    
+    if (checkRes.rows.length > 0) {
+      return res.json({ message: 'Login Google berhasil', user: checkRes.rows[0] });
+    }
+
+    const newId = `usr-google-${Date.now().toString().slice(-4)}`;
+    const defaultRole = (email.toLowerCase().includes('admin') || email.toLowerCase() === 'angga.purbaya@gmail.com') ? 'Admin' : 'Engineer';
+    const q = `
+      INSERT INTO user_profiles (id, full_name, email, role, department, status, avatar_url)
+      VALUES ($1, $2, $3, $4, 'Google Single Sign-On', 'Active', $5)
+      RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
+    `;
+    const values = [newId, name, email, defaultRole, photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`];
+    const result = await pool.query(q, values);
+    res.status(201).json({ message: 'Registrasi Google berhasil', user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`🚀 SewerBITA Production REST API Server running on port ${PORT}`);

@@ -13,12 +13,14 @@ interface LandingPageProps {
   onEnterDashboard: () => void;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
+  onOpenAuthModal?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onEnterDashboard,
   isDarkMode = true,
-  onToggleDarkMode
+  onToggleDarkMode,
+  onOpenAuthModal
 }) => {
   return (
     <div className={`h-screen w-full font-sans flex flex-col items-center justify-center p-6 sm:p-10 relative overflow-hidden transition-colors duration-300 selection:bg-[#2563EB] selection:text-white ${
@@ -41,7 +43,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="h-9 sm:h-11 w-auto object-contain" />
         </div>
 
-        {/* Top Right Controls (Dark Mode Toggle + Enter Dashboard Button) */}
+        {/* Top Right Controls (Dark Mode Toggle + Auth Login + Enter Dashboard Button) */}
         <div className="flex items-center gap-3">
           {onToggleDarkMode && (
             <button
@@ -58,6 +60,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               ) : (
                 <Moon className="w-5 h-5 text-blue-600" />
               )}
+            </button>
+          )}
+
+          {onOpenAuthModal && (
+            <button
+              onClick={onOpenAuthModal}
+              className={`inline-flex items-center justify-center gap-2 font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl border transition-all shadow-md cursor-pointer whitespace-nowrap ${
+                isDarkMode
+                  ? 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+                  : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-2xs'
+              }`}
+            >
+              <span>🔑 Login / Daftar</span>
             </button>
           )}
 

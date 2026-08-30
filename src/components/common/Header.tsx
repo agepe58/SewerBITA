@@ -11,6 +11,7 @@ interface HeaderProps {
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
   onOpenEditProfile?: () => void;
+  onOpenAuthModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,7 +22,8 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   isDarkMode = false,
   onToggleDarkMode,
-  onOpenEditProfile
+  onOpenEditProfile,
+  onOpenAuthModal
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -176,6 +178,27 @@ export const Header: React.FC<HeaderProps> = ({
                     <span>Edit Profil User</span>
                   </div>
                 </button>
+
+                {/* Login / Switch Account Option */}
+                {onOpenAuthModal && (
+                  <button
+                    onClick={() => {
+                      setIsUserDropdownOpen(false);
+                      onOpenAuthModal();
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-bold flex items-center justify-between transition cursor-pointer ${
+                      isDarkMode ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <User className="w-4 h-4 text-emerald-500" />
+                      <span>Masuk / Ganti Akun</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      Login
+                    </span>
+                  </button>
+                )}
 
                 {/* Dark Mode Toggle Option */}
                 {onToggleDarkMode && (
