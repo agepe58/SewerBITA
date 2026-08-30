@@ -23,7 +23,32 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 }) => {
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Active' | 'Inactive'>('All');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
   const roles: UserRole[] = ['Admin', 'Engineer', 'Technician', 'Management'];
+
+  // Auto sync on mount
+  React.useEffect(() => {
+    if (onRefreshUsers) {
+      onRefreshUsers();
+    }
+  }, [onRefreshUsers]);
+
+  const handleManualSync = async () => {
+    if (!onRefreshUsers) return;
+    setIsSyncing(true);
+    setSyncFeedback(null);
+    try {
+      await onRefreshUsers();
+      setSyncFeedback('✅ Sinkronisasi PostgreSQL berhasil!');
+      setTimeout(() => setSyncFeedback(null), 3000);
+    } catch {
+      setSyncFeedback('⚠️ Sinkronisasi selesai (offline fallback aktif).');
+      setTimeout(() => setSyncFeedback(null), 3000);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Calculate pending count
   const pendingCount = users.filter(u => u.status === 'Pending Approval' || u.status === 'Pending').length;
@@ -76,17 +101,23 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold mt-1">
             Pengaturan pengguna sistem, autentikasi password, peran (*role*), dan matriks hak akses (*Role-Based Permissions*).
           </p>
+          {syncFeedback && (
+            <div className="mt-2 text-xs font-black text-emerald-600 dark:text-emerald-400 animate-in fade-in">
+              {syncFeedback}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2.5">
           {onRefreshUsers && (
             <button
-              onClick={onRefreshUsers}
-              className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-extrabold text-xs px-4 py-3.5 rounded-xl transition cursor-pointer border border-slate-200 dark:border-slate-700"
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-extrabold text-xs px-4 py-3.5 rounded-xl transition cursor-pointer border border-slate-200 dark:border-slate-700 disabled:opacity-60"
               title="Refresh Data Pengguna dari Server PostgreSQL"
             >
-              <Users className="w-4 h-4 text-blue-500 animate-spin-slow" />
-              <span>🔄 Sync Server</span>
+              <Users className={`w-4 h-4 text-blue-500 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Menyinkronkan...' : '🔄 Sync Server'}</span>
             </button>
           )}
           <button
