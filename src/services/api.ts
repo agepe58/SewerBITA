@@ -29,7 +29,63 @@ export const apiClient = {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets`);
       if (!res.ok) return null;
-      return await res.json();
+      const raw = await res.json();
+      if (!raw) return null;
+
+      const manholes: ManholeAsset[] = (raw.manholes || []).map((m: any) => {
+        const lat = Number(m.coordinates?.lat ?? m.latitude ?? -6.444);
+        const lng = Number(m.coordinates?.lng ?? m.longitude ?? 107.452);
+        return {
+          ...m,
+          type: 'manhole' as const,
+          coordinates: { lat, lng },
+          latitude: lat,
+          longitude: lng,
+          depthMeters: Number(m.depthMeters ?? 2.5),
+          diameterMm: Number(m.diameterMm ?? 800),
+          material: m.material || 'Precast Concrete',
+          coverCondition: m.coverCondition || 'Good',
+          status: m.status || 'Active',
+          condition: m.condition || 'Good',
+          photos: Array.isArray(m.photos) ? m.photos : []
+        };
+      });
+
+      const pumpStations: PumpStationAsset[] = (raw.pumpStations || []).map((ps: any) => {
+        const lat = Number(ps.coordinates?.lat ?? ps.latitude ?? -6.444);
+        const lng = Number(ps.coordinates?.lng ?? ps.longitude ?? 107.452);
+        const pumpCount = Number(ps.pumpCount ?? ps.totalPumps ?? 2);
+        const capacityLps = Number(ps.capacityLps ?? ps.flowCapacityLps ?? 50);
+        return {
+          ...ps,
+          type: 'pump_station' as const,
+          coordinates: { lat, lng },
+          latitude: lat,
+          longitude: lng,
+          pumpCount,
+          activePumps: Number(ps.activePumps ?? pumpCount),
+          capacityLps,
+          powerSource: ps.powerSource || 'PLN + Genset',
+          status: ps.status || 'Active',
+          condition: ps.condition || 'Good',
+          photos: Array.isArray(ps.photos) ? ps.photos : []
+        };
+      });
+
+      const pipes: PipeAsset[] = (raw.pipes || []).map((p: any) => {
+        return {
+          ...p,
+          type: 'pipe' as const,
+          diameterMm: Number(p.diameterMm ?? 400),
+          lengthMeters: Number(p.lengthMeters ?? 50),
+          flowDirection: p.flowDirection || 'downstream',
+          status: p.status || 'Active',
+          condition: p.condition || 'Good',
+          photos: Array.isArray(p.photos) ? p.photos : []
+        };
+      });
+
+      return { manholes, pumpStations, pipes };
     } catch (e) {
       console.warn('Backend API unavailable, using fallback storage:', e);
       return null;

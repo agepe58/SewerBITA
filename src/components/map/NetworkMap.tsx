@@ -121,6 +121,17 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
     }
   };
 
+  // Defensive Coordinate Extractor
+  const getCoords = (asset: any): [number, number] | null => {
+    if (!asset) return null;
+    const lat = Number(asset.coordinates?.lat ?? asset.latitude);
+    const lng = Number(asset.coordinates?.lng ?? asset.longitude);
+    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+      return [lat, lng];
+    }
+    return [-6.444, 107.452];
+  };
+
   // Center Coordinates for Bukit Indah
   const defaultCenter: [number, number] = [-6.444, 107.452];
   const [panTarget, setPanTarget] = useState<[number, number] | null>(null);
@@ -131,7 +142,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       setSelectedAssetId(selectedAssetIdFromParent);
       const matched = [...manholes, ...pumpStations].find(a => a.id === selectedAssetIdFromParent);
       if (matched) {
-        setPanTarget([matched.coordinates.lat, matched.coordinates.lng]);
+        const c = getCoords(matched);
+        if (c) setPanTarget(c);
       }
     }
   }, [selectedAssetIdFromParent, manholes, pumpStations]);
@@ -142,8 +154,14 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
 
   // Combined asset node coordinates mapping for polyline connections
   const nodeCoordsMap = new Map<string, [number, number]>();
-  manholes.forEach(m => nodeCoordsMap.set(m.id, [m.coordinates.lat, m.coordinates.lng]));
-  pumpStations.forEach(p => nodeCoordsMap.set(p.id, [p.coordinates.lat, p.coordinates.lng]));
+  manholes.forEach(m => {
+    const c = getCoords(m);
+    if (c) nodeCoordsMap.set(m.id, c);
+  });
+  pumpStations.forEach(p => {
+    const c = getCoords(p);
+    if (c) nodeCoordsMap.set(p.id, c);
+  });
 
   // Filters logic
   const filteredManholes = manholes.filter(m => {
@@ -174,7 +192,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-64px)] overflow-hidden">
+    <div className="relative w-full h-full min-h-[600px] overflow-hidden">
       {/* Floating Filter Bar Overlay */}
       <MapFilters
         selectedArea={selectedArea}
@@ -231,7 +249,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       <MapContainer
         center={defaultCenter}
         zoom={14}
-        className="w-full h-full"
+        className="w-full h-full min-h-[600px]"
         zoomControl={false}
       >
         <MapController centerCoords={panTarget} />
@@ -297,6 +315,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
 
         {/* Render Manhole Markers */}
         {showManholes && filteredManholes.map((mh) => {
+          const coords = getCoords(mh);
+          if (!coords) return null;
           const inTrace = isAssetInTrace(mh.id);
           const icon = createManholeIcon(mh.condition, inTrace);
           const opacity = activeTraceResult && !inTrace ? 0.4 : 1.0;
@@ -304,7 +324,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           return (
             <Marker
               key={mh.id}
-              position={[mh.coordinates.lat, mh.coordinates.lng]}
+              position={coords}
               icon={icon}
               opacity={opacity}
               eventHandlers={{
@@ -341,13 +361,15 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
 
         {/* Render Pump Station Markers */}
         {showPumpStations && filteredPumpStations.map((ps) => {
+          const coords = getCoords(ps);
+          if (!coords) return null;
           const inTrace = isAssetInTrace(ps.id);
           const icon = createPumpStationIcon(inTrace);
 
           return (
             <Marker
               key={ps.id}
-              position={[ps.coordinates.lat, ps.coordinates.lng]}
+              position={coords}
               icon={icon}
               eventHandlers={{
                 click: () => handleSelectAsset(ps)
