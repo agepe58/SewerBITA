@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   Plus,
-  Filter,
+  FileSpreadsheet,
+  Trash2,
+  Edit2,
   QrCode,
   MapPin,
   GitBranch,
   Boxes,
-  Eye,
-  FileSpreadsheet,
-  Trash2,
-  Edit3,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset, AssetCondition } from '../../types/asset';
 
@@ -24,255 +23,406 @@ interface AssetRegistryProps {
   onNavigateToMapWithAsset: (assetId: string) => void;
   onEditAsset: (asset: SewerAsset) => void;
   onDeleteAsset: (assetId: string) => void;
+  isDarkMode?: boolean;
 }
 
 export const AssetRegistry: React.FC<AssetRegistryProps> = ({
-  manholes,
-  pumpStations,
-  pipes,
+  manholes = [],
+  pumpStations = [],
+  pipes = [],
   onOpenAddModal,
   onOpenQrModal,
   onNavigateToMapWithAsset,
   onEditAsset,
-  onDeleteAsset
+  onDeleteAsset,
+  isDarkMode = true
 }) => {
-  const [filterType, setFilterType] = useState<'all' | 'manhole' | 'pipe' | 'pump_station'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterCondition, setFilterCondition] = useState<string>('all');
-  const [assetToDelete, setAssetToDelete] = useState<SewerAsset | null>(null);
+  const [selectedType, setSelectedType] = useState<string>('Semua Tipe');
+  const [selectedCondition, setSelectedCondition] = useState<string>('Semua Kondisi');
+  const [selectedArea, setSelectedArea] = useState<string>('Semua Area');
+  const [selectedStatus, setSelectedStatus] = useState<string>('Semua Status');
 
-  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
+  // Filter Tabs
+  const [activeTabFilter, setActiveTabFilter] = useState<'all' | 'manhole' | 'pump_station' | 'pipe'>('all');
 
-  const filteredAssets = allAssets.filter(asset => {
-    if (filterType !== 'all' && asset.type !== filterType) return false;
-    if (filterCondition !== 'all' && asset.condition !== filterCondition) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        asset.assetCode.toLowerCase().includes(q) ||
-        asset.name.toLowerCase().includes(q) ||
-        asset.area.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+  const allAssets: SewerAsset[] = useMemo(() => {
+    return [
+      ...manholes.map(m => ({ ...m, type: 'manhole' as const })),
+      ...pumpStations.map(ps => ({ ...ps, type: 'pump_station' as const })),
+      ...pipes.map(p => ({ ...p, type: 'pipe' as const }))
+    ];
+  }, [manholes, pumpStations, pipes]);
 
-  const handleConfirmDelete = () => {
-    if (assetToDelete) {
-      onDeleteAsset(assetToDelete.id);
-      setAssetToDelete(null);
-    }
+  // Unique areas
+  const areas = useMemo(() => {
+    const set = new Set<string>();
+    allAssets.forEach(a => { if (a.area) set.add(a.area); });
+    return Array.from(set);
+  }, [allAssets]);
+
+  // Filtered assets
+  const filteredAssets = useMemo(() => {
+    return allAssets.filter(asset => {
+      // Search
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesCode = (asset.assetCode || '').toLowerCase().includes(q);
+        const matchesName = (asset.name || '').toLowerCase().includes(q);
+        const matchesArea = (asset.area || '').toLowerCase().includes(q);
+        if (!matchesCode && !matchesName && !matchesArea) return false;
+      }
+
+      // Tab filter
+      if (activeTabFilter !== 'all' && asset.type !== activeTabFilter) {
+        return false;
+      }
+
+      // Dropdown Type
+      if (selectedType !== 'Semua Tipe') {
+        if (selectedType === 'Manhole' && asset.type !== 'manhole') return false;
+        if (selectedType === 'Stasiun Pompa' && asset.type !== 'pump_station') return false;
+        if (selectedType === 'Pipa' && asset.type !== 'pipe') return false;
+      }
+
+      // Condition
+      if (selectedCondition !== 'Semua Kondisi' && asset.condition !== selectedCondition) {
+        return false;
+      }
+
+      // Area
+      if (selectedArea !== 'Semua Area' && asset.area !== selectedArea) {
+        return false;
+      }
+
+      // Status
+      if (selectedStatus !== 'Semua Status' && asset.status !== selectedStatus) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [allAssets, searchQuery, activeTabFilter, selectedType, selectedCondition, selectedArea, selectedStatus]);
+
+  // Export to CSV
+  const handleExportCsv = () => {
+    const headers = ['Tipe', 'Kode Aset', 'Nama Aset', 'Area', 'Kondisi', 'Status', 'Jatuh Tempo Inspeksi'];
+    const rows = filteredAssets.map(a => [
+      a.type,
+      a.assetCode,
+      `"${a.name.replace(/"/g, '""')}"`,
+      `"${a.area.replace(/"/g, '""')}"`,
+      a.condition,
+      a.status,
+      a.nextInspectionDue || ''
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `SewerBITA_Assets_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
+  const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800/80' : 'bg-white border-slate-200';
+  const filterInputClass = `px-3 py-2 rounded-xl text-xs font-semibold border transition outline-none cursor-pointer ${
+    isDarkMode
+      ? 'bg-slate-900/90 border-slate-800 text-slate-200 focus:border-blue-500'
+      : 'bg-slate-100 border-slate-200 text-slate-700 focus:border-blue-500'
+  }`;
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto font-sans">
-      {/* Workspace Header Bar Card */}
-      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
-              <Boxes className="w-5 h-5" />
-            </div>
-            <span>Master Registry Aset Jaringan Air Limbah</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold mt-1">
-            Katalog lengkap Manhole, Pipa Kolektor, dan Stasiun Pompa terpusat (*Single Source of Truth*).
-          </p>
-        </div>
+    <div className={`p-6 space-y-6 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      
+      {/* 1. TOP ACTION BUTTONS (Export & + Tambah Aset) */}
+      <div className="flex items-center justify-end gap-3">
+        <button
+          onClick={handleExportCsv}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+          <span>Export .xlsx / .csv</span>
+        </button>
 
         <button
           onClick={onOpenAddModal}
-          className="flex items-center gap-2.5 bg-[#2563EB] text-white font-black text-sm px-6 py-3.5 rounded-xl hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/25 shrink-0 self-start md:self-auto cursor-pointer"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
         >
-          <Plus className="w-5 h-5" />
-          <span>+ Tambah Aset Baru</span>
+          <Plus className="w-4 h-4" />
+          <span>Tambah Aset Baru</span>
         </button>
       </div>
 
-      {/* Control Bar: Tabs, Search, Filter */}
-      <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-        {/* Type Filter Tabs */}
-        <div className="flex flex-wrap bg-slate-100/90 dark:bg-slate-800 p-1.5 rounded-full border border-slate-200/80 dark:border-slate-700 text-sm font-bold gap-1">
+      {/* 2. FILTER & SEARCH TOOLBAR (matching Screenshot 2 layout) */}
+      <div className={`p-4 rounded-2xl border space-y-4 shadow-xs ${cardBg}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          {/* Search Input */}
+          <div className="relative lg:col-span-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari kode atau nama aset..."
+              className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-semibold border transition outline-none ${
+                isDarkMode
+                  ? 'bg-slate-900/90 border-slate-800 text-white focus:border-blue-500'
+                  : 'bg-slate-100 border-slate-200 text-slate-900 focus:border-blue-500'
+              }`}
+            />
+          </div>
+
+          {/* Tipe Dropdown */}
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className={filterInputClass}
+          >
+            <option value="Semua Tipe">Semua Tipe</option>
+            <option value="Manhole">Manhole</option>
+            <option value="Stasiun Pompa">Stasiun Pompa</option>
+            <option value="Pipa">Pipa</option>
+          </select>
+
+          {/* Kondisi Dropdown */}
+          <select
+            value={selectedCondition}
+            onChange={(e) => setSelectedCondition(e.target.value)}
+            className={filterInputClass}
+          >
+            <option value="Semua Kondisi">Semua Kondisi</option>
+            <option value="Good">Good (Baik)</option>
+            <option value="Fair">Fair (Cukup)</option>
+            <option value="Warning">Warning (Waspada)</option>
+            <option value="Critical">Critical (Kritis)</option>
+          </select>
+
+          {/* Area Dropdown */}
+          <select
+            value={selectedArea}
+            onChange={(e) => setSelectedArea(e.target.value)}
+            className={filterInputClass}
+          >
+            <option value="Semua Area">Semua Area</option>
+            {areas.map(a => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+
+          {/* Status Dropdown */}
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className={filterInputClass}
+          >
+            <option value="Semua Status">Semua Status</option>
+            <option value="Active">Active (Aktif)</option>
+            <option value="Inactive">Inactive (Non-Aktif)</option>
+            <option value="Under Maintenance">Under Maintenance</option>
+          </select>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-2 pt-1">
           <button
-            onClick={() => setFilterType('all')}
-            className={`px-5 py-2.5 rounded-full transition cursor-pointer ${filterType === 'all' ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
+            onClick={() => setActiveTabFilter('all')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              activeTabFilter === 'all'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
           >
             Semua Aset ({allAssets.length})
           </button>
           <button
-            onClick={() => setFilterType('manhole')}
-            className={`px-5 py-2.5 rounded-full transition cursor-pointer ${filterType === 'manhole' ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
+            onClick={() => setActiveTabFilter('manhole')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              activeTabFilter === 'manhole'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
           >
             Manhole ({manholes.length})
           </button>
           <button
-            onClick={() => setFilterType('pipe')}
-            className={`px-5 py-2.5 rounded-full transition cursor-pointer ${filterType === 'pipe' ? 'bg-[#0284C7] text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
-          >
-            Pipa ({pipes.length})
-          </button>
-          <button
-            onClick={() => setFilterType('pump_station')}
-            className={`px-5 py-2.5 rounded-full transition cursor-pointer ${filterType === 'pump_station' ? 'bg-[#059669] text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
+            onClick={() => setActiveTabFilter('pump_station')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              activeTabFilter === 'pump_station'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
           >
             Stasiun Pompa ({pumpStations.length})
           </button>
-        </div>
-
-        {/* Search & Condition Dropdown */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Cari Kode Asset, Nama..."
-              style={{ paddingLeft: '48px' }}
-              className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-semibold rounded-full pr-4 py-3 border border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-[#2563EB]"
-            />
-          </div>
-
-          <select
-            value={filterCondition}
-            onChange={e => setFilterCondition(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-sm rounded-full px-5 py-3 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#2563EB] font-extrabold cursor-pointer"
+          <button
+            onClick={() => setActiveTabFilter('pipe')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              activeTabFilter === 'pipe'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
           >
-            <option value="all">Semua Kondisi</option>
-            <option value="Good">Good</option>
-            <option value="Fair">Fair</option>
-            <option value="Warning">Warning</option>
-            <option value="Critical">Critical</option>
-          </select>
+            Pipa Jaringan ({pipes.length})
+          </button>
         </div>
       </div>
 
-      {/* Main Assets Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+      {/* 3. DATA TABLE */}
+      <div className={`rounded-2xl border overflow-hidden shadow-sm ${cardBg}`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50/90 text-slate-500 font-extrabold border-b border-slate-200/80 uppercase tracking-wider text-xs">
-              <tr>
-                <th className="p-5">Kode Aset (ID)</th>
-                <th className="p-5">Nama Aset</th>
-                <th className="p-5">Jenis Aset</th>
-                <th className="p-5">Area / Zona</th>
-                <th className="p-5">Spesifikasi Fisik</th>
-                <th className="p-5">Kondisi Status</th>
-                <th className="p-5">Jatuh Tempo Inspeksi</th>
-                <th className="p-5 text-center">Tindakan</th>
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className={`border-b ${isDarkMode ? 'border-slate-800/90 bg-slate-900/40 text-slate-400' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                <th className="py-3.5 px-4 font-bold">Kode Aset</th>
+                <th className="py-3.5 px-4 font-bold">Nama Aset</th>
+                <th className="py-3.5 px-4 font-bold">Tipe</th>
+                <th className="py-3.5 px-4 font-bold">Area / Zona</th>
+                <th className="py-3.5 px-4 font-bold">Kondisi</th>
+                <th className="py-3.5 px-4 font-bold">Status</th>
+                <th className="py-3.5 px-4 font-bold">Jatuh Tempo</th>
+                <th className="py-3.5 px-4 font-bold text-center">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
-              {filteredAssets.map(asset => (
-                <tr key={asset.id} className="hover:bg-slate-50/80 transition">
-                  <td className="p-5">
-                    <div className="font-mono font-black text-[#2563EB] text-base">{asset.assetCode}</div>
-                    {asset.type === 'manhole' && 'sequenceNumber' in asset && asset.sequenceNumber && (
-                      <div className="text-[11px] text-[#0284C7] font-bold font-mono">
-                        Urutan Flow #{asset.sequenceNumber}
-                      </div>
-                    )}
-                  </td>
-                  <td className="p-5 font-bold text-slate-900">{asset.name}</td>
-                  <td className="p-5 capitalize">
-                    <span className={`px-3.5 py-1 rounded-full text-xs font-extrabold ${
-                      asset.type === 'manhole' ? 'bg-blue-50 text-[#2563EB] border border-blue-100' :
-                      asset.type === 'pipe' ? 'bg-sky-50 text-[#0284C7] border border-sky-100' : 'bg-emerald-50 text-[#059669] border border-emerald-100'
-                    }`}>
-                      {asset.type.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="p-5 text-slate-600 font-semibold">{asset.area}</td>
-                  <td className="p-5 text-slate-700 font-mono font-semibold">
-                    {asset.type === 'manhole' && `${asset.depthMeters}m | ⌀${asset.diameterMm}mm`}
-                    {asset.type === 'pipe' && `${asset.lengthMeters}m | ⌀${asset.diameterMm}mm`}
-                    {asset.type === 'pump_station' && `${asset.capacityLps} L/s | ${asset.activePumps} Pompa`}
-                  </td>
-                  <td className="p-5">
-                    <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold shadow-2xs ${
-                      asset.condition === 'Good' ? 'bg-[#4ADE80] text-slate-900' :
-                      asset.condition === 'Fair' ? 'bg-[#38BDF8] text-slate-900' :
-                      asset.condition === 'Warning' ? 'bg-[#FDE047] text-slate-900' : 'bg-[#F87171] text-white'
-                    }`}>
-                      {asset.condition}
-                    </span>
-                  </td>
-                  <td className="p-5 font-mono text-slate-600 font-bold">{asset.nextInspectionDue}</td>
-                  <td className="p-5 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <button
-                        onClick={() => onNavigateToMapWithAsset(asset.id)}
-                        className="p-2 bg-slate-100 hover:bg-blue-50 text-[#2563EB] rounded-lg border border-slate-200 transition"
-                        title="Lihat di Peta GIS"
-                      >
-                        <MapPin className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => onOpenQrModal(asset.id)}
-                        className="p-2 bg-slate-100 hover:bg-slate-200/70 text-slate-700 rounded-lg border border-slate-200 transition"
-                        title="Tampilkan QR Code"
-                      >
-                        <QrCode className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => onEditAsset(asset)}
-                        className="p-2 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 rounded-lg border border-slate-200 transition"
-                        title="Edit Asset"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => setAssetToDelete(asset)}
-                        className="p-2 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg border border-slate-200 transition"
-                        title="Hapus Asset"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+            <tbody className="divide-y divide-slate-800/60">
+              {filteredAssets.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-500 font-medium">
+                    Tidak ada aset yang sesuai dengan filter pencarian.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredAssets.map((asset) => {
+                  return (
+                    <tr
+                      key={asset.id}
+                      className={`transition-colors ${
+                        isDarkMode ? 'hover:bg-slate-900/50' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      {/* Kode Aset */}
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400 font-bold whitespace-nowrap">
+                        {asset.assetCode}
+                      </td>
+
+                      {/* Nama Aset */}
+                      <td className="py-3.5 px-4 font-extrabold text-white">
+                        {asset.name}
+                      </td>
+
+                      {/* Tipe */}
+                      <td className="py-3.5 px-4 text-slate-300 font-semibold uppercase text-[10px]">
+                        {asset.type === 'pump_station' ? 'Stasiun Pompa' : asset.type}
+                      </td>
+
+                      {/* Area */}
+                      <td className="py-3.5 px-4 text-slate-300 font-semibold">
+                        {asset.area}
+                      </td>
+
+                      {/* Kondisi Badge */}
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                          asset.condition === 'Good'
+                            ? 'bg-emerald-600/30 text-emerald-400'
+                            : asset.condition === 'Fair'
+                            ? 'bg-sky-600/30 text-sky-400'
+                            : asset.condition === 'Warning'
+                            ? 'bg-amber-600/30 text-amber-400'
+                            : 'bg-rose-600/30 text-rose-400'
+                        }`}>
+                          {asset.condition}
+                        </span>
+                      </td>
+
+                      {/* Status Badge */}
+                      <td className="py-3.5 px-4">
+                        <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-[10px] font-bold">
+                          {asset.status}
+                        </span>
+                      </td>
+
+                      {/* Jatuh Tempo */}
+                      <td className="py-3.5 px-4 text-slate-300 font-medium whitespace-nowrap">
+                        {asset.nextInspectionDue || '-'}
+                      </td>
+
+                      {/* Aksi */}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* QR Code */}
+                          <button
+                            onClick={() => onOpenQrModal(asset.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-sky-400 hover:bg-sky-500/10 transition cursor-pointer"
+                            title="Generate QR Code"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* GIS Map Target */}
+                          <button
+                            onClick={() => onNavigateToMapWithAsset(asset.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition cursor-pointer"
+                            title="Lihat di Peta GIS"
+                          >
+                            <MapPin className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Edit */}
+                          <button
+                            onClick={() => onEditAsset(asset)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
+                            title="Edit Aset"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => {
+                              if (confirm(`Apakah Anda yakin ingin menghapus aset "${asset.name}" (${asset.assetCode})?`)) {
+                                onDeleteAsset(asset.id);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                            title="Hapus Aset"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Delete Confirmation Modal */}
-      {assetToDelete && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1400] flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200/90 w-full max-w-md rounded-xl shadow-2xl p-6 text-slate-900 space-y-4 font-sans">
-            <div className="flex items-center gap-3 text-rose-600 font-extrabold text-base border-b border-slate-100 pb-3">
-              <div className="p-2 bg-rose-50 rounded-xl border border-rose-100">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <span>Konfirmasi Hapus Asset</span>
-            </div>
-
-            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-              Apakah Anda yakin ingin menghapus aset <strong className="text-slate-900 font-mono">{assetToDelete.assetCode} ({assetToDelete.name})</strong>? Tindakan ini akan menghapus aset secara permanen dari katalog master.
-            </p>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setAssetToDelete(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-100 transition text-sm"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-5 py-2 rounded-xl bg-rose-600 text-white font-extrabold hover:bg-rose-700 transition shadow-md shadow-rose-500/20 text-sm"
-              >
-                Hapus Permanen
-              </button>
-            </div>
+        {/* 4. TABLE FOOTER */}
+        <div className="px-6 py-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-semibold">
+          <div>
+            Total {filteredAssets.length} aset - Halaman 1 dari 1
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              disabled
+              className="px-3 py-1.5 rounded-xl border border-slate-800 text-slate-600 cursor-not-allowed text-xs font-bold"
+            >
+              Sebelumnya
+            </button>
+            <button
+              disabled
+              className="px-3 py-1.5 rounded-xl border border-slate-800 text-slate-600 cursor-not-allowed text-xs font-bold"
+            >
+              Berikutnya
+            </button>
           </div>
         </div>
-      )}
+      </div>
+
     </div>
   );
 };

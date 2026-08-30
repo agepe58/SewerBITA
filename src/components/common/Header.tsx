@@ -6,7 +6,6 @@ import {
   Sun,
   Moon,
   LogOut,
-  ChevronDown,
   UserCheck
 } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types/rbac';
@@ -42,68 +41,58 @@ export const Header: React.FC<HeaderProps> = ({
     switch (activeTab) {
       case 'dashboard':
         return {
-          title: 'Dashboard',
-          subtitle: 'Ringkasan pekerjaan maintenance secara real-time'
+          title: 'Dashboard Monitoring',
+          subtitle: 'Ringkasan operasional dan kondisi aset jaringan air limbah secara real-time'
         };
-      case 'work_orders':
+      case 'map':
         return {
-          title: 'Work Order',
-          subtitle: 'Daftar pekerjaan maintenance yang dapat Anda akses...'
+          title: 'Peta GIS Interaktif',
+          subtitle: 'Visualisasi spasial geospasial manhole, stasiun pompa, dan pipa limbah'
         };
-      case 'projects':
+      case 'topology':
         return {
-          title: 'Proyek',
-          subtitle: 'Manajemen dan monitoring progres proyek pemeliharaan'
+          title: 'Topologi & Flow Tracing',
+          subtitle: 'Solver aliran hidrolik hulu ke hilir (upstream & downstream flow)'
         };
-      case 'daily_reports':
+      case 'assets':
         return {
-          title: 'Laporan Harian',
-          subtitle: 'Rekapitulasi laporan operasional dan inspeksi harian'
+          title: 'Registri Aset Master',
+          subtitle: 'Katalog terpadu data teknis manhole, stasiun pompa, dan segmen pipa'
         };
-      case 'activity_logs':
+      case 'inspections':
         return {
-          title: 'Log Aktivitas',
-          subtitle: 'Audit trail riwayat aktivitas dan perubahan status'
+          title: 'Inspeksi Lapangan',
+          subtitle: 'Riwayat audit kondisi fisik, foto kerusakan, dan catatan inspeksi'
         };
-      case 'app_android':
+      case 'qr_scanner':
         return {
-          title: 'App Android',
-          subtitle: 'Aplikasi mobile teknisi lapangan untuk pencatatan realtime'
+          title: 'Scan QR Code Aset',
+          subtitle: 'Pemindaian cepat kode QR untuk identifikasi dan inspeksi aset'
         };
-      case 'flowchart':
+      case 'data':
         return {
-          title: 'Flowchart Aplikasi & GIS',
-          subtitle: 'Visualisasi alur sistem informasi & jaringan GIS'
+          title: 'Import / Export Data',
+          subtitle: 'Ekspor dan impor data inventaris jaringan format CSV / Excel / GeoJSON'
         };
       case 'users':
         return {
-          title: 'Pengguna',
-          subtitle: 'Kelola hak akses pengguna, engineer, dan teknisi'
-        };
-      case 'master_data':
-        return {
-          title: 'Data Master',
-          subtitle: 'Master data aset pompa, manhole, pipa, dan kategori'
-        };
-      case 'ai_settings':
-        return {
-          title: 'Pengaturan AI',
-          subtitle: 'Konfigurasi deteksi anomali debit air dan prediksi maintenance'
+          title: 'Manajemen Pengguna',
+          subtitle: 'Kelola hak akses role-based access control (Admin, Engineer, Teknisi)'
         };
       case 'backup':
         return {
           title: 'Backup & Pemulihan',
-          subtitle: 'Pencadangan database PostgreSQL dan pemulihan data'
+          subtitle: 'Pencadangan database PostgreSQL dan restore arsip sistem'
         };
       case 'profile':
         return {
           title: 'Profil Saya',
-          subtitle: 'Pengaturan informasi akun dan preferensi pengguna'
+          subtitle: 'Pengaturan akun pengguna dan informasi kontak personal'
         };
       default:
         return {
-          title: 'Dashboard',
-          subtitle: 'Sistem Informasi Monitoring & Maintenance'
+          title: 'Dashboard Monitoring',
+          subtitle: 'Sistem Informasi Jaringan Air Limbah SewerBITA'
         };
     }
   };
@@ -165,10 +154,10 @@ export const Header: React.FC<HeaderProps> = ({
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 text-xs font-semibold transition cursor-pointer shadow-2xs"
         >
           <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Download App</span>
+          <span>Mobile App</span>
         </button>
 
-        {/* Notification Bell with Badge */}
+        {/* Notification Bell */}
         <div className="relative">
           <button className={`p-2 rounded-xl border transition cursor-pointer ${
             isDarkMode ? 'bg-slate-900/80 border-slate-700/80 text-slate-300 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-600'

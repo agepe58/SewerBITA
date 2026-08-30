@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ClipboardCheck,
   Search,
@@ -8,8 +8,9 @@ import {
   User,
   AlertTriangle,
   FileText,
-  Edit3,
-  Trash2
+  Edit2,
+  Trash2,
+  FileSpreadsheet
 } from 'lucide-react';
 import { InspectionRecord } from '../../types/inspection';
 
@@ -18,199 +19,210 @@ interface InspectionViewProps {
   onOpenNewModal: () => void;
   onEditInspection: (inspection: InspectionRecord) => void;
   onDeleteInspection: (inspectionId: string) => void;
+  isDarkMode?: boolean;
 }
 
 export const InspectionView: React.FC<InspectionViewProps> = ({
-  inspections,
+  inspections = [],
   onOpenNewModal,
   onEditInspection,
-  onDeleteInspection
+  onDeleteInspection,
+  isDarkMode = true
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('all');
-  const [inspectionToDelete, setInspectionToDelete] = useState<InspectionRecord | null>(null);
 
-  const filteredInspections = inspections.filter(insp => {
-    if (selectedCondition !== 'all' && insp.condition !== selectedCondition) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        insp.assetCode.toLowerCase().includes(q) ||
-        insp.assetName.toLowerCase().includes(q) ||
-        insp.inspectorName.toLowerCase().includes(q) ||
-        insp.notes.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+  const filteredInspections = useMemo(() => {
+    return inspections.filter(insp => {
+      if (selectedCondition !== 'all' && insp.condition !== selectedCondition) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          (insp.assetCode || '').toLowerCase().includes(q) ||
+          (insp.inspectorName || '').toLowerCase().includes(q) ||
+          (insp.notes || '').toLowerCase().includes(q) ||
+          (insp.issueCategory || '').toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [inspections, searchQuery, selectedCondition]);
 
-  const handleConfirmDelete = () => {
-    if (inspectionToDelete) {
-      onDeleteInspection(inspectionToDelete.id);
-      setInspectionToDelete(null);
-    }
+  const handleExportCsv = () => {
+    const headers = ['ID Inspeksi', 'Kode Aset', 'Pemeriksa', 'Tanggal', 'Kondisi', 'Kategori Isu', 'Catatan', 'Tindakan'];
+    const rows = filteredInspections.map(i => [
+      i.id,
+      i.assetCode,
+      `"${(i.inspectorName || '').replace(/"/g, '""')}"`,
+      i.inspectionDate,
+      i.condition,
+      `"${(i.issueCategory || '').replace(/"/g, '""')}"`,
+      `"${(i.notes || '').replace(/"/g, '""')}"`,
+      `"${(i.actionTaken || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `SewerBITA_Inspections_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
+  const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800/80' : 'bg-white border-slate-200';
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto font-sans">
-      {/* Workspace Header Bar Card */}
-      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
-              <ClipboardCheck className="w-5 h-5" />
-            </div>
-            <span>Manajemen Inspeksi & Riwayat Lapangan</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold mt-1">
-            Log inspeksi berkala, pelaporan masalah fisik (*issue tracking*), dan dokumentasi lapangan.
-          </p>
-        </div>
+    <div className={`p-6 space-y-6 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      
+      {/* 1. TOP ACTION BUTTONS */}
+      <div className="flex items-center justify-end gap-3">
+        <button
+          onClick={handleExportCsv}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+          <span>Export .xlsx / .csv</span>
+        </button>
 
         <button
           onClick={onOpenNewModal}
-          className="flex items-center gap-2 bg-[#2563EB] text-white font-extrabold text-sm px-6 py-3 rounded-xl hover:bg-[#1D4ED8] transition shadow-md shadow-blue-500/20 cursor-pointer"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
         >
-          <Plus className="w-5 h-5" />
-          <span>+ Buat Laporan Inspeksi Baru</span>
+          <Plus className="w-4 h-4" />
+          <span>Catat Inspeksi Baru</span>
         </button>
       </div>
 
-      {/* Search & Filters */}
-      <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Cari ID Aset, Catatan, Petugas..."
-            style={{ paddingLeft: '48px' }}
-            className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium rounded-full pr-4 py-2.5 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#2563EB]"
-          />
-        </div>
+      {/* 2. FILTER & SEARCH TOOLBAR */}
+      <div className={`p-4 rounded-2xl border space-y-3 shadow-xs ${cardBg}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Search Input */}
+          <div className="relative sm:col-span-2">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari kode aset, nama pemeriksa, atau catatan..."
+              className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-semibold border transition outline-none ${
+                isDarkMode
+                  ? 'bg-slate-900/90 border-slate-800 text-white focus:border-blue-500'
+                  : 'bg-slate-100 border-slate-200 text-slate-900 focus:border-blue-500'
+              }`}
+            />
+          </div>
 
-        <div className="flex items-center gap-3">
+          {/* Kondisi Dropdown */}
           <select
             value={selectedCondition}
-            onChange={e => setSelectedCondition(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white text-sm rounded-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#2563EB] font-bold cursor-pointer"
+            onChange={(e) => setSelectedCondition(e.target.value)}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold border transition outline-none cursor-pointer ${
+              isDarkMode
+                ? 'bg-slate-900/90 border-slate-800 text-slate-200 focus:border-blue-500'
+                : 'bg-slate-100 border-slate-200 text-slate-700 focus:border-blue-500'
+            }`}
           >
-            <option value="all">Semua Hasil Kondisi</option>
-            <option value="Good">Good</option>
-            <option value="Fair">Fair</option>
-            <option value="Warning">Warning</option>
-            <option value="Critical">Critical</option>
+            <option value="all">Semua Kondisi</option>
+            <option value="Good">Good (Baik)</option>
+            <option value="Fair">Fair (Cukup)</option>
+            <option value="Warning">Warning (Waspada)</option>
+            <option value="Critical">Critical (Kritis)</option>
           </select>
         </div>
       </div>
 
-      {/* Inspections Timeline List (Aesthetic Card Spacing) */}
-      <div className="space-y-5 sm:space-y-6">
-        {filteredInspections.map(insp => (
-          <div
-            key={insp.id}
-            className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition space-y-4"
-          >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3.5">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="font-mono font-black text-[#2563EB] text-base">{insp.assetCode}</span>
-                <span className="font-bold text-slate-900 dark:text-white text-sm">{insp.assetName}</span>
-                <span className="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 font-bold">
-                  {insp.issueCategory}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 text-xs shrink-0">
-                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5 font-mono font-semibold">
-                  <Calendar className="w-4 h-4 text-slate-400" />
-                  {insp.inspectionDate}
-                </span>
-
-                <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold shadow-2xs ${
-                  insp.condition === 'Good' ? 'bg-[#4ADE80] text-slate-900' :
-                  insp.condition === 'Fair' ? 'bg-[#38BDF8] text-slate-900' :
-                  insp.condition === 'Warning' ? 'bg-[#FDE047] text-slate-900' : 'bg-[#F87171] text-white'
-                }`}>
-                  {insp.condition}
-                </span>
-
-                <div className="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700">
-                  <button
-                    onClick={() => onEditInspection(insp)}
-                    className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-700 dark:hover:text-amber-300 text-slate-600 dark:text-slate-400 rounded-lg border border-slate-200 dark:border-slate-700 transition cursor-pointer"
-                    title="Edit Laporan Inspeksi"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => setInspectionToDelete(insp)}
-                    className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 text-slate-600 dark:text-slate-400 rounded-lg border border-slate-200 dark:border-slate-700 transition cursor-pointer"
-                    title="Hapus Laporan Inspeksi"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed font-semibold">{insp.notes}</p>
-
-            {insp.photos && insp.photos.length > 0 && (
-              <div className="flex gap-3 pt-1">
-                {insp.photos.map((url, idx) => (
-                  <img key={idx} src={url} alt="Inspeksi Foto" className="w-36 h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs" />
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 font-medium">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-[#0284C7]" />
-                <span>Petugas: <strong className="text-slate-900 dark:text-white font-bold">{insp.inspectorName}</strong> ({insp.inspectorRole})</span>
-              </div>
-
-              {insp.actionTaken && (
-                <div className="text-[#2563EB] dark:text-blue-400 font-extrabold">Tindakan: {insp.actionTaken}</div>
+      {/* 3. DATA TABLE */}
+      <div className={`rounded-2xl border overflow-hidden shadow-sm ${cardBg}`}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className={`border-b ${isDarkMode ? 'border-slate-800/90 bg-slate-900/40 text-slate-400' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                <th className="py-3.5 px-4 font-bold">Kode Aset</th>
+                <th className="py-3.5 px-4 font-bold">Pemeriksa</th>
+                <th className="py-3.5 px-4 font-bold">Tanggal</th>
+                <th className="py-3.5 px-4 font-bold">Kondisi</th>
+                <th className="py-3.5 px-4 font-bold">Kategori Masalah</th>
+                <th className="py-3.5 px-4 font-bold">Catatan</th>
+                <th className="py-3.5 px-4 font-bold text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {filteredInspections.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-500 font-medium">
+                    Belum ada data catatan inspeksi lapangan.
+                  </td>
+                </tr>
+              ) : (
+                filteredInspections.map((insp) => {
+                  return (
+                    <tr
+                      key={insp.id}
+                      className={`transition-colors ${
+                        isDarkMode ? 'hover:bg-slate-900/50' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <td className="py-3.5 px-4 font-mono font-bold text-white whitespace-nowrap">
+                        {insp.assetCode}
+                      </td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-200">
+                        {insp.inspectorName}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
+                        {insp.inspectionDate}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                          insp.condition === 'Good'
+                            ? 'bg-emerald-600/30 text-emerald-400'
+                            : insp.condition === 'Fair'
+                            ? 'bg-sky-600/30 text-sky-400'
+                            : insp.condition === 'Warning'
+                            ? 'bg-amber-600/30 text-amber-400'
+                            : 'bg-rose-600/30 text-rose-400'
+                        }`}>
+                          {insp.condition}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300 font-semibold">
+                        {insp.issueCategory || '-'}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-400 max-w-xs truncate">
+                        {insp.notes || '-'}
+                      </td>
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => onEditInspection(insp)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
+                            title="Edit Inspeksi"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Hapus catatan inspeksi aset ${insp.assetCode}?`)) {
+                                onDeleteInspection(insp.id);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                            title="Hapus Inspeksi"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
-            </div>
-          </div>
-        ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {inspectionToDelete && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1400] flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200/90 w-full max-w-md rounded-xl shadow-2xl p-6 text-slate-900 space-y-4 font-sans">
-            <div className="flex items-center gap-3 text-rose-600 font-extrabold text-base border-b border-slate-100 pb-3">
-              <div className="p-2 bg-rose-50 rounded-xl border border-rose-100">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <span>Konfirmasi Hapus Inspeksi</span>
-            </div>
-
-            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-              Apakah Anda yakin ingin menghapus catatan inspeksi untuk aset <strong className="text-slate-900 font-mono">{inspectionToDelete.assetCode}</strong> (Tanggal: {inspectionToDelete.inspectionDate})? Tindakan ini tidak dapat dibatalkan.
-            </p>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setInspectionToDelete(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-100 transition text-sm"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-5 py-2 rounded-xl bg-rose-600 text-white font-extrabold hover:bg-rose-700 transition shadow-md shadow-rose-500/20 text-sm"
-              >
-                Hapus Permanen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -3,6 +3,11 @@ import { Sidebar, NavTab } from './components/common/Sidebar';
 import { Header } from './components/common/Header';
 import { LandingPage } from './components/landing/LandingPage';
 import { DashboardView } from './components/dashboard/DashboardView';
+import { NetworkMap } from './components/map/NetworkMap';
+import { TopologyView } from './components/topology/TopologyView';
+import { AssetRegistry } from './components/assets/AssetRegistry';
+import { InspectionView } from './components/inspections/InspectionView';
+import { ImportExportView } from './components/data/ImportExportView';
 import { WorkOrderView } from './components/workorder/WorkOrderView';
 import { CreateWorkOrderModal } from './components/workorder/CreateWorkOrderModal';
 import { ProjectsView } from './components/common/ProjectsView';
@@ -31,6 +36,7 @@ import { InspectionRecord } from './types/inspection';
 import { UserRole, UserProfile } from './types/rbac';
 import { WorkOrder, MaintenanceProject, DailyReport, ActivityLog } from './types/workOrder';
 import { NetworkGraphEngine } from './services/graphEngine';
+import { NetworkTraceResult } from './types/topology';
 import { apiClient } from './services/api';
 import { authService } from './services/authService';
 import { AuthModal } from './components/auth/AuthModal';
@@ -317,10 +323,23 @@ export const App: React.FC = () => {
   const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
+  // Flow Tracing State
+  const [activeTraceResult, setActiveTraceResult] = useState<NetworkTraceResult | null>(null);
+
   // Graph Engine Instance
   const graphEngine = useMemo(() => {
     return new NetworkGraphEngine(manholes, pumpStations, pipes);
   }, [manholes, pumpStations, pipes]);
+
+  const handleTraceDownstreamFromMap = (assetId: string) => {
+    const res = graphEngine.traceDownstream(assetId);
+    setActiveTraceResult(res);
+  };
+
+  const handleTraceUpstreamFromMap = (assetId: string) => {
+    const res = graphEngine.traceUpstream(assetId);
+    setActiveTraceResult(res);
+  };
 
   // Work Order Handlers
   const handleSaveWorkOrder = async (wo: WorkOrder) => {
@@ -511,7 +530,7 @@ export const App: React.FC = () => {
               reloadProjects();
               reloadUsersList();
             }}
-            onOpenDownloadApp={() => setActiveTab('app_android')}
+            onOpenDownloadApp={() => window.open('https://sewer.kbi.web.id/sewerbita-release.apk', '_blank')}
             onLogout={() => {
               authService.logout();
               setIsLandingPage(true);
@@ -525,65 +544,109 @@ export const App: React.FC = () => {
           <main className="flex-1 overflow-y-auto">
             {activeTab === 'dashboard' && (
               <DashboardView
-                workOrders={workOrders}
-                projects={projects}
-                users={users}
+                manholes={manholes}
+                pumpStations={pumpStations}
+                pipes={pipes}
+                inspections={inspections}
                 onNavigate={setActiveTab}
                 isDarkMode={isDarkMode}
               />
             )}
 
-            {activeTab === 'work_orders' && (
-              <WorkOrderView
-                workOrders={workOrders}
-                currentUser={currentUser}
-                onOpenCreateModal={() => {
-                  setWorkOrderToEdit(null);
-                  setIsCreateWorkOrderModalOpen(true);
+            {activeTab === 'map' && (
+              <div className="h-[calc(100vh-5rem)] p-4">
+                <div className="h-full rounded-2xl overflow-hidden border border-slate-800 shadow-md">
+                  <NetworkMap
+                    manholes={manholes}
+                    pumpStations={pumpStations}
+                    pipes={pipes}
+                    inspections={inspections}
+                    activeTraceResult={activeTraceResult}
+                    onTraceDownstream={handleTraceDownstreamFromMap}
+                    onTraceUpstream={handleTraceUpstreamFromMap}
+                    onClearTrace={() => setActiveTraceResult(null)}
+                    onOpenQrModal={(id) => setActiveQrAssetId(id)}
+                    onOpenNewInspection={(id) => {
+                      setSelectedAssetIdForMap(id);
+                      setIsNewInspectionModalOpen(true);
+                    }}
+                    selectedAssetIdFromParent={selectedAssetIdForMap}
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'topology' && (
+              <TopologyView
+                manholes={manholes}
+                pumpStations={pumpStations}
+                pipes={pipes}
+                graphEngine={graphEngine}
+                onApplyTraceResult={(trace) => {
+                  setActiveTraceResult(trace);
+                  setActiveTab('map');
                 }}
-                onEditWorkOrder={(wo) => {
-                  setWorkOrderToEdit(wo);
-                  setIsCreateWorkOrderModalOpen(true);
+                onNavigateToMap={() => setActiveTab('map')}
+              />
+            )}
+
+            {activeTab === 'assets' && (
+              <AssetRegistry
+                manholes={manholes}
+                pumpStations={pumpStations}
+                pipes={pipes}
+                onOpenAddModal={() => setIsAddAssetModalOpen(true)}
+                onOpenQrModal={(id) => setActiveQrAssetId(id)}
+                onNavigateToMapWithAsset={(id) => {
+                  setSelectedAssetIdForMap(id);
+                  setActiveTab('map');
                 }}
-                onDeleteWorkOrder={handleDeleteWorkOrder}
+                onEditAsset={(asset) => setAssetToEdit(asset)}
+                onDeleteAsset={(id: string) => {
+                  if (manholes.some(m => m.id === id)) {
+                    handleDeleteAsset(id, 'manhole');
+                  } else if (pumpStations.some(ps => ps.id === id)) {
+                    handleDeleteAsset(id, 'pumpStation');
+                  } else {
+                    handleDeleteAsset(id, 'pipe');
+                  }
+                }}
                 isDarkMode={isDarkMode}
               />
             )}
 
-            {activeTab === 'projects' && (
-              <ProjectsView
-                projects={projects}
-                onCreateProject={handleCreateProject}
+            {activeTab === 'inspections' && (
+              <InspectionView
+                inspections={inspections}
+                onOpenNewModal={() => setIsNewInspectionModalOpen(true)}
+                onEditInspection={(insp) => setInspectionToEdit(insp)}
+                onDeleteInspection={handleDeleteInspection}
                 isDarkMode={isDarkMode}
               />
             )}
 
-            {activeTab === 'daily_reports' && (
-              <DailyReportsView
-                reports={dailyReports}
-                isDarkMode={isDarkMode}
-              />
+            {activeTab === 'qr_scanner' && (
+              <div className="p-6">
+                <div className="p-8 rounded-2xl border max-w-lg mx-auto text-center space-y-4 bg-[#111827] border-slate-800">
+                  <h3 className="text-base font-extrabold text-white">Pemindai QR Code Lapangan</h3>
+                  <p className="text-xs text-slate-400">Pindai kode QR fisik yang terpasang pada tutup manhole atau stasiun pompa</p>
+                  <button
+                    onClick={() => setIsQrScannerModalOpen(true)}
+                    className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition cursor-pointer"
+                  >
+                    Buka Kamera Scanner
+                  </button>
+                </div>
+              </div>
             )}
 
-            {activeTab === 'activity_logs' && (
-              <ActivityLogsView
-                logs={activityLogs}
-                isDarkMode={isDarkMode}
-              />
-            )}
-
-            {activeTab === 'app_android' && (
-              <AppAndroidView isDarkMode={isDarkMode} />
-            )}
-
-            {activeTab === 'flowchart' && (
-              <FlowchartView
+            {activeTab === 'data' && (
+              <ImportExportView
                 manholes={manholes}
                 pumpStations={pumpStations}
                 pipes={pipes}
                 inspections={inspections}
-                graphEngine={graphEngine}
-                isDarkMode={isDarkMode}
+                onBatchImportManholes={(newMhs) => setManholes(prev => [...newMhs, ...prev])}
               />
             )}
 
@@ -597,33 +660,6 @@ export const App: React.FC = () => {
                 onOpenAddUserModal={() => setIsAddUserModalOpen(true)}
                 onRefreshUsers={reloadUsersList}
               />
-            )}
-
-            {activeTab === 'master_data' && (
-              <MasterDataView
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
-                inspections={inspections}
-                currentUser={currentUser}
-                onOpenAddAssetModal={() => setIsAddAssetModalOpen(true)}
-                onEditAsset={(asset) => setAssetToEdit(asset)}
-                onDeleteAsset={handleDeleteAsset}
-                onOpenNewInspectionModal={() => setIsNewInspectionModalOpen(true)}
-                onEditInspection={(insp) => setInspectionToEdit(insp)}
-                onDeleteInspection={handleDeleteInspection}
-                onGenerateQr={(id) => setActiveQrAssetId(id)}
-                onSelectAssetForMap={(id) => {
-                  setSelectedAssetIdForMap(id);
-                  setActiveTab('flowchart');
-                }}
-                onImportManholes={(newMhs) => setManholes(prev => [...newMhs, ...prev])}
-                isDarkMode={isDarkMode}
-              />
-            )}
-
-            {activeTab === 'ai_settings' && (
-              <AiSettingsView isDarkMode={isDarkMode} />
             )}
 
             {activeTab === 'backup' && (
@@ -696,7 +732,7 @@ export const App: React.FC = () => {
         allAssets={allAssets}
         onSelectAsset={(id) => {
           setSelectedAssetIdForMap(id);
-          setActiveTab('flowchart');
+          setActiveTab('map');
         }}
       />
 

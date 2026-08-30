@@ -1,15 +1,13 @@
 import React from 'react';
 import {
   LayoutDashboard,
-  ClipboardList,
-  FolderKanban,
-  ClipboardCheck,
-  Activity,
-  Smartphone,
+  MapPin,
   GitBranch,
+  Boxes,
+  ClipboardCheck,
+  QrCode,
+  FileSpreadsheet,
   Users,
-  Sliders,
-  Sparkles,
   HardDriveDownload,
   UserCircle,
   LogOut
@@ -18,15 +16,13 @@ import { UserRole } from '../../types/rbac';
 
 export type NavTab =
   | 'dashboard'
-  | 'work_orders'
-  | 'projects'
-  | 'daily_reports'
-  | 'activity_logs'
-  | 'app_android'
-  | 'flowchart'
+  | 'map'
+  | 'topology'
+  | 'assets'
+  | 'inspections'
+  | 'qr_scanner'
+  | 'data'
   | 'users'
-  | 'master_data'
-  | 'ai_settings'
   | 'backup'
   | 'profile';
 
@@ -52,49 +48,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: LayoutDashboard
     },
     {
-      id: 'work_orders' as NavTab,
-      label: 'Work Order',
-      icon: ClipboardList
+      id: 'map' as NavTab,
+      label: 'Peta GIS Interaktif',
+      icon: MapPin,
+      badge: 'Live'
     },
     {
-      id: 'projects' as NavTab,
-      label: 'Proyek',
-      icon: FolderKanban
-    },
-    {
-      id: 'daily_reports' as NavTab,
-      label: 'Laporan Harian',
-      icon: ClipboardCheck
-    },
-    {
-      id: 'activity_logs' as NavTab,
-      label: 'Log Aktivitas',
-      icon: Activity
-    },
-    {
-      id: 'app_android' as NavTab,
-      label: 'App Android',
-      icon: Smartphone
-    },
-    {
-      id: 'flowchart' as NavTab,
-      label: 'Flowchart Aplikasi',
+      id: 'topology' as NavTab,
+      label: 'Topologi & Flow Tracing',
       icon: GitBranch
     },
     {
+      id: 'assets' as NavTab,
+      label: 'Registri Aset Master',
+      icon: Boxes
+    },
+    {
+      id: 'inspections' as NavTab,
+      label: 'Inspeksi Lapangan',
+      icon: ClipboardCheck
+    },
+    {
+      id: 'qr_scanner' as NavTab,
+      label: 'Scan QR Code Aset',
+      icon: QrCode
+    },
+    {
+      id: 'data' as NavTab,
+      label: 'Import / Export Data',
+      icon: FileSpreadsheet
+    },
+    {
       id: 'users' as NavTab,
-      label: 'Pengguna',
+      label: 'Manajemen Pengguna',
       icon: Users
-    },
-    {
-      id: 'master_data' as NavTab,
-      label: 'Data Master',
-      icon: Sliders
-    },
-    {
-      id: 'ai_settings' as NavTab,
-      label: 'Pengaturan AI',
-      icon: Sparkles
     },
     {
       id: 'backup' as NavTab,
@@ -114,20 +101,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }`}>
       {/* Upper Brand & Navigation Menu */}
       <div className="space-y-4">
-        {/* Workspace Brand Badge matching Reference Logo */}
+        {/* Workspace Brand Badge */}
         <div className="flex items-center gap-3 px-2 py-2 mb-2">
           <div className="bg-white/95 p-1.5 rounded-xl border border-white/20 shadow-md shrink-0 flex items-center justify-center">
             <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="h-8 w-auto object-contain" />
           </div>
           <div className="min-w-0">
             <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 leading-tight">
-              Unit Pengolahan Air & Limbah Cair
+              Unit Pengolahan Air & Limbah
             </div>
             <div className={`font-black text-xs sm:text-sm tracking-tight leading-tight uppercase ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
               Kota Bukit Indah
             </div>
             <div className="text-[9px] text-blue-400 font-semibold truncate leading-tight">
-              PT. BUKIT INDAH TIRTA ALAM
+              SewerBITA Asset System
             </div>
           </div>
         </div>
@@ -142,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
                   isActive
                     ? isDarkMode
                       ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-sm'
@@ -152,8 +139,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 transition-transform ${isActive ? 'scale-110 text-blue-400' : 'text-slate-400'}`} />
-                <span className="truncate text-left">{item.label}</span>
+                <div className="flex items-center gap-3 truncate">
+                  <Icon className={`w-4 h-4 shrink-0 transition-transform ${isActive ? 'scale-110 text-blue-400' : 'text-slate-400'}`} />
+                  <span className="truncate text-left">{item.label}</span>
+                </div>
+                {item.badge && (
+                  <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}
