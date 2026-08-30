@@ -139,7 +139,13 @@ const initDb = async () => {
       ON CONFLICT (email) DO NOTHING;
     `);
 
-    console.log('✅ PostgreSQL Schema & Tables (manhole, pump_station, pipe, inspection, users) initialized for production!');
+    // 8. Clean up any previous demo assets from database, keeping user profiles intact
+    await pool.query("DELETE FROM inspection_records WHERE id LIKE 'insp-%';");
+    await pool.query("DELETE FROM pipe_assets WHERE id LIKE 'p-%';");
+    await pool.query("DELETE FROM pump_station_assets WHERE id LIKE 'ps-%';");
+    await pool.query("DELETE FROM manhole_assets WHERE id LIKE 'mh-%';");
+
+    console.log('✅ PostgreSQL Schema & Tables (manhole, pump_station, pipe, inspection, users) clean and initialized for pure production!');
   } catch (err) {
     console.error('⚠️ DB Init Warning:', err.message);
   }
