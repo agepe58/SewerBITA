@@ -2,7 +2,15 @@ import { ManholeAsset, PumpStationAsset, PipeAsset } from '../types/asset';
 import { InspectionRecord } from '../types/inspection';
 import { UserProfile } from '../types/rbac';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const getApiBaseUrl = (): string => {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  if (typeof window !== 'undefined' && window.location.hostname.includes('sewer.kbi.web.id')) {
+    return 'https://api.sewer.kbi.web.id';
+  }
+  return '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const apiClient = {
   // Check Health Endpoint
