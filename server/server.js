@@ -132,14 +132,78 @@ const initDb = async () => {
       );
     `);
 
-    // 7. Seed Default Admin User
+    // 7. Work Orders Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS work_orders (
+          id VARCHAR(100) PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          category VARCHAR(100) NOT NULL DEFAULT 'Mekanik',
+          location VARCHAR(255) NOT NULL DEFAULT 'WWTP',
+          priority VARCHAR(50) NOT NULL DEFAULT 'Sedang',
+          status VARCHAR(50) NOT NULL DEFAULT 'Baru',
+          pic_user_id VARCHAR(100),
+          pic_name VARCHAR(255),
+          due_date TIMESTAMP WITH TIME ZONE,
+          description TEXT,
+          notes TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 8. Maintenance Projects Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS maintenance_projects (
+          id VARCHAR(100) PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          status VARCHAR(50) NOT NULL DEFAULT 'Direncanakan',
+          total_tasks INT NOT NULL DEFAULT 0,
+          completed_tasks INT NOT NULL DEFAULT 0,
+          target_date DATE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 9. Daily Reports Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS daily_reports (
+          id VARCHAR(100) PRIMARY KEY,
+          report_date DATE NOT NULL DEFAULT CURRENT_DATE,
+          technician_name VARCHAR(255) NOT NULL,
+          work_summary TEXT NOT NULL,
+          work_order_id VARCHAR(100),
+          status VARCHAR(50) NOT NULL DEFAULT 'Submitted',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 10. Activity Logs Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS activity_logs (
+          id VARCHAR(100) PRIMARY KEY,
+          actor_name VARCHAR(255) NOT NULL,
+          action VARCHAR(100) NOT NULL,
+          entity VARCHAR(100) NOT NULL,
+          details TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 11. Seed Default Admin User
     await pool.query(`
       INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
       VALUES ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
       ON CONFLICT (email) DO NOTHING;
     `);
 
-    console.log('✅ PostgreSQL Schema & Tables (manhole, pump_station, pipe, inspection, users) clean and initialized for pure production!');
+    // 12. Seed Default Project If Empty
+    await pool.query(`
+      INSERT INTO maintenance_projects (id, title, status, total_tasks, completed_tasks)
+      VALUES ('proj-01', 'Pintu air Balance Tank', 'Direncanakan', 0, 0)
+      ON CONFLICT (id) DO NOTHING;
+    `);
+
+    console.log('✅ PostgreSQL Schema & Tables (work_orders, projects, reports, assets, users) initialized for production!');
   } catch (err) {
     console.error('⚠️ DB Init Warning:', err.message);
   }
@@ -467,7 +531,181 @@ app.delete('/api/inspections/:id', async (req, res) => {
 });
 
 // --------------------------------------------------------------------
-// 7. USER PROFILES (RBAC) ENDPOINTS
+// 6. WORK ORDERS (MAINTENANCE) ENDPOINTS
+// --------------------------------------------------------------------
+app.get('/api/work-orders', async (req, res) => {
+  try {
+    const q = `
+      SELECT 
+        id, title, category, location, priority, status,
+        pic_user_id AS "picUserId", pic_name AS "picName",
+        due_date AS "dueDate", description, notes,
+        created_at AS "createdAt", updated_at AS "updatedAt"
+      FROM work_orders
+      ORDER BY created_at DESC;
+    `;
+    const result = await pool.query(q);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching work orders:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/work-orders', async (req, res) => {
+  const data = req.body;
+  try {
+    const q = `
+      INSERT INTO work_orders 
+      (id, title, category, location, priority, status, pic_user_id, pic_name, due_date, description, notes, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        title = EXCLUDED.title,
+        category = EXCLUDED.category,
+        location = EXCLUDED.location,
+        priority = EXCLUDED.priority,
+        status = EXCLUDED.status,
+        pic_user_id = EXCLUDED.pic_user_id,
+        pic_name = EXCLUDED.pic_name,
+        due_date = EXCLUDED.due_date,
+        description = EXCLUDED.description,
+        notes = EXCLUDED.notes,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING 
+        id, title, category, location, priority, status,
+        pic_user_id AS "picUserId", pic_name AS "picName",
+        due_date AS "dueDate", description, notes,
+        created_at AS "createdAt", updated_at AS "updatedAt";
+    `;
+    const values = [
+      data.id || `WO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(Math.floor(Math.random() * 900) + 100)}`,
+      data.title,
+      data.category || 'Mekanik',
+      data.location || 'WWTP',
+      data.priority || 'Sedang',
+      data.status || 'Baru',
+      data.picUserId || null,
+      data.picName || null,
+      data.dueDate || new Date().toISOString(),
+      data.description || '',
+      data.notes || ''
+    ];
+    const result = await pool.query(q, values);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error saving work order:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/work-orders/:id', async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+  try {
+    const q = `
+      UPDATE work_orders SET
+        title = COALESCE($1, title),
+        category = COALESCE($2, category),
+        location = COALESCE($3, location),
+        priority = COALESCE($4, priority),
+        status = COALESCE($5, status),
+        pic_user_id = $6,
+        pic_name = $7,
+        due_date = $8,
+        description = $9,
+        notes = $10,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $11
+      RETURNING 
+        id, title, category, location, priority, status,
+        pic_user_id AS "picUserId", pic_name AS "picName",
+        due_date AS "dueDate", description, notes,
+        created_at AS "createdAt", updated_at AS "updatedAt";
+    `;
+    const values = [
+      data.title,
+      data.category,
+      data.location,
+      data.priority,
+      data.status,
+      data.picUserId,
+      data.picName,
+      data.dueDate,
+      data.description,
+      data.notes,
+      id
+    ];
+    const result = await pool.query(q, values);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Work order not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating work order:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/work-orders/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM work_orders WHERE id = $1;', [id]);
+    res.json({ message: 'Work order deleted successfully', id });
+  } catch (err) {
+    console.error('Error deleting work order:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --------------------------------------------------------------------
+// 7. MAINTENANCE PROJECTS ENDPOINTS
+// --------------------------------------------------------------------
+app.get('/api/projects', async (req, res) => {
+  try {
+    const q = `
+      SELECT 
+        id, title, status, 
+        total_tasks AS "totalTasks", completed_tasks AS "completedTasks",
+        target_date AS "targetDate", created_at AS "createdAt"
+      FROM maintenance_projects
+      ORDER BY created_at DESC;
+    `;
+    const result = await pool.query(q);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/projects', async (req, res) => {
+  const data = req.body;
+  try {
+    const q = `
+      INSERT INTO maintenance_projects (id, title, status, total_tasks, completed_tasks, target_date)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (id) DO UPDATE SET
+        title = EXCLUDED.title,
+        status = EXCLUDED.status,
+        total_tasks = EXCLUDED.total_tasks,
+        completed_tasks = EXCLUDED.completed_tasks,
+        target_date = EXCLUDED.target_date
+      RETURNING id, title, status, total_tasks AS "totalTasks", completed_tasks AS "completedTasks", target_date AS "targetDate", created_at AS "createdAt";
+    `;
+    const values = [
+      data.id || `proj-${Date.now()}`,
+      data.title,
+      data.status || 'Direncanakan',
+      data.totalTasks || 0,
+      data.completedTasks || 0,
+      data.targetDate || null
+    ];
+    const result = await pool.query(q, values);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --------------------------------------------------------------------
+// 8. USER PROFILES (RBAC) ENDPOINTS
 // --------------------------------------------------------------------
 app.get('/api/users', async (req, res) => {
   try {

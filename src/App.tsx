@@ -3,28 +3,34 @@ import { Sidebar, NavTab } from './components/common/Sidebar';
 import { Header } from './components/common/Header';
 import { LandingPage } from './components/landing/LandingPage';
 import { DashboardView } from './components/dashboard/DashboardView';
-import { NetworkMap } from './components/map/NetworkMap';
-import { TopologyView } from './components/topology/TopologyView';
-import { AssetRegistry } from './components/assets/AssetRegistry';
-import { AddAssetModal } from './components/assets/AddAssetModal';
-import { EditAssetModal } from './components/assets/EditAssetModal';
-import { InspectionView } from './components/inspections/InspectionView';
-import { NewInspectionModal } from './components/inspections/NewInspectionModal';
-import { EditInspectionModal } from './components/inspections/EditInspectionModal';
-import { QrCodeModal } from './components/qr/QrCodeModal';
-import { QrScannerModal } from './components/qr/QrScannerModal';
-import { ImportExportView } from './components/data/ImportExportView';
+import { WorkOrderView } from './components/workorder/WorkOrderView';
+import { CreateWorkOrderModal } from './components/workorder/CreateWorkOrderModal';
+import { ProjectsView } from './components/common/ProjectsView';
+import { DailyReportsView } from './components/common/DailyReportsView';
+import { ActivityLogsView } from './components/common/ActivityLogsView';
+import { AppAndroidView } from './components/common/AppAndroidView';
+import { FlowchartView } from './components/common/FlowchartView';
+import { MasterDataView } from './components/common/MasterDataView';
+import { AiSettingsView } from './components/common/AiSettingsView';
+import { ProfileView } from './components/common/ProfileView';
 import { UserManagementView } from './components/rbac/UserManagementView';
 import { EditUserModal } from './components/rbac/EditUserModal';
 import { AddUserModal } from './components/rbac/AddUserModal';
 import { BackupRestoreView } from './components/admin/BackupRestoreView';
 
+import { AddAssetModal } from './components/assets/AddAssetModal';
+import { EditAssetModal } from './components/assets/EditAssetModal';
+import { NewInspectionModal } from './components/inspections/NewInspectionModal';
+import { EditInspectionModal } from './components/inspections/EditInspectionModal';
+import { QrCodeModal } from './components/qr/QrCodeModal';
+import { QrScannerModal } from './components/qr/QrScannerModal';
+
 import { INITIAL_MANHOLES, INITIAL_PUMP_STATIONS, INITIAL_PIPES, INITIAL_INSPECTIONS, INITIAL_USERS } from './services/mockData';
 import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset } from './types/asset';
 import { InspectionRecord } from './types/inspection';
 import { UserRole, UserProfile } from './types/rbac';
+import { WorkOrder, MaintenanceProject, DailyReport, ActivityLog } from './types/workOrder';
 import { NetworkGraphEngine } from './services/graphEngine';
-import { NetworkTraceResult } from './types/topology';
 import { apiClient } from './services/api';
 import { authService } from './services/authService';
 import { AuthModal } from './components/auth/AuthModal';
@@ -106,6 +112,52 @@ export const App: React.FC = () => {
     return INITIAL_USERS;
   });
 
+  // Work Orders & Maintenance Projects State
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>(() => {
+    const saved = localStorage.getItem('sewerbita_work_orders');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load work orders', e); }
+    }
+    return [];
+  });
+
+  const [projects, setProjects] = useState<MaintenanceProject[]>(() => {
+    const saved = localStorage.getItem('sewerbita_projects');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load projects', e); }
+    }
+    return [
+      {
+        id: 'proj-01',
+        title: 'Pintu air Balance Tank',
+        status: 'Direncanakan',
+        totalTasks: 0,
+        completedTasks: 0
+      }
+    ];
+  });
+
+  const [dailyReports] = useState<DailyReport[]>([]);
+  const [activityLogs] = useState<ActivityLog[]>([]);
+
+  // Areas state
+  const [areas, setAreas] = useState<string[]>([
+    'Zone A - Sudirman',
+    'Zone A - Setiabudi',
+    'Zone A - Manggarai',
+    'Zone B - Tebet',
+    'Zone C - Pluit',
+    'WWTP',
+    'WTP',
+    'Pump Station Sektor A'
+  ]);
+
   // Sync state changes automatically to LocalStorage
   useEffect(() => {
     localStorage.setItem('sewerbita_manholes', JSON.stringify(manholes));
@@ -127,6 +179,32 @@ export const App: React.FC = () => {
     localStorage.setItem('sewerbita_users', JSON.stringify(users));
   }, [users]);
 
+  useEffect(() => {
+    localStorage.setItem('sewerbita_work_orders', JSON.stringify(workOrders));
+  }, [workOrders]);
+
+  useEffect(() => {
+    localStorage.setItem('sewerbita_projects', JSON.stringify(projects));
+  }, [projects]);
+
+  // Reload Work Orders from Backend API
+  const reloadWorkOrders = useCallback(async () => {
+    const serverWos = await apiClient.getWorkOrders();
+    if (serverWos && Array.isArray(serverWos)) {
+      setWorkOrders(serverWos);
+      localStorage.setItem('sewerbita_work_orders', JSON.stringify(serverWos));
+    }
+  }, []);
+
+  // Reload Projects from Backend API
+  const reloadProjects = useCallback(async () => {
+    const serverProjs = await apiClient.getProjects();
+    if (serverProjs && Array.isArray(serverProjs) && serverProjs.length > 0) {
+      setProjects(serverProjs);
+      localStorage.setItem('sewerbita_projects', JSON.stringify(serverProjs));
+    }
+  }, []);
+
   // Dynamic User List Synchronization Function
   const reloadUsersList = useCallback(async () => {
     const savedStr = localStorage.getItem('sewerbita_users');
@@ -142,72 +220,40 @@ export const App: React.FC = () => {
 
     if (serverUsers && serverUsers.length > 0) {
       const mergedMap = new Map<string, UserProfile>();
-      // 1. Add server users
       serverUsers.forEach(su => mergedMap.set((su.email || '').trim().toLowerCase(), su));
-      // 2. Merge local users, ensuring pending/active statuses and passwords are not lost
       localUsers.forEach(lu => {
         const key = (lu.email || '').trim().toLowerCase();
         if (!mergedMap.has(key)) {
           mergedMap.set(key, lu);
-        } else {
-          const serverU = mergedMap.get(key)!;
-          // If local user has status 'Active' (approved by admin locally) and server was still pending, preserve Active and sync
-          if (lu.status === 'Active' && (serverU.status === 'Pending Approval' || serverU.status === 'Pending')) {
-            mergedMap.set(key, { ...serverU, status: 'Active' });
-            apiClient.updateUser(serverU.id, { ...serverU, status: 'Active' });
-          } else if (lu.password && !serverU.password) {
-            mergedMap.set(key, { ...serverU, password: lu.password });
-          }
+          apiClient.createUser(lu);
         }
       });
-      const combined = Array.from(mergedMap.values());
-      setUsers(combined);
-      localStorage.setItem('sewerbita_users', JSON.stringify(combined));
+      const finalUsers = Array.from(mergedMap.values());
+      setUsers(finalUsers);
+      localStorage.setItem('sewerbita_users', JSON.stringify(finalUsers));
     } else if (localUsers.length > 0) {
       setUsers(localUsers);
+      for (const u of localUsers) {
+        apiClient.createUser(u);
+      }
     }
   }, []);
 
-  // Handle new user registration from any AuthModal instance
-  const handleUserRegistered = useCallback((registeredUser: UserProfile) => {
-    const normalizedEmail = (registeredUser.email || '').trim().toLowerCase();
-    const userToSave: UserProfile = {
-      ...registeredUser,
-      email: normalizedEmail,
-      status: registeredUser.status || 'Pending Approval'
-    };
+  // Handle Registered Callback
+  const handleUserRegistered = useCallback(async (newUser: UserProfile) => {
+    const normalizedEmail = (newUser.email || '').trim().toLowerCase();
+    const updatedUser = { ...newUser, email: normalizedEmail };
 
-    setUsers(prev => {
-      const exists = prev.some(u => u.id === userToSave.id || (u.email && u.email.trim().toLowerCase() === normalizedEmail));
-      const next = exists
-        ? prev.map(u => (u.email && u.email.trim().toLowerCase() === normalizedEmail) ? { ...u, ...userToSave } : u)
-        : [userToSave, ...prev];
-      localStorage.setItem('sewerbita_users', JSON.stringify(next));
-      return next;
+    await apiClient.createUser(updatedUser);
+    await reloadUsersList();
+
+    setUsers(prevUsers => {
+      const filtered = prevUsers.filter(u => u.email && u.email.trim().toLowerCase() !== normalizedEmail);
+      const updated = [updatedUser, ...filtered];
+      localStorage.setItem('sewerbita_users', JSON.stringify(updated));
+      return updated;
     });
-
-    // Background sync to API if available
-    apiClient.createUser(userToSave);
-  }, []);
-
-  // Listen for custom event whenever a user is registered or updated in authService
-  useEffect(() => {
-    const handleUserUpdate = (e: Event) => {
-      const customEvent = e as CustomEvent<UserProfile>;
-      if (customEvent.detail) {
-        handleUserRegistered(customEvent.detail);
-      } else {
-        reloadUsersList();
-      }
-    };
-
-    window.addEventListener('sewerbita_users_updated', handleUserUpdate);
-    window.addEventListener('storage', handleUserUpdate);
-    return () => {
-      window.removeEventListener('sewerbita_users_updated', handleUserUpdate);
-      window.removeEventListener('storage', handleUserUpdate);
-    };
-  }, [handleUserRegistered, reloadUsersList]);
+  }, [reloadUsersList]);
 
   // Load Real Data from Backend PostgreSQL API on App Startup
   useEffect(() => {
@@ -230,21 +276,23 @@ export const App: React.FC = () => {
         setInspections(inspectionData);
         localStorage.setItem('sewerbita_inspections', JSON.stringify(inspectionData));
       }
+
+      await reloadWorkOrders();
+      await reloadProjects();
       await reloadUsersList();
     };
     loadRealDatabaseData();
-  }, [reloadUsersList]);
+  }, [reloadWorkOrders, reloadProjects, reloadUsersList]);
 
-  // Re-sync users whenever user management tab is active (auto poll every 4 seconds)
+  // Realtime Polling (Every 3 seconds Live Sync)
   useEffect(() => {
-    if (activeTab === 'users') {
+    const interval = setInterval(() => {
+      reloadWorkOrders();
+      reloadProjects();
       reloadUsersList();
-      const interval = setInterval(() => {
-        reloadUsersList();
-      }, 4000);
-      return () => clearInterval(interval);
-    }
-  }, [activeTab, reloadUsersList]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [reloadWorkOrders, reloadProjects, reloadUsersList]);
 
   // Active User & Role Session Initialization
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
@@ -256,6 +304,9 @@ export const App: React.FC = () => {
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
 
   // Modals state
+  const [isCreateWorkOrderModalOpen, setIsCreateWorkOrderModalOpen] = useState(false);
+  const [workOrderToEdit, setWorkOrderToEdit] = useState<WorkOrder | null>(null);
+
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
   const [isNewInspectionModalOpen, setIsNewInspectionModalOpen] = useState(false);
   const [isQrScannerModalOpen, setIsQrScannerModalOpen] = useState(false);
@@ -266,260 +317,141 @@ export const App: React.FC = () => {
   const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
-  // Flow Tracing State
-  const [activeTraceResult, setActiveTraceResult] = useState<NetworkTraceResult | null>(null);
-
   // Graph Engine Instance
   const graphEngine = useMemo(() => {
     return new NetworkGraphEngine(manholes, pumpStations, pipes);
   }, [manholes, pumpStations, pipes]);
 
-  // Handlers for data modification with Backend API sync
-  const handleAddManhole = (
-    newMh: Omit<ManholeAsset, 'id'>,
-    intermediateInfo?: { upstreamId: string; downstreamId: string }
-  ) => {
-    const newMhId = `mh-${Date.now()}`;
+  // Work Order Handlers
+  const handleSaveWorkOrder = async (wo: WorkOrder) => {
+    await apiClient.createWorkOrder(wo);
+    await reloadWorkOrders();
+  };
+
+  const handleDeleteWorkOrder = async (id: string) => {
+    await apiClient.deleteWorkOrder(id);
+    setWorkOrders(prev => prev.filter(w => w.id !== id));
+  };
+
+  const handleCreateProject = async (proj: MaintenanceProject) => {
+    await apiClient.createProject(proj);
+    await reloadProjects();
+  };
+
+  // Asset Handlers
+  const handleAddManhole = (newMh: Omit<ManholeAsset, 'id'>) => {
     const createdMh: ManholeAsset = {
       ...newMh,
-      id: newMhId
+      id: `mh-${Date.now()}`
     };
-
     apiClient.createAsset('manhole', createdMh);
-
-    let updatedPipes = [...pipes];
-
-    // If inserted between two registered manholes, split the existing pipe automatically
-    if (intermediateInfo) {
-      const { upstreamId, downstreamId } = intermediateInfo;
-      const existingPipeIndex = pipes.findIndex(
-        p => (p.fromAssetId === upstreamId && p.toAssetId === downstreamId) ||
-             (p.fromAssetId === downstreamId && p.toAssetId === upstreamId)
-      );
-
-      if (existingPipeIndex !== -1) {
-        const oldPipe = pipes[existingPipeIndex];
-        const halfLength = Math.round(oldPipe.lengthMeters / 2);
-        const fromMh = manholes.find(m => m.id === oldPipe.fromAssetId);
-        const toMh = manholes.find(m => m.id === oldPipe.toAssetId);
-
-        const fromCode = fromMh ? fromMh.assetCode : 'MH';
-        const toCode = toMh ? toMh.assetCode : 'MH';
-
-        const pipeA: PipeAsset = {
-          ...oldPipe,
-          id: `p-${Date.now()}-a`,
-          assetCode: `P-${fromCode}_${createdMh.assetCode}`,
-          name: `Pipa Segmen ${fromCode} → ${createdMh.assetCode}`,
-          fromAssetId: oldPipe.fromAssetId,
-          toAssetId: newMhId,
-          lengthMeters: halfLength
-        };
-
-        const pipeB: PipeAsset = {
-          ...oldPipe,
-          id: `p-${Date.now()}-b`,
-          assetCode: `P-${createdMh.assetCode}_${toCode}`,
-          name: `Pipa Segmen ${createdMh.assetCode} → ${toCode}`,
-          fromAssetId: newMhId,
-          toAssetId: oldPipe.toAssetId,
-          lengthMeters: halfLength
-        };
-
-        apiClient.createAsset('pipe', pipeA);
-        apiClient.createAsset('pipe', pipeB);
-        apiClient.deleteAsset(oldPipe.id);
-
-        updatedPipes = pipes.filter((_, idx) => idx !== existingPipeIndex).concat([pipeA, pipeB]);
-        setPipes(updatedPipes);
-      }
-    }
-
-    const allManholesUnsequenced = [createdMh, ...manholes];
-    const tempEngine = new NetworkGraphEngine(allManholesUnsequenced, pumpStations, updatedPipes);
-    const sequencedManholes = tempEngine.computeDynamicSequences(allManholesUnsequenced);
-
-    setManholes(sequencedManholes);
-  };
-
-  // Dynamic Master Areas / Zones state
-  const [areas, setAreas] = useState<string[]>([
-    'Zone A - Sudirman',
-    'Zone A - Setiabudi',
-    'Zone A - Manggarai',
-    'Zone B - Tebet',
-    'Zone C - Pluit'
-  ]);
-
-  const handleAddArea = (newAreaName: string) => {
-    const trimmed = newAreaName.trim();
-    if (trimmed && !areas.includes(trimmed)) {
-      setAreas(prev => [...prev, trimmed]);
-    }
-  };
-
-  const handleAddPipe = (newPipe: Omit<PipeAsset, 'id'>) => {
-    const created: PipeAsset = {
-      ...newPipe,
-      id: `p-${Date.now()}`
-    };
-    apiClient.createAsset('pipe', created);
-    setPipes(prev => [created, ...prev]);
+    setManholes(prev => [createdMh, ...prev]);
   };
 
   const handleAddPumpStation = (newPs: Omit<PumpStationAsset, 'id'>) => {
-    const created: PumpStationAsset = {
+    const createdPs: PumpStationAsset = {
       ...newPs,
       id: `ps-${Date.now()}`
     };
-    apiClient.createAsset('pumpStation', created);
-    setPumpStations(prev => [created, ...prev]);
+    apiClient.createAsset('pumpStation', createdPs);
+    setPumpStations(prev => [createdPs, ...prev]);
+  };
+
+  const handleAddPipe = (newPipe: Omit<PipeAsset, 'id'>) => {
+    const createdPipe: PipeAsset = {
+      ...newPipe,
+      id: `p-${Date.now()}`
+    };
+    apiClient.createAsset('pipe', createdPipe);
+    setPipes(prev => [createdPipe, ...prev]);
+  };
+
+  const handleEditManhole = (updatedMh: ManholeAsset) => {
+    apiClient.updateAsset(updatedMh.id, 'manhole', updatedMh);
+    setManholes(prev => prev.map(m => m.id === updatedMh.id ? updatedMh : m));
+    setAssetToEdit(null);
+  };
+
+  const handleEditPumpStation = (updatedPs: PumpStationAsset) => {
+    apiClient.updateAsset(updatedPs.id, 'pumpStation', updatedPs);
+    setPumpStations(prev => prev.map(ps => ps.id === updatedPs.id ? updatedPs : ps));
+    setAssetToEdit(null);
+  };
+
+  const handleEditPipe = (updatedPipe: PipeAsset) => {
+    apiClient.updateAsset(updatedPipe.id, 'pipe', updatedPipe);
+    setPipes(prev => prev.map(p => p.id === updatedPipe.id ? updatedPipe : p));
+    setAssetToEdit(null);
+  };
+
+  const handleDeleteAsset = (id: string, type: 'manhole' | 'pumpStation' | 'pipe') => {
+    apiClient.deleteAsset(id);
+    if (type === 'manhole') {
+      setManholes(prev => prev.filter(m => m.id !== id));
+      setPipes(prev => prev.filter(p => p.fromAssetId !== id && p.toAssetId !== id));
+    } else if (type === 'pumpStation') {
+      setPumpStations(prev => prev.filter(ps => ps.id !== id));
+      setPipes(prev => prev.filter(p => p.fromAssetId !== id && p.toAssetId !== id));
+    } else {
+      setPipes(prev => prev.filter(p => p.id !== id));
+    }
   };
 
   const handleAddInspection = (newInsp: Omit<InspectionRecord, 'id'>) => {
-    const created: InspectionRecord = {
+    const createdInsp: InspectionRecord = {
       ...newInsp,
       id: `insp-${Date.now()}`
     };
-    apiClient.createInspection(created);
-    setInspections(prev => [created, ...prev]);
-
-    // Update asset condition state if necessary
-    setManholes(prev => prev.map(m => m.id === newInsp.assetId ? { ...m, condition: newInsp.condition } : m));
-    setPipes(prev => prev.map(p => p.id === newInsp.assetId ? { ...p, condition: newInsp.condition } : p));
+    apiClient.createInspection(createdInsp);
+    setInspections(prev => [createdInsp, ...prev]);
   };
 
-  // Handlers for asset modification (Edit & Delete)
-  const handleEditManhole = (updated: ManholeAsset) => {
-    apiClient.updateAsset(updated.id, 'manhole', updated);
-    setManholes(prev => prev.map(m => m.id === updated.id ? updated : m));
+  const handleSaveEditedInspection = (updatedInsp: InspectionRecord) => {
+    apiClient.updateInspection(updatedInsp.id, updatedInsp);
+    setInspections(prev => prev.map(i => i.id === updatedInsp.id ? updatedInsp : i));
+    setInspectionToEdit(null);
   };
 
-  const handleEditPipe = (updated: PipeAsset) => {
-    apiClient.updateAsset(updated.id, 'pipe', updated);
-    setPipes(prev => prev.map(p => p.id === updated.id ? updated : p));
+  const handleDeleteInspection = (id: string) => {
+    apiClient.deleteInspection(id);
+    setInspections(prev => prev.filter(i => i.id !== id));
   };
 
-  const handleEditPumpStation = (updated: PumpStationAsset) => {
-    apiClient.updateAsset(updated.id, 'pumpStation', updated);
-    setPumpStations(prev => prev.map(ps => ps.id === updated.id ? updated : ps));
-  };
-
-  const handleDeleteAsset = (assetId: string) => {
-    apiClient.deleteAsset(assetId);
-    setManholes(prev => prev.filter(m => m.id !== assetId));
-    setPumpStations(prev => prev.filter(p => p.id !== assetId));
-    setPipes(prev => prev.filter(p => p.id !== assetId && p.fromAssetId !== assetId && p.toAssetId !== assetId));
-  };
-
-  const handleSaveEditedInspection = (updated: InspectionRecord) => {
-    apiClient.updateInspection(updated.id, updated);
-    setInspections(prev => prev.map(i => i.id === updated.id ? updated : i));
-
-    // Synchronize asset condition if changed
-    setManholes(prev => prev.map(m => m.id === updated.assetId ? { ...m, condition: updated.condition } : m));
-    setPipes(prev => prev.map(p => p.id === updated.assetId ? { ...p, condition: updated.condition } : p));
-  };
-
-  const handleDeleteInspection = (inspectionId: string) => {
-    apiClient.deleteInspection(inspectionId);
-    setInspections(prev => prev.filter(i => i.id !== inspectionId));
-  };
-
-  // User management handlers
-  const handleSaveEditedUser = async (updated: UserProfile) => {
-    const normalizedEmail = (updated.email || '').trim().toLowerCase();
-    const updatedWithEmail: UserProfile = {
-      ...updated,
-      email: normalizedEmail,
-      status: updated.status || 'Active'
-    };
-
-    setUsers(prev => {
-      const next = prev.map(u => (u.id === updated.id || (u.email && u.email.trim().toLowerCase() === normalizedEmail)) ? updatedWithEmail : u);
-      localStorage.setItem('sewerbita_users', JSON.stringify(next));
-      return next;
-    });
-
-    if (currentUser.id === updated.id || (currentUser.email && currentUser.email.trim().toLowerCase() === normalizedEmail)) {
-      setCurrentUser(updatedWithEmail);
-      authService.saveSession(updatedWithEmail);
-    }
-
-    await apiClient.updateUser(updated.id, updatedWithEmail);
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('sewerbita_users_updated', { detail: updatedWithEmail }));
-    }
-  };
-
-  const handleAddUser = async (newUser: UserProfile) => {
-    const normalizedEmail = (newUser.email || '').trim().toLowerCase();
-    const userWithStatus: UserProfile = {
+  const handleAddUser = async (newUser: Omit<UserProfile, 'id'>) => {
+    const createdUser: UserProfile = {
       ...newUser,
-      email: normalizedEmail,
-      status: newUser.status || 'Active'
+      id: `usr-${Date.now()}`
     };
-
-    setUsers(prev => {
-      const exists = prev.some(u => u.id === userWithStatus.id || (u.email && u.email.trim().toLowerCase() === normalizedEmail));
-      const next = exists
-        ? prev.map(u => (u.email && u.email.trim().toLowerCase() === normalizedEmail) ? userWithStatus : u)
-        : [userWithStatus, ...prev];
-      localStorage.setItem('sewerbita_users', JSON.stringify(next));
-      return next;
-    });
-
-    await apiClient.createUser(userWithStatus);
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('sewerbita_users_updated', { detail: userWithStatus }));
-    }
+    await apiClient.createUser(createdUser);
+    await reloadUsersList();
+    setIsAddUserModalOpen(false);
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    setUsers(prev => {
-      const next = prev.filter(u => u.id !== userId);
-      localStorage.setItem('sewerbita_users', JSON.stringify(next));
-      return next;
-    });
-    await apiClient.deleteUser(userId);
+  const handleSaveEditedUser = async (updatedUser: UserProfile) => {
+    await apiClient.updateUser(updatedUser.id, updatedUser);
+    await reloadUsersList();
+    setUserToEdit(null);
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    await apiClient.deleteUser(id);
+    await reloadUsersList();
   };
 
   const handleRoleChange = (newRole: UserRole) => {
-    const userForRole = users.find(u => u.role === newRole) || { ...currentUser, role: newRole };
-    setCurrentUser(userForRole);
+    const updated = { ...currentUser, role: newRole };
+    setCurrentUser(updated);
+    authService.saveSession(updated);
   };
 
-  // Tracing actions from Map Drawer
-  const handleTraceDownstreamFromMap = (assetId: string) => {
-    const res = graphEngine.traceDownstream(assetId);
-    setActiveTraceResult(res);
-  };
-
-  const handleTraceUpstreamFromMap = (assetId: string) => {
-    const res = graphEngine.traceUpstream(assetId);
-    setActiveTraceResult(res);
-  };
-
-  // Find asset for QR Modal
-  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
-  const qrTargetAsset = activeQrAssetId ? allAssets.find(a => a.id === activeQrAssetId) || null : null;
-
-  // Global search asset handler
-  const handleSearchAsset = (query: string) => {
-    const found = allAssets.find(a =>
-      a.assetCode.toLowerCase().includes(query.toLowerCase()) ||
-      a.name.toLowerCase().includes(query.toLowerCase())
-    );
-    if (found) {
-      setSelectedAssetIdForMap(found.id);
-      setActiveTab('map');
-      setIsLandingPage(false);
-    } else {
-      alert(`Aset '${query}' tidak ditemukan.`);
+  const handleAddArea = (newArea: string) => {
+    if (!areas.includes(newArea)) {
+      setAreas(prev => [...prev, newArea]);
     }
   };
+
+  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
+  const qrTargetAsset = activeQrAssetId ? allAssets.find(a => a.id === activeQrAssetId) || null : null;
 
   // If in Landing Page mode, show landing page portal
   if (isLandingPage) {
@@ -547,126 +479,111 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen w-full p-2 sm:p-3 lg:p-4 flex flex-col justify-center items-center font-sans selection:bg-[#2563EB] selection:text-white transition-colors duration-300 ${
-      isDarkMode ? 'bg-[#0B0F17] text-slate-100 dark' : 'bg-[#F4F5F7] text-slate-900'
+    <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#0B0F17] text-slate-100 dark' : 'bg-slate-50 text-slate-900'
     }`}>
-      {/* Ramp HQ / Notion Clean Workspace Shell */}
-      <div className={`w-full max-w-[1920px] rounded-2xl shadow-sm border overflow-hidden flex min-h-[96vh] h-full transition-colors duration-300 ${
-        isDarkMode ? 'bg-[#111827] border-slate-800' : 'bg-white border-slate-200/80'
-      }`}>
-        {/* Sidebar Navigation */}
+      {/* Enterprise Full-Width Dashboard Container */}
+      <div className="w-full flex flex-1 overflow-hidden min-h-screen">
+        
+        {/* Left Navigation Sidebar matching Kota Bukit Indah layout */}
         <Sidebar
           activeTab={activeTab}
           onSelectTab={setActiveTab}
           currentUserRole={currentUser.role}
-          onLogout={() => setIsLandingPage(true)}
+          onLogout={() => {
+            authService.logout();
+            setIsLandingPage(true);
+          }}
           isDarkMode={isDarkMode}
         />
 
-        {/* Main Content Area */}
-        <div className={`flex-1 flex flex-col min-w-0 transition-colors duration-300 ${
+        {/* Right Main Content Area */}
+        <div className={`flex-1 flex flex-col min-w-0 h-screen overflow-hidden ${
           isDarkMode ? 'bg-[#0B0F17]' : 'bg-[#F8FAFC]'
         }`}>
-          {/* Top Header */}
+          {/* Top Header Controls (Live Sync 3s, Refresh, Download App, User Avatar AP) */}
           <Header
+            activeTab={activeTab}
             currentUser={currentUser}
             onRoleChange={handleRoleChange}
-            onOpenQrScanner={() => setIsQrScannerModalOpen(true)}
-            onSearchAsset={handleSearchAsset}
+            onRefresh={() => {
+              reloadWorkOrders();
+              reloadProjects();
+              reloadUsersList();
+            }}
+            onOpenDownloadApp={() => setActiveTab('app_android')}
             onLogout={() => {
               authService.logout();
               setIsLandingPage(true);
             }}
             isDarkMode={isDarkMode}
             onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-            onOpenEditProfile={() => setUserToEdit(currentUser)}
-            onOpenAuthModal={() => {
-              setAuthModalMode('login');
-              setIsAuthModalOpen(true);
-            }}
+            onOpenEditProfile={() => setActiveTab('profile')}
           />
 
-          {/* Tab Router Views */}
+          {/* Main View Router */}
           <main className="flex-1 overflow-y-auto">
             {activeTab === 'dashboard' && (
               <DashboardView
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
-                inspections={inspections}
+                workOrders={workOrders}
+                projects={projects}
+                users={users}
                 onNavigate={setActiveTab}
-                onOpenAddAssetModal={() => setIsAddAssetModalOpen(true)}
-                onOpenQrScanner={() => setIsQrScannerModalOpen(true)}
-                onOpenNewInspectionModal={() => setIsNewInspectionModalOpen(true)}
-                onSelectAssetForMap={(id) => {
-                  setSelectedAssetIdForMap(id);
-                  setActiveTab('map');
-                }}
+                isDarkMode={isDarkMode}
               />
             )}
 
-            {activeTab === 'map' && (
-              <NetworkMap
+            {activeTab === 'work_orders' && (
+              <WorkOrderView
+                workOrders={workOrders}
+                currentUser={currentUser}
+                onOpenCreateModal={() => {
+                  setWorkOrderToEdit(null);
+                  setIsCreateWorkOrderModalOpen(true);
+                }}
+                onEditWorkOrder={(wo) => {
+                  setWorkOrderToEdit(wo);
+                  setIsCreateWorkOrderModalOpen(true);
+                }}
+                onDeleteWorkOrder={handleDeleteWorkOrder}
+                isDarkMode={isDarkMode}
+              />
+            )}
+
+            {activeTab === 'projects' && (
+              <ProjectsView
+                projects={projects}
+                onCreateProject={handleCreateProject}
+                isDarkMode={isDarkMode}
+              />
+            )}
+
+            {activeTab === 'daily_reports' && (
+              <DailyReportsView
+                reports={dailyReports}
+                isDarkMode={isDarkMode}
+              />
+            )}
+
+            {activeTab === 'activity_logs' && (
+              <ActivityLogsView
+                logs={activityLogs}
+                isDarkMode={isDarkMode}
+              />
+            )}
+
+            {activeTab === 'app_android' && (
+              <AppAndroidView isDarkMode={isDarkMode} />
+            )}
+
+            {activeTab === 'flowchart' && (
+              <FlowchartView
                 manholes={manholes}
                 pumpStations={pumpStations}
                 pipes={pipes}
                 inspections={inspections}
-                activeTraceResult={activeTraceResult}
-                onTraceDownstream={handleTraceDownstreamFromMap}
-                onTraceUpstream={handleTraceUpstreamFromMap}
-                onClearTrace={() => setActiveTraceResult(null)}
-                onOpenQrModal={(id) => setActiveQrAssetId(id)}
-                onOpenNewInspection={(id) => {
-                  setSelectedAssetIdForMap(id);
-                  setIsNewInspectionModalOpen(true);
-                }}
-                selectedAssetIdFromParent={selectedAssetIdForMap}
-              />
-            )}
-
-            {activeTab === 'topology' && (
-              <TopologyView
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
                 graphEngine={graphEngine}
-                onApplyTraceResult={setActiveTraceResult}
-                onNavigateToMap={() => setActiveTab('map')}
-              />
-            )}
-
-            {activeTab === 'assets' && (
-              <AssetRegistry
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
-                onOpenAddModal={() => setIsAddAssetModalOpen(true)}
-                onOpenQrModal={(id) => setActiveQrAssetId(id)}
-                onNavigateToMapWithAsset={(id) => {
-                  setSelectedAssetIdForMap(id);
-                  setActiveTab('map');
-                }}
-                onEditAsset={(asset) => setAssetToEdit(asset)}
-                onDeleteAsset={handleDeleteAsset}
-              />
-            )}
-
-            {activeTab === 'inspections' && (
-              <InspectionView
-                inspections={inspections}
-                onOpenNewModal={() => setIsNewInspectionModalOpen(true)}
-                onEditInspection={(insp) => setInspectionToEdit(insp)}
-                onDeleteInspection={handleDeleteInspection}
-              />
-            )}
-
-            {activeTab === 'data' && (
-              <ImportExportView
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
-                inspections={inspections}
-                onBatchImportManholes={(newMhs) => setManholes(prev => [...newMhs, ...prev])}
+                isDarkMode={isDarkMode}
               />
             )}
 
@@ -682,6 +599,33 @@ export const App: React.FC = () => {
               />
             )}
 
+            {activeTab === 'master_data' && (
+              <MasterDataView
+                manholes={manholes}
+                pumpStations={pumpStations}
+                pipes={pipes}
+                inspections={inspections}
+                currentUser={currentUser}
+                onOpenAddAssetModal={() => setIsAddAssetModalOpen(true)}
+                onEditAsset={(asset) => setAssetToEdit(asset)}
+                onDeleteAsset={handleDeleteAsset}
+                onOpenNewInspectionModal={() => setIsNewInspectionModalOpen(true)}
+                onEditInspection={(insp) => setInspectionToEdit(insp)}
+                onDeleteInspection={handleDeleteInspection}
+                onGenerateQr={(id) => setActiveQrAssetId(id)}
+                onSelectAssetForMap={(id) => {
+                  setSelectedAssetIdForMap(id);
+                  setActiveTab('flowchart');
+                }}
+                onImportManholes={(newMhs) => setManholes(prev => [...newMhs, ...prev])}
+                isDarkMode={isDarkMode}
+              />
+            )}
+
+            {activeTab === 'ai_settings' && (
+              <AiSettingsView isDarkMode={isDarkMode} />
+            )}
+
             {activeTab === 'backup' && (
               <BackupRestoreView
                 currentUserRole={currentUser.role}
@@ -690,11 +634,37 @@ export const App: React.FC = () => {
                 }}
               />
             )}
+
+            {activeTab === 'profile' && (
+              <ProfileView
+                currentUser={currentUser}
+                onUpdateProfile={(updated) => {
+                  setCurrentUser(updated);
+                  authService.saveSession(updated);
+                  apiClient.updateUser(updated.id, updated);
+                  reloadUsersList();
+                }}
+                isDarkMode={isDarkMode}
+              />
+            )}
           </main>
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Work Order Modal */}
+      <CreateWorkOrderModal
+        isOpen={isCreateWorkOrderModalOpen}
+        onClose={() => {
+          setIsCreateWorkOrderModalOpen(false);
+          setWorkOrderToEdit(null);
+        }}
+        onSave={handleSaveWorkOrder}
+        users={users}
+        initialData={workOrderToEdit}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* Asset & Inspection Modals */}
       <AddAssetModal
         isOpen={isAddAssetModalOpen}
         onClose={() => setIsAddAssetModalOpen(false)}
@@ -726,7 +696,7 @@ export const App: React.FC = () => {
         allAssets={allAssets}
         onSelectAsset={(id) => {
           setSelectedAssetIdForMap(id);
-          setActiveTab('map');
+          setActiveTab('flowchart');
         }}
       />
 

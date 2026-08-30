@@ -1,31 +1,34 @@
 import React from 'react';
 import {
   LayoutDashboard,
-  MapPin,
-  GitBranch,
-  Boxes,
+  ClipboardList,
+  FolderKanban,
   ClipboardCheck,
-  FileSpreadsheet,
-  Users,
-  Droplets,
   Activity,
-  Layers,
-  ChevronRight,
-  LogOut,
-  HardDriveDownload
+  Smartphone,
+  GitBranch,
+  Users,
+  Sliders,
+  Sparkles,
+  HardDriveDownload,
+  UserCircle,
+  LogOut
 } from 'lucide-react';
 import { UserRole } from '../../types/rbac';
-import { RBACService } from '../../services/rbacService';
 
 export type NavTab =
   | 'dashboard'
-  | 'map'
-  | 'topology'
-  | 'assets'
-  | 'inspections'
-  | 'data'
+  | 'work_orders'
+  | 'projects'
+  | 'daily_reports'
+  | 'activity_logs'
+  | 'app_android'
+  | 'flowchart'
   | 'users'
-  | 'backup';
+  | 'master_data'
+  | 'ai_settings'
+  | 'backup'
+  | 'profile';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -38,163 +41,137 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
-  currentUserRole,
+  currentUserRole: _currentUserRole,
   onLogout,
-  isDarkMode = false
+  isDarkMode = true
 }) => {
   const navItems = [
     {
       id: 'dashboard' as NavTab,
       label: 'Dashboard',
-      icon: LayoutDashboard,
-      action: 'view_dashboard' as const
+      icon: LayoutDashboard
     },
     {
-      id: 'map' as NavTab,
-      label: 'Interactive GIS Map',
-      icon: MapPin,
-      action: 'view_map' as const,
-      badge: 'Live'
+      id: 'work_orders' as NavTab,
+      label: 'Work Order',
+      icon: ClipboardList
     },
     {
-      id: 'topology' as NavTab,
-      label: 'Flow Topology Solver',
-      icon: GitBranch,
-      action: 'view_assets' as const
+      id: 'projects' as NavTab,
+      label: 'Proyek',
+      icon: FolderKanban
     },
     {
-      id: 'assets' as NavTab,
-      label: 'Master Asset Registry',
-      icon: Boxes,
-      action: 'view_assets' as const
+      id: 'daily_reports' as NavTab,
+      label: 'Laporan Harian',
+      icon: ClipboardCheck
     },
     {
-      id: 'inspections' as NavTab,
-      label: 'Inspections & Reports',
-      icon: ClipboardCheck,
-      action: 'create_inspection' as const
+      id: 'activity_logs' as NavTab,
+      label: 'Log Aktivitas',
+      icon: Activity
     },
     {
-      id: 'data' as NavTab,
-      label: 'Data Import / Export',
-      icon: FileSpreadsheet,
-      action: 'export_data' as const
+      id: 'app_android' as NavTab,
+      label: 'App Android',
+      icon: Smartphone
+    },
+    {
+      id: 'flowchart' as NavTab,
+      label: 'Flowchart Aplikasi',
+      icon: GitBranch
     },
     {
       id: 'users' as NavTab,
-      label: 'User Management',
-      icon: Users,
-      action: 'manage_users' as const
+      label: 'Pengguna',
+      icon: Users
+    },
+    {
+      id: 'master_data' as NavTab,
+      label: 'Data Master',
+      icon: Sliders
+    },
+    {
+      id: 'ai_settings' as NavTab,
+      label: 'Pengaturan AI',
+      icon: Sparkles
     },
     {
       id: 'backup' as NavTab,
-      label: 'Backup & Restore (NAS/Drive)',
-      icon: HardDriveDownload,
-      action: 'manage_backups' as const,
-      badge: 'Admin'
+      label: 'Backup & Pemulihan',
+      icon: HardDriveDownload
+    },
+    {
+      id: 'profile' as NavTab,
+      label: 'Profil Saya',
+      icon: UserCircle
     }
   ];
 
   return (
     <aside className={`w-64 border-r p-4 flex flex-col justify-between shrink-0 font-sans select-none transition-colors duration-300 ${
-      isDarkMode ? 'bg-[#111827] border-slate-800 text-slate-100' : 'bg-[#F7F7F8] border-slate-200/80 text-slate-900'
+      isDarkMode ? 'bg-[#0B0F17] border-slate-800/80 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
     }`}>
-      {/* Upper Brand & Views */}
-      <div className="space-y-6">
-        {/* Workspace Brand Badge */}
-        <div className="flex items-center gap-3 px-2 py-1">
-          <div className="bg-white p-1.5 rounded-xl border border-slate-200/90 dark:border-slate-700 shadow-2xs shrink-0 flex items-center justify-center">
-            <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="h-8 sm:h-9 w-auto object-contain" />
+      {/* Upper Brand & Navigation Menu */}
+      <div className="space-y-4">
+        {/* Workspace Brand Badge matching Reference Logo */}
+        <div className="flex items-center gap-3 px-2 py-2 mb-2">
+          <div className="bg-white/95 p-1.5 rounded-xl border border-white/20 shadow-md shrink-0 flex items-center justify-center">
+            <img src="/logo.jpg" alt="PT. Bukit Indah Tirta Alam Logo" className="h-8 w-auto object-contain" />
           </div>
-          <div>
-            <div className={`font-black text-sm tracking-tight leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-              SewerBITA
+          <div className="min-w-0">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 leading-tight">
+              Unit Pengolahan Air & Limbah Cair
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold leading-tight">
-              PT. Bukit Indah Tirta Alam
+            <div className={`font-black text-xs sm:text-sm tracking-tight leading-tight uppercase ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+              Kota Bukit Indah
+            </div>
+            <div className="text-[9px] text-blue-400 font-semibold truncate leading-tight">
+              PT. BUKIT INDAH TIRTA ALAM
             </div>
           </div>
         </div>
 
-        {/* Section Header */}
-        <div className="px-3 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-          Workspace Views
-        </div>
-
-        {/* Navigation List */}
+        {/* Navigation Item Links */}
         <nav className="space-y-1">
           {navItems.map((item) => {
-            const hasPerm = RBACService.hasPermission(currentUserRole, item.action);
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-
-            if (!hasPerm && item.id === 'users') return null;
 
             return (
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition group cursor-pointer ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? isDarkMode ? 'bg-slate-800 text-white font-extrabold border border-slate-700 shadow-2xs' : 'bg-white text-slate-900 font-extrabold shadow-2xs border border-slate-200/90'
-                    : isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-[#EAEAEB]'
+                    ? isDarkMode
+                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-sm'
+                      : 'bg-blue-50 text-blue-700 border border-blue-200 shadow-xs'
+                    : isDarkMode
+                      ? 'text-slate-400 hover:text-slate-100 hover:bg-white/5 border border-transparent'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-[#2563EB]' : 'text-slate-400 group-hover:text-slate-700'}`} />
-                  <span>{item.label}</span>
-                </div>
-
-                {item.badge && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive
-                      ? 'bg-blue-50 text-[#2563EB] border border-blue-100'
-                      : isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200/70 text-slate-600'
-                    }`}>
-                    {item.badge}
-                  </span>
-                )}
+                <Icon className={`w-4 h-4 shrink-0 transition-transform ${isActive ? 'scale-110 text-blue-400' : 'text-slate-400'}`} />
+                <span className="truncate text-left">{item.label}</span>
               </button>
             );
           })}
         </nav>
       </div>
 
-      {/* Footer Widgets & Logout Button */}
-      <div className="space-y-3 mt-4">
-        <div className={`p-3.5 rounded-xl border space-y-2 shadow-2xs ${
-          isDarkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200/70'
-        }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-              <span className={`text-xs font-extrabold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Network GIS</span>
-            </div>
-            <Activity className="w-3.5 h-3.5 text-[#2563EB]" />
-          </div>
-          <div className="text-[11px] text-slate-500 font-medium leading-tight">
-            Sewerage Zone 1 & 2 Active
-          </div>
-          <div className={`pt-1.5 border-t flex items-center justify-between text-[11px] font-medium ${
-            isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-500'
-          }`}>
-            <span>Topology DAG</span>
-            <span className="text-emerald-500 font-bold font-mono">100% OK</span>
-          </div>
-        </div>
-
-        {onLogout && (
+      {/* Footer / Logout */}
+      {onLogout && (
+        <div className="pt-4 border-t border-slate-800/80">
           <button
             onClick={onLogout}
-            className={`w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border font-extrabold text-xs transition cursor-pointer shadow-2xs group ${
-              isDarkMode ? 'bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border-rose-900/60' : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200'
-            }`}
-            title="Keluar dari Sesi Sistem"
+            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
           >
-            <LogOut className="w-4 h-4 group-hover:scale-110 transition" />
-            <span>Logout Sistem</span>
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span>Keluar Sesi</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </aside>
   );
 };
