@@ -26,6 +26,14 @@ const pool = new Pool({
 // Test Database Connection and Auto-Initialize Required Tables
 const initDb = async () => {
   try {
+    // 1. Enable PostGIS
+    try {
+      await pool.query('CREATE EXTENSION IF NOT EXISTS postgis;');
+    } catch (e) {
+      console.warn('PostGIS extension check notice:', e.message);
+    }
+
+    // 2. User Profiles Table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_profiles (
           id VARCHAR(100) PRIMARY KEY,
@@ -39,12 +47,99 @@ const initDb = async () => {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // 3. Manhole Assets Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS manhole_assets (
+          id VARCHAR(100) PRIMARY KEY,
+          asset_code VARCHAR(50) UNIQUE NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          area VARCHAR(100) NOT NULL,
+          latitude DOUBLE PRECISION NOT NULL,
+          longitude DOUBLE PRECISION NOT NULL,
+          depth_meters DOUBLE PRECISION NOT NULL DEFAULT 2.0,
+          diameter_mm INT NOT NULL DEFAULT 600,
+          material VARCHAR(100) NOT NULL DEFAULT 'Precast Concrete',
+          status VARCHAR(50) NOT NULL DEFAULT 'Active',
+          condition VARCHAR(50) NOT NULL DEFAULT 'Good',
+          next_inspection_due DATE NOT NULL DEFAULT CURRENT_DATE + INTERVAL '90 days',
+          geom GEOMETRY(Point, 4326),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 4. Pump Station Assets Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pump_station_assets (
+          id VARCHAR(100) PRIMARY KEY,
+          asset_code VARCHAR(50) UNIQUE NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          area VARCHAR(100) NOT NULL,
+          latitude DOUBLE PRECISION NOT NULL,
+          longitude DOUBLE PRECISION NOT NULL,
+          flow_capacity_lps DOUBLE PRECISION NOT NULL DEFAULT 150.0,
+          total_pumps INT NOT NULL DEFAULT 3,
+          active_pumps INT NOT NULL DEFAULT 2,
+          power_source VARCHAR(100) NOT NULL DEFAULT 'PLN Grid + Genset',
+          generator_backup VARCHAR(100) NOT NULL DEFAULT '150 kVA Genset',
+          status VARCHAR(50) NOT NULL DEFAULT 'Active',
+          condition VARCHAR(50) NOT NULL DEFAULT 'Good',
+          next_inspection_due DATE NOT NULL DEFAULT CURRENT_DATE + INTERVAL '90 days',
+          geom GEOMETRY(Point, 4326),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 5. Pipe Assets Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pipe_assets (
+          id VARCHAR(100) PRIMARY KEY,
+          asset_code VARCHAR(50) UNIQUE NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          area VARCHAR(100) NOT NULL,
+          from_asset_id VARCHAR(100) NOT NULL,
+          to_asset_id VARCHAR(100) NOT NULL,
+          length_meters DOUBLE PRECISION NOT NULL DEFAULT 50.0,
+          diameter_mm INT NOT NULL DEFAULT 300,
+          material VARCHAR(100) NOT NULL DEFAULT 'HDPE',
+          slope_percent DOUBLE PRECISION NOT NULL DEFAULT 0.5,
+          status VARCHAR(50) NOT NULL DEFAULT 'Active',
+          condition VARCHAR(50) NOT NULL DEFAULT 'Good',
+          next_inspection_due DATE NOT NULL DEFAULT CURRENT_DATE + INTERVAL '90 days',
+          geom GEOMETRY(LineString, 4326),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 6. Inspection Records Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS inspection_records (
+          id VARCHAR(100) PRIMARY KEY,
+          asset_id VARCHAR(100) NOT NULL,
+          asset_code VARCHAR(50) NOT NULL,
+          asset_type VARCHAR(50) NOT NULL DEFAULT 'Manhole',
+          inspector_name VARCHAR(255) NOT NULL,
+          inspection_date DATE NOT NULL DEFAULT CURRENT_DATE,
+          condition VARCHAR(50) NOT NULL DEFAULT 'Good',
+          issue_category VARCHAR(100),
+          notes TEXT,
+          action_required TEXT,
+          photo_url TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 7. Seed Default Admin User
     await pool.query(`
       INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
       VALUES ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
       ON CONFLICT (email) DO NOTHING;
     `);
-    console.log('✅ PostgreSQL user_profiles table initialized & auto-healed successfully!');
+
+    console.log('✅ PostgreSQL Schema & Tables (manhole, pump_station, pipe, inspection, users) initialized & auto-healed successfully!');
   } catch (err) {
     console.error('⚠️ DB Init Warning:', err.message);
   }
