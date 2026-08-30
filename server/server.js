@@ -139,12 +139,6 @@ const initDb = async () => {
       ON CONFLICT (email) DO NOTHING;
     `);
 
-    // 8. Clean up any previous demo assets from database, keeping user profiles intact
-    await pool.query("DELETE FROM inspection_records WHERE id LIKE 'insp-%';");
-    await pool.query("DELETE FROM pipe_assets WHERE id LIKE 'p-%';");
-    await pool.query("DELETE FROM pump_station_assets WHERE id LIKE 'ps-%';");
-    await pool.query("DELETE FROM manhole_assets WHERE id LIKE 'mh-%';");
-
     console.log('✅ PostgreSQL Schema & Tables (manhole, pump_station, pipe, inspection, users) clean and initialized for pure production!');
   } catch (err) {
     console.error('⚠️ DB Init Warning:', err.message);
@@ -207,7 +201,7 @@ app.get('/api/assets', async (req, res) => {
 });
 
 // --------------------------------------------------------------------
-// 3. CREATE ASSET ENDPOINT
+// 3. CREATE ASSET ENDPOINT (WITH PERSISTENT UPSERT)
 // --------------------------------------------------------------------
 app.post('/api/assets', async (req, res) => {
   const { type, data } = req.body;
@@ -217,17 +211,29 @@ app.post('/api/assets', async (req, res) => {
         INSERT INTO manhole_assets 
         (id, asset_code, name, area, latitude, longitude, depth_meters, diameter_mm, material, status, condition, next_inspection_due)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING *;
+        ON CONFLICT (id) DO UPDATE SET
+          asset_code = EXCLUDED.asset_code,
+          name = EXCLUDED.name,
+          area = EXCLUDED.area,
+          latitude = EXCLUDED.latitude,
+          longitude = EXCLUDED.longitude,
+          depth_meters = EXCLUDED.depth_meters,
+          diameter_mm = EXCLUDED.diameter_mm,
+          material = EXCLUDED.material,
+          status = EXCLUDED.status,
+          condition = EXCLUDED.condition,
+          next_inspection_due = EXCLUDED.next_inspection_due
+        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue";
       `;
       const values = [
         data.id || `mh-${Date.now()}`,
         data.assetCode,
         data.name,
         data.area,
-        data.latitude,
-        data.longitude,
-        data.depthMeters || 2.0,
-        data.diameterMm || 600,
+        Number(data.latitude) || 0,
+        Number(data.longitude) || 0,
+        Number(data.depthMeters) || 2.0,
+        Number(data.diameterMm) || 600,
         data.material || 'Precast Concrete',
         data.status || 'Active',
         data.condition || 'Good',
@@ -242,18 +248,32 @@ app.post('/api/assets', async (req, res) => {
         INSERT INTO pump_station_assets 
         (id, asset_code, name, area, latitude, longitude, flow_capacity_lps, total_pumps, active_pumps, power_source, generator_backup, status, condition, next_inspection_due)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-        RETURNING *;
+        ON CONFLICT (id) DO UPDATE SET
+          asset_code = EXCLUDED.asset_code,
+          name = EXCLUDED.name,
+          area = EXCLUDED.area,
+          latitude = EXCLUDED.latitude,
+          longitude = EXCLUDED.longitude,
+          flow_capacity_lps = EXCLUDED.flow_capacity_lps,
+          total_pumps = EXCLUDED.total_pumps,
+          active_pumps = EXCLUDED.active_pumps,
+          power_source = EXCLUDED.power_source,
+          generator_backup = EXCLUDED.generator_backup,
+          status = EXCLUDED.status,
+          condition = EXCLUDED.condition,
+          next_inspection_due = EXCLUDED.next_inspection_due
+        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
       const values = [
         data.id || `ps-${Date.now()}`,
         data.assetCode,
         data.name,
         data.area,
-        data.latitude,
-        data.longitude,
-        data.flowCapacityLps || 150.0,
-        data.totalPumps || 3,
-        data.activePumps || 2,
+        Number(data.latitude) || 0,
+        Number(data.longitude) || 0,
+        Number(data.flowCapacityLps) || 150.0,
+        Number(data.totalPumps) || 3,
+        Number(data.activePumps) || 2,
         data.powerSource || 'PLN Grid',
         data.generatorBackup || 'Genset',
         data.status || 'Active',
@@ -269,7 +289,20 @@ app.post('/api/assets', async (req, res) => {
         INSERT INTO pipe_assets 
         (id, asset_code, name, area, from_asset_id, to_asset_id, length_meters, diameter_mm, material, slope_percent, status, condition, next_inspection_due)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING *;
+        ON CONFLICT (id) DO UPDATE SET
+          asset_code = EXCLUDED.asset_code,
+          name = EXCLUDED.name,
+          area = EXCLUDED.area,
+          from_asset_id = EXCLUDED.from_asset_id,
+          to_asset_id = EXCLUDED.to_asset_id,
+          length_meters = EXCLUDED.length_meters,
+          diameter_mm = EXCLUDED.diameter_mm,
+          material = EXCLUDED.material,
+          slope_percent = EXCLUDED.slope_percent,
+          status = EXCLUDED.status,
+          condition = EXCLUDED.condition,
+          next_inspection_due = EXCLUDED.next_inspection_due
+        RETURNING id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
       const values = [
         data.id || `p-${Date.now()}`,
@@ -278,10 +311,10 @@ app.post('/api/assets', async (req, res) => {
         data.area,
         data.fromAssetId,
         data.toAssetId,
-        data.lengthMeters || 50.0,
-        data.diameterMm || 300,
+        Number(data.lengthMeters) || 50.0,
+        Number(data.diameterMm) || 300,
         data.material || 'HDPE',
-        data.slopePercent || 0.5,
+        Number(data.slopePercent) || 0.5,
         data.status || 'Active',
         data.condition || 'Good',
         data.nextInspectionDue || new Date().toISOString().split('T')[0]
