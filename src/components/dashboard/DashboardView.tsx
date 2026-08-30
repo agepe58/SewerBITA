@@ -71,6 +71,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const goodCount = allAssets.filter(a => a.condition === 'Good').length;
   const fairCount = allAssets.filter(a => a.condition === 'Fair').length;
 
+  // Helper for safe percentage calculation
+  const getPercentage = (count: number) => totalAssets > 0 ? ((count / totalAssets) * 100).toFixed(0) : '0';
+
   // 2. PRD 7.1 Distribusi Aset Berdasarkan Area
   const areaMap = new Map<string, number>();
   allAssets.forEach(a => {
@@ -79,7 +82,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const areaDistribution = Array.from(areaMap.entries()).map(([areaName, count]) => ({
     areaName,
     count,
-    percentage: Math.round((count / totalAssets) * 100)
+    percentage: totalAssets > 0 ? Math.round((count / totalAssets) * 100) : 0
   }));
 
   // 3. PRD 7.1 Aktivitas Inspeksi Terbaru (Top 5)
@@ -144,7 +147,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
             </div>
             <div className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">{totalActive}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">{((totalActive / totalAssets) * 100).toFixed(0)}% Normal</div>
+            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold truncate">{getPercentage(totalActive)}% Normal</div>
           </div>
 
           {/* 5. Aset Membutuhkan Inspeksi */}
@@ -201,10 +204,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Progress Bar Breakdown */}
             <div className="space-y-3">
               <div className="h-6 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex p-0.5 border border-slate-200/80 dark:border-slate-700 shadow-inner">
-                <div style={{ width: `${(goodCount / totalAssets) * 100}%` }} className="bg-[#4ADE80] h-full rounded-l-full" title={`Good: ${goodCount}`}></div>
-                <div style={{ width: `${(fairCount / totalAssets) * 100}%` }} className="bg-[#38BDF8] h-full" title={`Fair: ${fairCount}`}></div>
-                <div style={{ width: `${(warningAssets.length / totalAssets) * 100}%` }} className="bg-[#FACC15] h-full" title={`Warning: ${warningAssets.length}`}></div>
-                <div style={{ width: `${(criticalAssets.length / totalAssets) * 100}%` }} className="bg-[#F87171] h-full rounded-r-full" title={`Critical: ${criticalAssets.length}`}></div>
+                <div style={{ width: `${totalAssets > 0 ? (goodCount / totalAssets) * 100 : 0}%` }} className="bg-[#4ADE80] h-full rounded-l-full" title={`Good: ${goodCount}`}></div>
+                <div style={{ width: `${totalAssets > 0 ? (fairCount / totalAssets) * 100 : 0}%` }} className="bg-[#38BDF8] h-full" title={`Fair: ${fairCount}`}></div>
+                <div style={{ width: `${totalAssets > 0 ? (warningAssets.length / totalAssets) * 100 : 0}%` }} className="bg-[#FACC15] h-full" title={`Warning: ${warningAssets.length}`}></div>
+                <div style={{ width: `${totalAssets > 0 ? (criticalAssets.length / totalAssets) * 100 : 0}%` }} className="bg-[#F87171] h-full rounded-r-full" title={`Critical: ${criticalAssets.length}`}></div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
@@ -214,7 +217,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="w-2.5 h-2.5 rounded-full bg-[#4ADE80]"></span>
                   </div>
                   <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1">{goodCount}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">{((goodCount / totalAssets) * 100).toFixed(0)}% dari total</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">{getPercentage(goodCount)}% dari total</div>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
@@ -223,7 +226,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8]"></span>
                   </div>
                   <div className="text-3xl font-black text-sky-600 dark:text-sky-400 font-mono mt-1">{fairCount}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">{((fairCount / totalAssets) * 100).toFixed(0)}% dari total</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">{getPercentage(fairCount)}% dari total</div>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
@@ -232,7 +235,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="w-2.5 h-2.5 rounded-full bg-[#FACC15]"></span>
                   </div>
                   <div className="text-3xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1">{warningAssets.length}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">{((warningAssets.length / totalAssets) * 100).toFixed(0)}% dari total</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">{getPercentage(warningAssets.length)}% dari total</div>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
@@ -241,7 +244,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="w-2.5 h-2.5 rounded-full bg-[#F87171]"></span>
                   </div>
                   <div className="text-3xl font-black text-rose-600 dark:text-rose-400 font-mono mt-1">{criticalAssets.length}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">{((criticalAssets.length / totalAssets) * 100).toFixed(0)}% dari total</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">{getPercentage(criticalAssets.length)}% dari total</div>
                 </div>
               </div>
             </div>

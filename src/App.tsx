@@ -48,7 +48,10 @@ export const App: React.FC = () => {
   const [manholes, setManholes] = useState<ManholeAsset[]>(() => {
     const saved = localStorage.getItem('sewerbita_manholes');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load manholes', e); }
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) { console.error('Failed to load manholes', e); }
     }
     return INITIAL_MANHOLES;
   });
@@ -56,7 +59,10 @@ export const App: React.FC = () => {
   const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>(() => {
     const saved = localStorage.getItem('sewerbita_pump_stations');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load pumpStations', e); }
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) { console.error('Failed to load pumpStations', e); }
     }
     return INITIAL_PUMP_STATIONS;
   });
@@ -64,7 +70,10 @@ export const App: React.FC = () => {
   const [pipes, setPipes] = useState<PipeAsset[]>(() => {
     const saved = localStorage.getItem('sewerbita_pipes');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load pipes', e); }
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) { console.error('Failed to load pipes', e); }
     }
     return INITIAL_PIPES;
   });
@@ -72,7 +81,10 @@ export const App: React.FC = () => {
   const [inspections, setInspections] = useState<InspectionRecord[]>(() => {
     const saved = localStorage.getItem('sewerbita_inspections');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load inspections', e); }
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) { console.error('Failed to load inspections', e); }
     }
     return INITIAL_INSPECTIONS;
   });
@@ -80,7 +92,10 @@ export const App: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>(() => {
     const saved = localStorage.getItem('sewerbita_users');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error('Failed to load users', e); }
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) { console.error('Failed to load users', e); }
     }
     return INITIAL_USERS;
   });
