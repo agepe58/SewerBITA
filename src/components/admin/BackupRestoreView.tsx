@@ -168,8 +168,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         filename: isIncremental
           ? `sewerbita_inc_delta_${Date.now().toString().slice(-4)}_${new Date().toISOString().slice(0, 10)}.sql.gz`
           : isDifferential
-          ? `sewerbita_diff_${new Date().toISOString().slice(0, 10)}.sql.gz`
-          : `sewerbita_full_backup_${new Date().toISOString().slice(0, 10)}.sql.gz`,
+            ? `sewerbita_diff_${new Date().toISOString().slice(0, 10)}.sql.gz`
+            : `sewerbita_full_backup_${new Date().toISOString().slice(0, 10)}.sql.gz`,
         timestamp: `${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB`,
         sizeMb: isIncremental ? 1.2 : isDifferential ? 3.5 : 15.2,
         destination: selectedDestination,
@@ -228,7 +228,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
   // Filtered History
   const filteredHistory = backupHistory.filter(item => {
     const matchesSearch = item.filename.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                          item.triggeredBy.toLowerCase().includes(searchFilter.toLowerCase());
+      item.triggeredBy.toLowerCase().includes(searchFilter.toLowerCase());
     const matchesDest = destinationFilter === 'All' || item.destination === destinationFilter;
     return matchesSearch && matchesDest;
   });
@@ -324,7 +324,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                 <Server className="w-5 h-5 text-[#2563EB]" />
-                <span>Konfigurasi Storage NAS (SMB / Synology WebDAV)</span>
+                <span>Konfigurasi NAS</span>
               </h2>
               <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-2.5 py-0.5 rounded-full">
                 {nasConfig.status}
@@ -780,24 +780,22 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                     </td>
 
                     <td className="py-3.5 px-3">
-                      <span className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
-                        record.destination === 'DualRedundant' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' :
+                      <span className={`px-2.5 py-1 rounded-full font-black text-[10px] ${record.destination === 'DualRedundant' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' :
                         record.destination === 'NAS' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' : 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
-                      }`}>
+                        }`}>
                         {record.destination === 'DualRedundant' ? 'Dual Redundant (NAS + GDrive)' : record.destination}
                       </span>
                     </td>
 
                     <td className="py-3.5 px-3">
-                      <span className={`px-2.5 py-1 rounded-lg font-extrabold text-[11px] inline-flex items-center gap-1 ${
-                        record.type === 'Full Backup'
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                          : record.type === 'Incremental Backup'
+                      <span className={`px-2.5 py-1 rounded-lg font-extrabold text-[11px] inline-flex items-center gap-1 ${record.type === 'Full Backup'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                        : record.type === 'Incremental Backup'
                           ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
                           : record.type === 'Differential Backup'
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-                          : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
-                      }`}>
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                            : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
+                        }`}>
                         {record.type === 'Full Backup' && '📦 Full Baseline'}
                         {record.type === 'Incremental Backup' && `⚡ Incremental Delta #${record.deltaSequence || 1}`}
                         {record.type === 'Differential Backup' && '📊 Differential'}
