@@ -93,12 +93,30 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`px-3 py-1 rounded-full text-xs font-extrabold shadow-2xs ${usr.role === 'Admin' ? 'bg-[#2563EB] text-white' :
-                        usr.role === 'Engineer' ? 'bg-[#0284C7] text-white' :
-                          usr.role === 'Technician' ? 'bg-[#16A34A] text-white' : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
-                      }`}>
-                      {usr.role}
-                    </span>
+                    {usr.status === 'Pending Approval' || usr.status === 'Pending' ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800 animate-pulse">
+                          Pending Approval
+                        </span>
+                        {currentUser.role === 'Admin' && (
+                          <button
+                            onClick={() => onEditUser({ ...usr, status: 'Active' })}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-lg shadow-md transition flex items-center gap-1 cursor-pointer"
+                            title="Setujui dan Aktifkan Akun Pengguna Ini"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Setujui</span>
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={`px-3 py-1 rounded-full text-xs font-extrabold shadow-2xs ${usr.role === 'Admin' ? 'bg-[#2563EB] text-white' :
+                          usr.role === 'Engineer' ? 'bg-[#0284C7] text-white' :
+                            usr.role === 'Technician' ? 'bg-[#16A34A] text-white' : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
+                        }`}>
+                        {usr.role}
+                      </span>
+                    )}
 
                     <button
                       onClick={() => onEditUser(usr)}

@@ -24,7 +24,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const [password, setPassword] = useState(user.password || '');
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState(user.phone || '');
-  const [status, setStatus] = useState<'Active' | 'Inactive'>(user.status || 'Active');
+  const [status, setStatus] = useState<'Active' | 'Inactive' | 'Pending' | 'Pending Approval'>(user.status || 'Active');
   const [avatar, setAvatar] = useState(user.avatar);
 
   const roles: UserRole[] = ['Admin', 'Engineer', 'Technician', 'Management'];
@@ -191,7 +191,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           {/* Account Status */}
           <div>
             <label className="text-xs text-slate-600 font-bold uppercase tracking-wider">Status Akun</label>
-            <div className="flex gap-3 mt-1">
+            <div className="flex gap-2 sm:gap-3 mt-1">
               <button
                 type="button"
                 onClick={() => setStatus('Active')}
@@ -200,6 +200,15 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                 }`}
               >
                 ● Active (Aktif)
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatus('Pending Approval')}
+                className={`flex-1 py-2.5 rounded-xl border text-xs font-extrabold transition ${
+                  status === 'Pending Approval' || status === 'Pending' ? 'bg-amber-50 border-amber-300 text-amber-800 shadow-2xs' : 'bg-slate-50 border-slate-200 text-slate-600'
+                }`}
+              >
+                ● Pending Approval
               </button>
               <button
                 type="button"

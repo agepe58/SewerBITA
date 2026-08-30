@@ -77,7 +77,7 @@ export const authService = {
     pass: string,
     department: string,
     role: UserRole = 'Technician'
-  ): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
+  ): Promise<{ success: boolean; user?: UserProfile; error?: string; pending?: boolean; message?: string }> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
@@ -87,14 +87,18 @@ export const authService = {
 
       if (res.ok) {
         const data = await res.json();
-        authService.saveSession(data.user);
-        return { success: true, user: data.user };
+        return {
+          success: true,
+          user: data.user,
+          pending: true,
+          message: data.message || 'Pendaftaran berhasil! Akun Anda membutuhkan persetujuan Admin sebelum login.'
+        };
       } else {
         const err = await res.json();
         return { success: false, error: err.error || 'Gagal mendaftarkan akun' };
       }
     } catch {
-      // Fallback local registration
+      // Fallback local registration with Pending Approval
       const newUser: UserProfile = {
         id: `usr-${Date.now()}`,
         name: fullName,
@@ -103,15 +107,19 @@ export const authService = {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`,
         department: department || 'Operasional & Pemeliharaan',
         phone: '+62 812-0000-0000',
-        status: 'Active'
+        status: 'Pending Approval'
       };
-      authService.saveSession(newUser);
-      return { success: true, user: newUser };
+      return {
+        success: true,
+        user: newUser,
+        pending: true,
+        message: 'Pendaftaran berhasil! Akun Anda membutuhkan persetujuan Administrator sebelum login.'
+      };
     }
   },
 
   // Google OAuth Login Integration
-  loginWithGoogle: async (googlePayload: { name: string; email: string; photoUrl: string }): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
+  loginWithGoogle: async (googlePayload: { name: string; email: string; photoUrl: string }): Promise<{ success: boolean; user?: UserProfile; error?: string; pending?: boolean; message?: string }> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
         method: 'POST',
@@ -121,6 +129,13 @@ export const authService = {
 
       if (res.ok) {
         const data = await res.json();
+        if (data.pending) {
+          return {
+            success: false,
+            pending: true,
+            error: data.message || `Akun Google Anda (${googlePayload.email}) membutuhkan persetujuan Administrator.`
+          };
+        }
         authService.saveSession(data.user);
         return { success: true, user: data.user };
       } else {
@@ -129,13 +144,22 @@ export const authService = {
       }
     } catch {
       // Fallback Google OAuth login
+      const isDefaultAdmin = googlePayload.email.toLowerCase() === 'angga.purbaya@gmail.com';
+      if (!isDefaultAdmin) {
+        return {
+          success: false,
+          pending: true,
+          error: `Akun Google (${googlePayload.email}) telah terdaftar dan membutuhkan persetujuan Admin sebelum dapat masuk ke sistem.`
+        };
+      }
+
       const googleUser: UserProfile = {
-        id: `usr-google-${Date.now().toString().slice(-4)}`,
+        id: 'usr-admin-01',
         name: googlePayload.name,
         email: googlePayload.email,
-        role: googlePayload.email.toLowerCase().includes('admin') || googlePayload.email.toLowerCase() === 'angga.purbaya@gmail.com' ? 'Admin' : 'Engineer',
+        role: 'Admin',
         avatar: googlePayload.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(googlePayload.name)}`,
-        department: 'Google Single Sign-On (SSO)',
+        department: 'Direksi / System Administrator',
         phone: '+62 812-0000-0000',
         status: 'Active'
       };

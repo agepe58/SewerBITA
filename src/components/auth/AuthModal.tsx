@@ -79,12 +79,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const result = await authService.registerUser(regFullName, regEmail, regPassword, regDepartment, regRole);
     setLoading(false);
 
-    if (result.success && result.user) {
-      setSuccessMessage(`Akun ${result.user.email} berhasil didaftarkan!`);
-      setTimeout(() => {
-        onSuccess(result.user!);
-        onClose();
-      }, 1000);
+    if (result.success) {
+      setSuccessMessage(result.message || '⚠️ Pendaftaran Berhasil! Akun Anda saat ini dalam status Pending Approval. Harap tunggu persetujuan dari Administrator sebelum melakukan login.');
+      setMode('login');
+      setLoginEmail(regEmail);
     } else {
       setErrorMessage(result.error || 'Gagal mendaftarkan akun.');
     }
@@ -106,7 +104,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         onClose();
       }, 800);
     } else {
-      setErrorMessage(result.error || 'Login Google OAuth gagal.');
+      setErrorMessage(result.error || 'Login Google OAuth gagal. Akun mungkin belum disetujui Admin.');
     }
   };
 

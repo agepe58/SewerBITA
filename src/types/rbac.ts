@@ -9,7 +9,7 @@ export interface UserProfile {
   department: string;
   password?: string;
   phone?: string;
-  status?: 'Active' | 'Inactive';
+  status?: 'Active' | 'Inactive' | 'Pending' | 'Pending Approval';
 }
 
 export type PermissionAction =

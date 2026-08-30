@@ -365,7 +365,7 @@ app.delete('/api/users/:id', async (req, res) => {
 });
 
 // --------------------------------------------------------------------
-// 8. AUTHENTICATION REST API ENDPOINTS
+// 8. AUTHENTICATION REST API ENDPOINTS (STRICT ADMIN APPROVAL)
 // --------------------------------------------------------------------
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
@@ -375,7 +375,15 @@ app.post('/api/auth/login', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Email tidak terdaftar' });
     }
-    res.json({ message: 'Login berhasil', user: result.rows[0] });
+    const user = result.rows[0];
+    if (user.status === 'Pending' || user.status === 'Pending Approval') {
+      return res.status(403).json({ error: 'Akun Anda sedang menunggu persetujuan dari Administrator (Pending Approval). Harap hubungi Admin untuk pengaktifan.' });
+    }
+    if (user.status === 'Inactive') {
+      return res.status(403).json({ error: 'Akun Anda dalam status tidak aktif (Inactive). Silakan hubungi Admin.' });
+    }
+
+    res.json({ message: 'Login berhasil', user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -394,12 +402,16 @@ app.post('/api/auth/register', async (req, res) => {
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`;
     const q = `
       INSERT INTO user_profiles (id, full_name, email, role, department, status, avatar_url)
-      VALUES ($1, $2, $3, $4, $5, 'Active', $6)
+      VALUES ($1, $2, $3, $4, $5, 'Pending Approval', $6)
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
     const values = [newId, fullName, email, role || 'Technician', department || 'Operasional', avatarUrl];
     const result = await pool.query(q, values);
-    res.status(201).json({ message: 'Pendaftaran berhasil', user: result.rows[0] });
+    res.status(201).json({
+      message: 'Pendaftaran berhasil! Akun Anda saat ini dalam status Pending Approval. Harap tunggu persetujuan Administrator sebelum login.',
+      user: result.rows[0],
+      pending: true
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -412,18 +424,38 @@ app.post('/api/auth/google', async (req, res) => {
     const checkRes = await pool.query(checkQ, [email]);
     
     if (checkRes.rows.length > 0) {
-      return res.json({ message: 'Login Google berhasil', user: checkRes.rows[0] });
+      const existingUser = checkRes.rows[0];
+      if (existingUser.status === 'Pending' || existingUser.status === 'Pending Approval') {
+        return res.status(403).json({ error: `Akun Google Anda (${email}) sedang menunggu persetujuan dari Administrator (Pending Approval).` });
+      }
+      if (existingUser.status === 'Inactive') {
+        return res.status(403).json({ error: `Akun Google Anda (${email}) dalam status tidak aktif.` });
+      }
+      return res.json({ message: 'Login Google berhasil', user: existingUser });
     }
 
+    // Default admin angga.purbaya@gmail.com is Active automatically
+    const isDefaultAdmin = email.toLowerCase() === 'angga.purbaya@gmail.com';
+    const initialStatus = isDefaultAdmin ? 'Active' : 'Pending Approval';
+    const defaultRole = (email.toLowerCase().includes('admin') || isDefaultAdmin) ? 'Admin' : 'Engineer';
+
     const newId = `usr-google-${Date.now().toString().slice(-4)}`;
-    const defaultRole = (email.toLowerCase().includes('admin') || email.toLowerCase() === 'angga.purbaya@gmail.com') ? 'Admin' : 'Engineer';
     const q = `
       INSERT INTO user_profiles (id, full_name, email, role, department, status, avatar_url)
-      VALUES ($1, $2, $3, $4, 'Google Single Sign-On', 'Active', $5)
+      VALUES ($1, $2, $3, $4, 'Google Single Sign-On', $5, $6)
       RETURNING id, full_name AS "name", email, role, department, phone, status, avatar_url AS "avatar";
     `;
-    const values = [newId, name, email, defaultRole, photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`];
+    const values = [newId, name, email, defaultRole, initialStatus, photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`];
     const result = await pool.query(q, values);
+
+    if (!isDefaultAdmin) {
+      return res.status(201).json({
+        message: 'Registrasi via Google berhasil! Akun Anda membutuhkan persetujuan Administrator sebelum dapat masuk.',
+        user: result.rows[0],
+        pending: true
+      });
+    }
+
     res.status(201).json({ message: 'Registrasi Google berhasil', user: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });

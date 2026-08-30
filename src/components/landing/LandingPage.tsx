@@ -66,28 +66,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {onOpenAuthModal && (
             <button
               onClick={onOpenAuthModal}
-              className={`inline-flex items-center justify-center gap-2 font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl border transition-all shadow-md cursor-pointer whitespace-nowrap ${
-                isDarkMode
-                  ? 'bg-white/10 hover:bg-white/20 text-white border-white/20'
-                  : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-2xs'
-              }`}
+              className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-lg shadow-blue-600/35 hover:shadow-blue-600/55 hover:scale-103 cursor-pointer whitespace-nowrap group"
             >
-              <span>🔑 Login / Daftar</span>
+              <span>🔑 Masuk ke Sistem (Login / Daftar)</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
             </button>
           )}
-
-          <button
-            onClick={onEnterDashboard}
-            className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white font-extrabold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-lg shadow-blue-600/35 hover:shadow-blue-600/55 hover:scale-103 cursor-pointer whitespace-nowrap group"
-          >
-            <span>Masuk ke Dashboard</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-          </button>
         </div>
       </header>
 
       {/* Main Content (100% Vertically and Horizontally Centered Viewport Hero) */}
-      <main className="w-full max-w-4xl mx-auto z-10 text-center flex flex-col items-center justify-center space-y-8 my-auto">
+      <main className="w-full max-w-4xl mx-auto z-10 text-center flex flex-col items-center justify-center space-y-6 my-auto">
         {/* Main Headline & Subtitle (Centered) */}
         <div className="space-y-4 max-w-3xl mx-auto text-center flex flex-col items-center">
           <h1 className={`text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.18] text-center ${
@@ -104,10 +93,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           }`}>
             Platform intelijen terpadu untuk pemetaan peta GIS interaktif, analisis topologi alur jaringan, registrasi master aset, dan pelaporan inspeksi lapangan.
           </p>
+
+          {/* Primary Login Button CTA */}
+          {onOpenAuthModal && (
+            <div className="pt-3">
+              <button
+                onClick={onOpenAuthModal}
+                className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white font-black text-sm sm:text-base px-8 py-3.5 rounded-xl transition-all shadow-xl shadow-blue-600/40 hover:shadow-blue-600/60 hover:scale-105 cursor-pointer group"
+              >
+                <span>🔑 Masuk ke Sistem (Login)</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Clean Corporate Name Text (Without Button Box) with generous spacing */}
-        <div className="pt-2 pb-6 sm:pb-10 flex justify-center w-full">
+        <div className="pt-2 pb-4 sm:pb-6 flex justify-center w-full">
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-[0.22em] uppercase text-[#2563EB] dark:text-[#60A5FA] drop-shadow-xs">
             PT. BUKIT INDAH TIRTA ALAM
           </h2>
