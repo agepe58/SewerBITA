@@ -3,7 +3,10 @@ import { InspectionRecord } from '../types/inspection';
 import { UserProfile } from '../types/rbac';
 
 const getApiBaseUrl = (): string => {
-  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim() && !envUrl.includes('api.sewer.kbi.web.id')) {
+    return envUrl.trim();
+  }
   return '';
 };
 

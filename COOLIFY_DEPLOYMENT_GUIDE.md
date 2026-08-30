@@ -125,25 +125,11 @@ export const getManholesWithGIS = async () => {
 };
 ```
 
-#### 3. Hubungkan Web App Frontend (Vite React SPA) ke Backend API
-Buka aplikasi Frontend SewerBITA di Coolify $\to$ Masuk ke **Environment Variables** $\to$ Tambahkan:
-
-```env
-# URL REST API Backend di Coolify (sesuai domain server Anda)
-VITE_API_BASE_URL=https://api.sewer.kbi.web.id
-```
-
-Di dalam kode React Frontend ([`src/services/api.ts`](file:///c:/AntiGravity%20Project/SewerBITA/src/services/api.ts)):
-
-```typescript
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.sewer.kbi.web.id';
-
-export const fetchAssetsFromDatabase = async () => {
-  const response = await fetch(`${API_BASE_URL}/api/assets`);
-  if (!response.ok) throw new Error('Gagal mengambil data aset dari database');
-  return response.json();
-};
-```
+#### 3. Hubungkan Web App Frontend ke Backend API (Otomatis & Terpadu)
+Aplikasi SewerBITA menggunakan arsitektur *Unified Container* (Express + React SPA).
+API REST dilayani langsung di domain yang sama (`/api/...`), sehingga:
+- **TIDAK PERLU** menambahkan `VITE_API_BASE_URL` di Coolify Environment Variables (kosongkan atau hapus jika ada).
+- Request dari browser langsung menuju `https://sewer.kbi.web.id/api/...` secara seamless tanpa masalah CORS atau subdomain.
 
 #### 5. Cara Memeriksa Koneksi Database dan Web App Sudah Terhubung (4 Metode Audit)
 
