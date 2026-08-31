@@ -187,7 +187,7 @@ export const authService = {
   },
 
   // Google OAuth Login Integration
-  loginWithGoogle: async (googlePayload: { name: string; email: string; photoUrl: string }): Promise<{ success: boolean; user?: UserProfile; error?: string; pending?: boolean; message?: string }> => {
+  loginWithGoogle: async (googlePayload: { name: string; email: string; photoUrl: string; credential?: string }): Promise<{ success: boolean; user?: UserProfile; error?: string; pending?: boolean; message?: string }> => {
     const normalizedEmail = (googlePayload.email || '').trim().toLowerCase();
     
     // Check local storage

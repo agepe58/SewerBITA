@@ -3,6 +3,19 @@ import { X, Lock, Mail, User, ShieldCheck, Eye, EyeOff, Building, CheckCircle2, 
 import { UserProfile, UserRole } from '../../types/rbac';
 import { authService } from '../../services/authService';
 
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (config: any) => void;
+          prompt: (notification?: any) => void;
+        };
+      };
+    };
+  }
+}
+
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,11 +50,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [regDepartment, setRegDepartment] = useState('Operasional Jaringan');
   const [regRole, setRegRole] = useState<UserRole>('Technician');
 
-  // Google OAuth Modal Simulator State
+
+
+  // Google OAuth Modal State
   const [isGooglePopupOpen, setIsGooglePopupOpen] = useState(false);
-  const [isCustomGoogleInput, setIsCustomGoogleInput] = useState(false);
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
   const [customGoogleName, setCustomGoogleName] = useState('');
+
+  // Helper to open Google OAuth Popup cleanly without saved emails
+  const handleOpenGooglePopup = () => {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    // If Google Client ID is configured and GIS SDK is loaded, trigger real Google OAuth GIS popup
+    if (googleClientId && window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          auto_select: false,
+          callback: (response: { credential?: string }) => {
+            if (response.credential) {
+              try {
+                const base64Url = response.credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                  atob(base64)
+                    .split('')
+                    .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                    .join('')
+                );
+                const parsed = JSON.parse(jsonPayload);
+                handleGoogleOAuthSelect({
+                  name: parsed.name || parsed.email.split('@')[0],
+                  email: parsed.email,
+                  photoUrl: parsed.picture || '',
+                  credential: response.credential
+                });
+              } catch (err) {
+                console.error('Error decoding Google ID Token:', err);
+              }
+            }
+          }
+        });
+        window.google.accounts.id.prompt();
+        return;
+      } catch (err) {
+        console.warn('GIS initialization fallback:', err);
+      }
+    }
+
+    // Clean Modal Fallback (When Client ID is not configured yet)
+    setCustomGoogleEmail('');
+    setCustomGoogleName('');
+    setIsGooglePopupOpen(true);
+  };
 
   if (!isOpen) return null;
 
@@ -103,7 +164,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   // Handle Google OAuth Sign-In
-  const handleGoogleOAuthSelect = async (account: { name: string; email: string; photoUrl: string }) => {
+  const handleGoogleOAuthSelect = async (account: { name: string; email: string; photoUrl: string; credential?: string }) => {
     setIsGooglePopupOpen(false);
     setLoading(true);
     setErrorMessage(null);
@@ -279,7 +340,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {/* Google OAuth SSO Button */}
             <button
               type="button"
-              onClick={() => setIsGooglePopupOpen(true)}
+              onClick={handleOpenGooglePopup}
               className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer"
             >
               <svg className="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24">
@@ -416,7 +477,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {/* Google OAuth SSO Button on Register tab */}
             <button
               type="button"
-              onClick={() => setIsGooglePopupOpen(true)}
+              onClick={handleOpenGooglePopup}
               className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer"
             >
               <svg className="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24">
@@ -431,7 +492,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
       </div>
 
-      {/* Google OAuth Account Selector Popup Simulator */}
+      {/* Google OAuth Account Selector Popup Simulator (No Pre-saved Emails) */}
       {isGooglePopupOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
@@ -443,7 +504,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                <span className="text-sm font-extrabold text-slate-900 dark:text-white">Pilih Akun Google</span>
+                <span className="text-sm font-extrabold text-slate-900 dark:text-white">Sign In Google</span>
               </div>
               <button onClick={() => setIsGooglePopupOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
@@ -454,120 +515,65 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               Lanjutkan ke aplikasi <strong className="text-slate-900 dark:text-white">SewerBITA HQ</strong>
             </p>
 
-            <div className="space-y-2">
-              {!isCustomGoogleInput ? (
-                <>
-                  <button
-                    onClick={() => handleGoogleOAuthSelect({
-                      name: 'Angga Purbaya',
-                      email: 'angga.purbaya@gmail.com',
-                      photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-                    })}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-left cursor-pointer"
-                  >
-                    <img
-                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
-                      alt="Angga Purbaya"
-                      className="w-9 h-9 rounded-full object-cover border"
-                    />
-                    <div>
-                      <div className="text-xs font-extrabold text-slate-900 dark:text-white">Angga Purbaya</div>
-                      <div className="text-[11px] text-slate-500 font-medium">angga.purbaya@gmail.com</div>
-                    </div>
-                  </button>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                if (!emailRegex.test(customGoogleEmail.trim())) {
+                  alert('Harap masukkan alamat email Google yang valid.');
+                  return;
+                }
+                handleGoogleOAuthSelect({
+                  name: customGoogleName.trim() || customGoogleEmail.split('@')[0],
+                  email: customGoogleEmail.trim(),
+                  photoUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(customGoogleEmail)}`
+                });
+              }}
+              className="space-y-3 pt-1"
+            >
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1">
+                  Alamat Email Google
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={customGoogleEmail}
+                  onChange={e => setCustomGoogleEmail(e.target.value)}
+                  placeholder="Masukkan email Google anda..."
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-extrabold text-slate-900 dark:text-white focus:outline-none focus:border-[#2563EB]"
+                />
+              </div>
 
-                  <button
-                    onClick={() => handleGoogleOAuthSelect({
-                      name: 'Angga Purbaya (BITA Admin)',
-                      email: 'angga.purbaya@bita.co.id',
-                      photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80'
-                    })}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-left cursor-pointer"
-                  >
-                    <img
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80"
-                      alt="Angga Purbaya (BITA)"
-                      className="w-9 h-9 rounded-full object-cover border"
-                    />
-                    <div>
-                      <div className="text-xs font-extrabold text-slate-900 dark:text-white">Angga Purbaya (BITA Admin)</div>
-                      <div className="text-[11px] text-slate-500 font-medium">angga.purbaya@bita.co.id</div>
-                    </div>
-                  </button>
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1">
+                  Nama Akun Google (Opsional)
+                </label>
+                <input
+                  type="text"
+                  value={customGoogleName}
+                  onChange={e => setCustomGoogleName(e.target.value)}
+                  placeholder="Nama Lengkap Anda..."
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-extrabold text-slate-900 dark:text-white focus:outline-none focus:border-[#2563EB]"
+                />
+              </div>
 
-                  {/* Option to enter another custom Google account */}
-                  <button
-                    type="button"
-                    onClick={() => setIsCustomGoogleInput(true)}
-                    className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-blue-300 dark:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-950/40 text-[#2563EB] dark:text-[#60A5FA] text-xs font-extrabold transition cursor-pointer mt-3"
-                  >
-                    <User className="w-4 h-4" />
-                    <span>+ Gunakan Akun Google Lainnya</span>
-                  </button>
-                </>
-              ) : (
-                /* Custom Google Account Entry Form */
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                    if (!emailRegex.test(customGoogleEmail.trim())) {
-                      alert('Harap masukkan alamat email Google yang valid.');
-                      return;
-                    }
-                    handleGoogleOAuthSelect({
-                      name: customGoogleName.trim() || customGoogleEmail.split('@')[0],
-                      email: customGoogleEmail.trim(),
-                      photoUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(customGoogleEmail)}`
-                    });
-                  }}
-                  className="space-y-3 pt-1"
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsGooglePopupOpen(false)}
+                  className="flex-1 py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-extrabold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                 >
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1">
-                      Alamat Email Google
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={customGoogleEmail}
-                      onChange={e => setCustomGoogleEmail(e.target.value)}
-                      placeholder="contoh: nama.anda@gmail.com"
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-extrabold text-slate-900 dark:text-white focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 mb-1">
-                      Nama Akun Google
-                    </label>
-                    <input
-                      type="text"
-                      value={customGoogleName}
-                      onChange={e => setCustomGoogleName(e.target.value)}
-                      placeholder="Nama Lengkap Anda..."
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-extrabold text-slate-900 dark:text-white focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsCustomGoogleInput(false)}
-                      className="flex-1 py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-extrabold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-black shadow-md transition cursor-pointer"
-                    >
-                      Lanjutkan Sign In
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-black shadow-md transition cursor-pointer"
+                >
+                  Lanjutkan Sign In
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

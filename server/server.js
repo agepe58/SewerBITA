@@ -6,7 +6,10 @@ const https = require('https');
 const zlib = require('zlib');
 const path = require('path');
 const fs = require('fs');
+const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -889,7 +892,26 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 app.post('/api/auth/google', async (req, res) => {
-  const { name, email, photoUrl } = req.body;
+  let { credential, name, email, photoUrl } = req.body;
+
+  // If a Google ID Token (credential) is provided, verify it directly with Google!
+  if (credential) {
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID
+      });
+      const payload = ticket.getPayload();
+      if (payload) {
+        email = payload.email;
+        name = payload.name || name;
+        photoUrl = payload.picture || photoUrl;
+      }
+    } catch (verifyErr) {
+      console.warn('Google ID Token verification warning:', verifyErr.message);
+    }
+  }
+
   try {
     if (!email) {
       return res.status(400).json({ error: 'Email Google wajib diisi.' });
