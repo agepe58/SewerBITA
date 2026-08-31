@@ -3,6 +3,12 @@
 # Stage 1: Build React Frontend
 FROM node:20-alpine AS build-stage
 WORKDIR /app
+
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_API_BASE_URL
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
