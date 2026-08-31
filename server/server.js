@@ -189,14 +189,29 @@ const initDb = async () => {
       );
     `);
 
-    // 11. Seed Default Admin User
+    // 11. Backup History Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS backup_history (
+          id VARCHAR(100) PRIMARY KEY,
+          execution_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          backup_type VARCHAR(50) NOT NULL DEFAULT 'FULL',
+          destination VARCHAR(100) NOT NULL DEFAULT 'Synology NAS',
+          filename VARCHAR(255) NOT NULL,
+          file_size VARCHAR(50) NOT NULL,
+          status VARCHAR(50) NOT NULL DEFAULT 'Sukses',
+          notes TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 12. Seed Default Admin User
     await pool.query(`
       INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
       VALUES ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
       ON CONFLICT (email) DO NOTHING;
     `);
 
-    // 12. Seed Default Project If Empty
+    // 13. Seed Default Project If Empty
     await pool.query(`
       INSERT INTO maintenance_projects (id, title, status, total_tasks, completed_tasks)
       VALUES ('proj-01', 'Pintu air Balance Tank', 'Direncanakan', 0, 0)
@@ -930,7 +945,292 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 // --------------------------------------------------------------------
-// 9. SERVE PRODUCTION STATIC FRONTEND (SPA ROUTING)
+// 9. BACKUP & DISASTER RECOVERY ENDPOINTS (SYNOLOGY NAS & LOCAL DUMP)
+// --------------------------------------------------------------------
+const http = require('http');
+const https = require('https');
+const zlib = require('zlib');
+const path = require('path');
+const fs = require('fs');
+
+const BACKUP_DIR = path.join(__dirname, '../backups');
+if (!fs.existsSync(BACKUP_DIR)) {
+  try {
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
+  } catch (e) {
+    console.warn('Backup dir create notice:', e.message);
+  }
+}
+
+// Helper: Upload file buffer to Synology NAS via WebDAV PUT
+const uploadToWebDAV = (nasConfig, filename, fileBuffer) => {
+  return new Promise((resolve) => {
+    try {
+      const { ip, port = 5005, username, password, useSsl = false, targetFolder = '/Maia/MTC/mms_backup' } = nasConfig || {};
+      if (!ip) {
+        return resolve({ success: false, error: 'IP Address Synology NAS belum dikonfigurasi' });
+      }
+
+      const client = (useSsl || port === 5006 || port === '5006') ? https : http;
+      let cleanFolder = (targetFolder || '/').replace(/\\/g, '/');
+      if (!cleanFolder.startsWith('/')) cleanFolder = '/' + cleanFolder;
+      if (!cleanFolder.endsWith('/')) cleanFolder = cleanFolder + '/';
+
+      const targetPath = encodeURI(`${cleanFolder}${filename}`);
+      const auth = 'Basic ' + Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
+
+      const options = {
+        hostname: ip,
+        port: parseInt(port, 10) || 5005,
+        path: targetPath,
+        method: 'PUT',
+        headers: {
+          'Authorization': auth,
+          'Content-Type': 'application/gzip',
+          'Content-Length': fileBuffer.length
+        },
+        timeout: 10000,
+        rejectUnauthorized: false
+      };
+
+      const req = client.request(options, (res) => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve({ success: true, statusCode: res.statusCode, targetPath });
+        } else if (res.statusCode === 201 || res.statusCode === 204) {
+          resolve({ success: true, statusCode: res.statusCode, targetPath });
+        } else {
+          resolve({ success: false, statusCode: res.statusCode, error: `Synology WebDAV HTTP ${res.statusCode} ${res.statusMessage}` });
+        }
+      });
+
+      req.on('error', (err) => {
+        resolve({ success: false, error: `Koneksi WebDAV ke ${ip}:${port} gagal: ${err.message}` });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        resolve({ success: false, error: `Koneksi WebDAV ke ${ip}:${port} timeout (10s)` });
+      });
+
+      req.write(fileBuffer);
+      req.end();
+    } catch (e) {
+      resolve({ success: false, error: e.message });
+    }
+  });
+};
+
+// Helper: Generate SQL database dump string
+const generateSqlDump = async () => {
+  const tables = [
+    'user_profiles',
+    'manhole_assets',
+    'pump_station_assets',
+    'pipe_assets',
+    'inspection_records',
+    'work_orders',
+    'maintenance_projects',
+    'daily_reports',
+    'activity_logs',
+    'backup_history'
+  ];
+
+  let sqlDump = `-- ====================================================================\n`;
+  sqlDump += `-- SewerBITA Enterprise PostgreSQL Database Backup\n`;
+  sqlDump += `-- Unit Pengolahan Air & Limbah Cair Kota Bukit Indah - PT. Bukit Indah Tirta Alam\n`;
+  sqlDump += `-- Generated: ${new Date().toISOString()}\n`;
+  sqlDump += `-- ====================================================================\n\n`;
+
+  for (const table of tables) {
+    try {
+      const res = await pool.query(`SELECT * FROM ${table};`);
+      sqlDump += `-- Table: ${table} (${res.rows.length} records)\n`;
+      if (res.rows.length > 0) {
+        const columns = Object.keys(res.rows[0]);
+        for (const row of res.rows) {
+          const values = columns.map(col => {
+            const val = row[col];
+            if (val === null || val === undefined) return 'NULL';
+            if (typeof val === 'number' || typeof val === 'boolean') return val;
+            if (val instanceof Date) return `'${val.toISOString()}'`;
+            if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+            return `'${String(val).replace(/'/g, "''")}'`;
+          });
+          sqlDump += `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.join(', ')}) ON CONFLICT (id) DO UPDATE SET ${columns.filter(c => c !== 'id').map(c => `${c} = EXCLUDED.${c}`).join(', ')};\n`;
+        }
+      }
+      sqlDump += `\n`;
+    } catch (err) {
+      console.warn(`Table ${table} dump notice:`, err.message);
+    }
+  }
+
+  return sqlDump;
+};
+
+// 1. Test NAS Connectivity Endpoint
+app.post('/api/backup/test-nas', async (req, res) => {
+  const nasConfig = req.body || {};
+  try {
+    const testFilename = `.test_connection_${Date.now()}.tmp`;
+    const testBuffer = Buffer.from('SewerBITA Synology WebDAV Connection Test OK');
+    const result = await uploadToWebDAV(nasConfig, testFilename, testBuffer);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: `Koneksi WebDAV ke Synology NAS (${nasConfig.ip}:${nasConfig.port}) terverifikasi online! Folder target '${nasConfig.targetFolder}' siap digunakan.`
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error || 'Gagal terhubung ke Synology NAS WebDAV.'
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Execute Backup Endpoint (Creates SQL dump, gzips, saves to /backups and uploads to NAS)
+app.post('/api/backup/execute', async (req, res) => {
+  const { type = 'FULL', nasConfig } = req.body || {};
+  try {
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+    const filename = `sewerbita-${type.toLowerCase()}-backup-${stamp}.sql.gz`;
+
+    // 1. Generate SQL dump text
+    const sqlText = await generateSqlDump();
+
+    // 2. Gzip compress
+    const gzippedBuffer = zlib.gzipSync(Buffer.from(sqlText, 'utf-8'));
+    const sizeMb = (gzippedBuffer.length / (1024 * 1024)).toFixed(2) + ' MB';
+
+    // 3. Save local persistent file
+    const localFilePath = path.join(BACKUP_DIR, filename);
+    fs.writeFileSync(localFilePath, gzippedBuffer);
+
+    // 4. Upload to Synology NAS WebDAV if configured
+    let nasResult = { success: false, error: 'Belum dikonfigurasi' };
+    let uploadStatus = 'Lokal (Server)';
+    let notes = `${type} Backup berhasil. Database: 10 tabel tersimpan lokal di server.`;
+
+    if (nasConfig && nasConfig.ip) {
+      nasResult = await uploadToWebDAV(nasConfig, filename, gzippedBuffer);
+      if (nasResult.success) {
+        uploadStatus = 'NAS (Synology)';
+        notes = `${type} Backup berhasil. Tersimpan di Synology NAS (${nasConfig.targetFolder}) dan lokal.`;
+      } else {
+        notes = `${type} Backup tersimpan di server. WebDAV NAS notice: ${nasResult.error}`;
+      }
+    }
+
+    // 5. Insert record to backup_history in DB
+    const backupId = `bk-${Date.now()}`;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const waktuExec = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')}`;
+
+    await pool.query(`
+      INSERT INTO backup_history (id, execution_time, backup_type, destination, filename, file_size, status, notes)
+      VALUES ($1, CURRENT_TIMESTAMP, $2, $3, $4, $5, 'Sukses', $6)
+      ON CONFLICT (id) DO NOTHING;
+    `, [backupId, type, uploadStatus, filename, sizeMb, notes]);
+
+    res.json({
+      success: true,
+      id: backupId,
+      filename,
+      waktuExec,
+      fileSize: sizeMb,
+      destination: uploadStatus,
+      nasUpload: nasResult,
+      notes
+    });
+  } catch (err) {
+    console.error('Backup execution failed:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Get Backup History Endpoint
+app.get('/api/backup/history', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id, 
+        to_char(execution_time, 'DD Mon YYYY, HH24.MI') AS "waktuExec",
+        backup_type AS "tipe",
+        destination AS "destinasi",
+        filename AS "namaBerkas",
+        file_size AS "ukuran",
+        status,
+        notes AS "keterangan"
+      FROM backup_history
+      ORDER BY execution_time DESC
+      LIMIT 30;
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Fetch backup history error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Download Backup File Endpoint
+app.get('/api/backup/download/:filename', (req, res) => {
+  const { filename } = req.params;
+  const safeFilename = path.basename(filename);
+  const filePath = path.join(BACKUP_DIR, safeFilename);
+
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    res.setHeader('Content-Type', 'application/gzip');
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+  } else {
+    res.status(404).json({ error: `Berkas backup '${safeFilename}' tidak ditemukan di server.` });
+  }
+});
+
+// 5. Restore Database from Backup File Endpoint
+app.post('/api/backup/restore', async (req, res) => {
+  const { filename } = req.body || {};
+  try {
+    if (!filename) {
+      return res.status(400).json({ error: 'Nama berkas snapshot tidak valid.' });
+    }
+    const safeFilename = path.basename(filename);
+    const filePath = path.join(BACKUP_DIR, safeFilename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: `Berkas snapshot '${safeFilename}' tidak ditemukan di direktori backup.` });
+    }
+
+    const compressedBuffer = fs.readFileSync(filePath);
+    const sqlText = zlib.gunzipSync(compressedBuffer).toString('utf-8');
+
+    // Execute SQL queries inside a transaction
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN;');
+      await client.query(sqlText);
+      await client.query('COMMIT;');
+      res.json({ success: true, message: `Database SewerBITA berhasil dipulihkan dari '${safeFilename}'.` });
+    } catch (dbErr) {
+      await client.query('ROLLBACK;');
+      throw dbErr;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('Database restore error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --------------------------------------------------------------------
+// 10. SERVE PRODUCTION STATIC FRONTEND (SPA ROUTING)
 // --------------------------------------------------------------------
 const path = require('path');
 const fs = require('fs');

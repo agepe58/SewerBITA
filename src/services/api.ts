@@ -352,5 +352,62 @@ export const apiClient = {
       console.warn('Failed to create project:', e);
       return null;
     }
+  },
+
+  // Backup & Restore (Synology NAS WebDAV & PostgreSQL Dumps)
+  testNasConnection: async (nasConfig: any) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/backup/test-nas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nasConfig)
+      });
+      const data = await res.json();
+      return { ok: res.ok, data };
+    } catch (e: any) {
+      return { ok: false, data: { error: e.message || 'Koneksi ke backend gagal.' } };
+    }
+  },
+
+  executeBackup: async (type: 'FULL' | 'INCREMENTAL', nasConfig: any) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/backup/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, nasConfig })
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        return { success: false, error: errData.error || 'Eksekusi backup gagal di server.' };
+      }
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e.message || 'Gagal mengirim permintaan backup.' };
+    }
+  },
+
+  getBackupHistory: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/backup/history`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn('Failed to fetch backup history:', e);
+      return null;
+    }
+  },
+
+  restoreBackup: async (filename: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/backup/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename })
+      });
+      const data = await res.json();
+      return { ok: res.ok, data };
+    } catch (e: any) {
+      return { ok: false, data: { error: e.message || 'Gagal memulihkan backup database.' } };
+    }
   }
 };

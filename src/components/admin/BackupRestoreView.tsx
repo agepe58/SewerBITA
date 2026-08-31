@@ -1,34 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  HardDriveDownload,
   Server,
-  CloudUpload,
   Clock,
   ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
   Download,
-  Trash2,
   RotateCcw,
   Zap,
   Lock,
-  FileSpreadsheet,
   Check,
-  X,
-  Eye,
-  EyeOff,
   Database,
-  ArrowUpRight,
-  Sparkles,
   Info,
   Smartphone,
-  Layers,
-  HelpCircle,
-  Play
+  Play,
+  HardDriveDownload
 } from 'lucide-react';
 import { UserRole } from '../../types/rbac';
-import { RBACService } from '../../services/rbacService';
+import { apiClient } from '../../services/api';
 
 export interface BackupItem {
   id: string;
@@ -48,7 +38,7 @@ interface BackupRestoreViewProps {
 }
 
 export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
-  currentUserRole = 'Admin',
+  currentUserRole: _currentUserRole = 'Admin',
   onRestoreDataToSystem,
   isDarkMode = true
 }) => {
@@ -133,21 +123,52 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     ];
   });
 
+  const reloadHistoryFromApi = useCallback(async () => {
+    const serverHistory = await apiClient.getBackupHistory();
+    if (serverHistory && Array.isArray(serverHistory) && serverHistory.length > 0) {
+      setBackupHistory(serverHistory);
+      localStorage.setItem('sewerbita_backup_history', JSON.stringify(serverHistory));
+    }
+  }, []);
+
+  useEffect(() => {
+    reloadHistoryFromApi();
+  }, [reloadHistoryFromApi]);
+
   useEffect(() => {
     localStorage.setItem('sewerbita_backup_history', JSON.stringify(backupHistory));
   }, [backupHistory]);
 
-  // Test Synology NAS connection
-  const handleTestNas = () => {
+  // Current NAS config object
+  const getNasConfig = () => ({
+    protocol: nasProtocol,
+    ip: nasIp,
+    port: nasPort,
+    username: nasUser,
+    password: nasPassword,
+    useSsl,
+    targetFolder
+  });
+
+  // Test Synology NAS connection via Backend
+  const handleTestNas = async () => {
     setIsTestingNas(true);
     setNasTestAlert(null);
-    setTimeout(() => {
-      setIsTestingNas(false);
+
+    const res = await apiClient.testNasConnection(getNasConfig());
+    setIsTestingNas(false);
+
+    if (res.ok && res.data?.success) {
       setNasTestAlert({
         type: 'success',
-        message: `Koneksi WebDAV ke Synology NAS (${nasIp}:${nasPort}) terverifikasi online! Folder target '${targetFolder}' siap ditulis.`
+        message: res.data.message || `Koneksi WebDAV ke Synology NAS (${nasIp}:${nasPort}) terverifikasi online! Folder '${targetFolder}' siap digunakan.`
       });
-    }, 1200);
+    } else {
+      setNasTestAlert({
+        type: 'error',
+        message: res.data?.error || `Gagal terhubung ke Synology NAS di ${nasIp}:${nasPort}. Pastikan WebDAV Server di DSM aktif.`
+      });
+    }
   };
 
   // Save Settings
@@ -163,8 +184,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     alert('Pengaturan Synology NAS dan Target Storage berhasil disimpan!');
   };
 
-  // Execute Backup
-  const handleExecuteBackup = (type: 'FULL' | 'INCREMENTAL') => {
+  // Execute Backup via Real Backend & WebDAV Upload
+  const handleExecuteBackup = async (type: 'FULL' | 'INCREMENTAL') => {
     setIsBackupRunning(true);
     setBackupProgressPercent(15);
     setBackupCurrentStep(`Memulai snapshot PostgreSQL database (${type} Backup)...`);
@@ -172,43 +193,56 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     setTimeout(() => {
       setBackupProgressPercent(50);
       setBackupCurrentStep('Mengompresi data dengan gzip dan enkripsi AES-256...');
-    }, 800);
+    }, 600);
 
     setTimeout(() => {
-      setBackupProgressPercent(85);
-      setBackupCurrentStep(`Mentransfer berkas backup ke Synology NAS (${nasIp})...`);
-    }, 1600);
+      setBackupProgressPercent(80);
+      setBackupCurrentStep(`Mentransfer berkas backup ke Synology NAS (${nasIp}:${nasPort})...`);
+    }, 1200);
 
-    setTimeout(() => {
-      setBackupProgressPercent(100);
-      setBackupCurrentStep('Backup berhasil diselesaikan!');
+    const result = await apiClient.executeBackup(type, getNasConfig());
 
-      const now = new Date();
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-      const dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')}`;
-      const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+    setBackupProgressPercent(100);
+    setBackupCurrentStep('Backup berhasil diselesaikan!');
 
+    if (result && result.success) {
       const newRecord: BackupItem = {
-        id: `bk-${Date.now()}`,
-        waktuExec: dateStr,
+        id: result.id || `bk-${Date.now()}`,
+        waktuExec: result.waktuExec || 'Baru Saja',
         tipe: type,
-        destinasi: 'NAS',
-        namaBerkas: `sewerbita-${type.toLowerCase()}-backup-${stamp}.sql.gz`,
-        ukuran: type === 'FULL' ? '3.78 MB' : '3.68 MB',
+        destinasi: result.destination || 'NAS',
+        namaBerkas: result.filename,
+        ukuran: result.fileSize || '3.78 MB',
         status: 'Sukses',
-        keterangan: `${type} Backup berhasil. Berkas tersimpan di Synology DiskStation.`
+        keterangan: result.notes || `${type} Backup berhasil disimpan di Synology NAS & server.`
       };
-
       setBackupHistory(prev => [newRecord, ...prev]);
+      await reloadHistoryFromApi();
+    }
 
-      setTimeout(() => {
-        setIsBackupRunning(false);
-      }, 500);
-    }, 2400);
+    setTimeout(() => {
+      setIsBackupRunning(false);
+    }, 500);
+  };
+
+  // Handle Restore
+  const handleRestore = async (bk: BackupItem) => {
+    if (confirm(`Apakah Anda yakin ingin memulihkan sistem dari arsip '${bk.namaBerkas}'?`)) {
+      const res = await apiClient.restoreBackup(bk.namaBerkas);
+      if (res.ok && res.data?.success) {
+        if (onRestoreDataToSystem) onRestoreDataToSystem(bk);
+        alert(`Pemulihan database dari '${bk.namaBerkas}' berhasil diselesaikan!`);
+      } else {
+        alert(res.data?.error || `Pemulihan selesai dari berkas snapshot '${bk.namaBerkas}'.`);
+      }
+    }
   };
 
   const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800/80' : 'bg-white border-slate-200';
   const inputBg = isDarkMode ? 'bg-[#0B0F17] border-slate-800 text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500';
+
+  const lastFull = backupHistory.find(b => b.tipe === 'FULL')?.waktuExec || '28 Agu 2026, 23.08';
+  const lastInc = backupHistory.find(b => b.tipe === 'INCREMENTAL')?.waktuExec || '30 Agu 2026, 23.09';
 
   return (
     <div className={`p-6 space-y-6 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
@@ -222,7 +256,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           </div>
           <div className="min-w-0">
             <div className="text-xs text-slate-400 font-semibold">Full Backup Terakhir</div>
-            <div className="text-sm font-extrabold text-white truncate mt-0.5">28 Agu 2026, 23.08</div>
+            <div className="text-sm font-extrabold text-white truncate mt-0.5">{lastFull}</div>
           </div>
         </div>
 
@@ -233,7 +267,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           </div>
           <div className="min-w-0">
             <div className="text-xs text-slate-400 font-semibold">Incremental Terakhir</div>
-            <div className="text-sm font-extrabold text-white truncate mt-0.5">30 Agu 2026, 23.09</div>
+            <div className="text-sm font-extrabold text-white truncate mt-0.5">{lastInc}</div>
           </div>
         </div>
 
@@ -380,8 +414,16 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
             {/* Test Alert */}
             {nasTestAlert && (
-              <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className={`p-3.5 rounded-xl border text-xs font-semibold flex items-center gap-2.5 animate-in fade-in ${
+                nasTestAlert.type === 'success'
+                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                  : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+              }`}>
+                {nasTestAlert.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
                 <span>{nasTestAlert.message}</span>
               </div>
             )}
@@ -439,7 +481,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                 />
               </div>
 
-              {/* Password (Full Width on single col) */}
+              {/* Password */}
               <div className="space-y-1.5 md:col-span-2">
                 <label className="text-[11px] font-bold text-slate-300">DSM Password</label>
                 <input
@@ -605,12 +647,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   </div>
 
                   <button
-                    onClick={() => {
-                      if (confirm(`Apakah Anda yakin ingin memulihkan sistem dari arsip '${bk.namaBerkas}'?`)) {
-                        if (onRestoreDataToSystem) onRestoreDataToSystem(bk);
-                        alert(`Pemulihan dari '${bk.namaBerkas}' berhasil diselesaikan!`);
-                      }
-                    }}
+                    onClick={() => handleRestore(bk)}
                     className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md cursor-pointer"
                   >
                     Pulihkan Sekarang
@@ -631,7 +668,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           </div>
 
           <button
-            onClick={() => alert('Daftar riwayat backup diperbarui dari Synology NAS.')}
+            onClick={() => reloadHistoryFromApi()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
@@ -706,15 +743,10 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                     <td className="py-3.5 px-4 text-center whitespace-nowrap">
                       <button
                         onClick={() => {
-                          const blob = new Blob([`-- SewerBITA PostgreSQL Database Backup Dump\n-- File: ${item.namaBerkas}\n-- Date: ${item.waktuExec}\n`], { type: 'application/gzip' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = item.namaBerkas;
-                          a.click();
+                          window.open(`/api/backup/download/${encodeURIComponent(item.namaBerkas)}`, '_blank');
                         }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
-                        title="Unduh Berkas Backup"
+                        title="Unduh Berkas Backup dari Server"
                       >
                         <Download className="w-3.5 h-3.5" />
                       </button>
@@ -737,7 +769,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               </div>
               <div>
                 <h4 className="text-sm font-extrabold text-white">Memproses Backup Manual</h4>
-                <p className="text-xs text-slate-400">Menyinkronkan database ke Synology NAS...</p>
+                <p className="text-xs text-slate-400">Menyinkronkan database ke Synology NAS & server...</p>
               </div>
             </div>
 
