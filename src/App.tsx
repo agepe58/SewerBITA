@@ -28,6 +28,7 @@ import { AddAssetModal } from './components/assets/AddAssetModal';
 import { EditAssetModal } from './components/assets/EditAssetModal';
 import { NewInspectionModal } from './components/inspections/NewInspectionModal';
 import { EditInspectionModal } from './components/inspections/EditInspectionModal';
+import { ManholeScheduleModal } from './components/inspections/ManholeScheduleModal';
 import { QrCodeModal } from './components/qr/QrCodeModal';
 import { QrScannerModal } from './components/qr/QrScannerModal';
 
@@ -319,6 +320,7 @@ export const App: React.FC = () => {
 
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
   const [isNewInspectionModalOpen, setIsNewInspectionModalOpen] = useState(false);
+  const [isManholeScheduleModalOpen, setIsManholeScheduleModalOpen] = useState(false);
   const [isQrScannerModalOpen, setIsQrScannerModalOpen] = useState(false);
   const [activeQrAssetId, setActiveQrAssetId] = useState<string | null>(null);
   const [selectedAssetIdForMap, setSelectedAssetIdForMap] = useState<string | null>(null);
@@ -650,6 +652,7 @@ export const App: React.FC = () => {
               <InspectionView
                 inspections={inspections}
                 onOpenNewModal={() => setIsNewInspectionModalOpen(true)}
+                onOpenScheduleModal={() => setIsManholeScheduleModalOpen(true)}
                 onEditInspection={(insp) => setInspectionToEdit(insp)}
                 onDeleteInspection={handleDeleteInspection}
                 isDarkMode={isDarkMode}
@@ -750,6 +753,19 @@ export const App: React.FC = () => {
         allAssets={allAssets}
         currentUser={currentUser}
         preselectedAssetId={selectedAssetIdForMap}
+      />
+
+      <ManholeScheduleModal
+        isOpen={isManholeScheduleModalOpen}
+        onClose={() => setIsManholeScheduleModalOpen(false)}
+        manholes={manholes}
+        areas={areas}
+        onScheduleSaved={async () => {
+          const assetData = await apiClient.getAssets();
+          if (assetData) {
+            setManholes(assetData.manholes || []);
+          }
+        }}
       />
 
       <QrCodeModal

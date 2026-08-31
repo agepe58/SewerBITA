@@ -17,6 +17,7 @@ import { InspectionRecord } from '../../types/inspection';
 interface InspectionViewProps {
   inspections: InspectionRecord[];
   onOpenNewModal: () => void;
+  onOpenScheduleModal?: () => void;
   onEditInspection: (inspection: InspectionRecord) => void;
   onDeleteInspection: (inspectionId: string) => void;
   isDarkMode?: boolean;
@@ -25,6 +26,7 @@ interface InspectionViewProps {
 export const InspectionView: React.FC<InspectionViewProps> = ({
   inspections = [],
   onOpenNewModal,
+  onOpenScheduleModal,
   onEditInspection,
   onDeleteInspection,
   isDarkMode = true
@@ -77,7 +79,7 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
     <div className={`p-6 space-y-6 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       
       {/* 1. TOP ACTION BUTTONS */}
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           onClick={handleExportCsv}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
@@ -85,6 +87,16 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
           <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
           <span>Export .xlsx / .csv</span>
         </button>
+
+        {onOpenScheduleModal && (
+          <button
+            onClick={onOpenScheduleModal}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/40 bg-blue-950/30 hover:bg-blue-950/60 text-blue-400 text-xs font-bold transition shadow-xs cursor-pointer"
+          >
+            <Calendar className="w-4 h-4 text-blue-400" />
+            <span>Jadwal Inspeksi Manhole</span>
+          </button>
+        )}
 
         <button
           onClick={onOpenNewModal}

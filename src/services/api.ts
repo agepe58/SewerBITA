@@ -138,6 +138,22 @@ export const apiClient = {
     }
   },
 
+  // Schedule Periodic Manhole Inspection
+  scheduleManholeInspection: async (payload: { targetType: 'single' | 'area' | 'all'; targetId?: string; area?: string; nextInspectionDue: string }) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/assets/schedule-inspection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn('API scheduleManholeInspection failed:', e);
+      return null;
+    }
+  },
+
   // Inspections
   getInspections: async (): Promise<InspectionRecord[] | null> => {
     try {

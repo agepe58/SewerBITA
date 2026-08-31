@@ -487,6 +487,45 @@ app.delete('/api/assets/:id', async (req, res) => {
 });
 
 // --------------------------------------------------------------------
+// 5.5 SCHEDULE MANHOLE INSPECTION ENDPOINT
+// --------------------------------------------------------------------
+app.post('/api/assets/schedule-inspection', async (req, res) => {
+  const { targetType, targetId, area, nextInspectionDue } = req.body;
+  try {
+    if (!nextInspectionDue) {
+      return res.status(400).json({ error: 'Tanggal jadwal inspeksi (nextInspectionDue) wajib diisi.' });
+    }
+
+    let result;
+    if (targetType === 'single' && targetId) {
+      result = await pool.query(
+        'UPDATE manhole_assets SET next_inspection_due = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, asset_code, name, next_inspection_due;',
+        [nextInspectionDue, targetId]
+      );
+    } else if (targetType === 'area' && area) {
+      result = await pool.query(
+        'UPDATE manhole_assets SET next_inspection_due = $1, updated_at = CURRENT_TIMESTAMP WHERE area = $2 RETURNING id, asset_code, name, next_inspection_due;',
+        [nextInspectionDue, area]
+      );
+    } else {
+      result = await pool.query(
+        'UPDATE manhole_assets SET next_inspection_due = $1, updated_at = CURRENT_TIMESTAMP RETURNING id, asset_code, name, next_inspection_due;',
+        [nextInspectionDue]
+      );
+    }
+
+    res.json({
+      message: 'Jadwal inspeksi berhasil diperbarui!',
+      updatedCount: result.rows.length,
+      updatedAssets: result.rows
+    });
+  } catch (err) {
+    console.error('Error scheduling inspection:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --------------------------------------------------------------------
 // 6. INSPECTION RECORDS ENDPOINTS
 // --------------------------------------------------------------------
 app.get('/api/inspections', async (req, res) => {
