@@ -215,11 +215,31 @@ const initDb = async () => {
     // 12. Purge Any Legacy Demo Admin User
     await pool.query("DELETE FROM user_profiles WHERE id = 'usr-admin-01' OR LOWER(email) = 'angga.purbaya@gmail.com';");
 
-    // 13. Seed Default Project If Empty
+    // 13. Auto-fix & Distribute Zero or Overlapping Asset Coordinates
     await pool.query(`
-      INSERT INTO maintenance_projects (id, title, status, total_tasks, completed_tasks)
-      VALUES ('proj-01', 'Pintu air Balance Tank', 'Direncanakan', 0, 0)
-      ON CONFLICT (id) DO NOTHING;
+      WITH ranked AS (
+        SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC) as rnum
+        FROM pump_station_assets
+        WHERE latitude = 0 OR longitude = 0 OR (latitude = -6.444 AND longitude = 107.452)
+      )
+      UPDATE pump_station_assets ps
+      SET latitude = -6.444 + ((rnum - 1) * 0.003),
+          longitude = 107.452 + ((rnum - 1) * 0.004)
+      FROM ranked
+      WHERE ps.id = ranked.id;
+    `);
+
+    await pool.query(`
+      WITH ranked AS (
+        SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC) as rnum
+        FROM manhole_assets
+        WHERE latitude = 0 OR longitude = 0 OR (latitude = -6.444 AND longitude = 107.452)
+      )
+      UPDATE manhole_assets mh
+      SET latitude = -6.444 + ((rnum - 1) * 0.002),
+          longitude = 107.452 + ((rnum - 1) * 0.0025)
+      FROM ranked
+      WHERE mh.id = ranked.id;
     `);
 
     console.log('✅ PostgreSQL Schema & Tables (work_orders, projects, reports, assets, users) initialized for production!');
@@ -308,13 +328,20 @@ app.post('/api/assets', async (req, res) => {
           next_inspection_due = EXCLUDED.next_inspection_due
         RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue";
       `;
+      const rawLat = data.latitude ?? data.coordinates?.lat;
+      const rawLng = data.longitude ?? data.coordinates?.lng;
+      const parsedLat = Number(rawLat);
+      const parsedLng = Number(rawLng);
+      const finalLat = !isNaN(parsedLat) && parsedLat !== 0 ? parsedLat : -6.444;
+      const finalLng = !isNaN(parsedLng) && parsedLng !== 0 ? parsedLng : 107.452;
+
       const values = [
         data.id || `mh-${Date.now()}`,
         data.assetCode,
         data.name,
         data.area,
-        Number(data.latitude) || 0,
-        Number(data.longitude) || 0,
+        finalLat,
+        finalLng,
         Number(data.depthMeters) || 2.0,
         Number(data.diameterMm) || 600,
         data.material || 'Precast Concrete',
@@ -347,15 +374,22 @@ app.post('/api/assets', async (req, res) => {
           next_inspection_due = EXCLUDED.next_inspection_due
         RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
+      const rawLat = data.latitude ?? data.coordinates?.lat;
+      const rawLng = data.longitude ?? data.coordinates?.lng;
+      const parsedLat = Number(rawLat);
+      const parsedLng = Number(rawLng);
+      const finalLat = !isNaN(parsedLat) && parsedLat !== 0 ? parsedLat : -6.444;
+      const finalLng = !isNaN(parsedLng) && parsedLng !== 0 ? parsedLng : 107.452;
+
       const values = [
         data.id || `ps-${Date.now()}`,
         data.assetCode,
         data.name,
         data.area,
-        Number(data.latitude) || 0,
-        Number(data.longitude) || 0,
-        Number(data.flowCapacityLps) || 150.0,
-        Number(data.totalPumps) || 3,
+        finalLat,
+        finalLng,
+        Number(data.flowCapacityLps ?? data.capacityLps) || 150.0,
+        Number(data.totalPumps ?? data.pumpCount) || 3,
         Number(data.activePumps) || 2,
         data.powerSource || 'PLN Grid',
         data.generatorBackup || 'Genset',

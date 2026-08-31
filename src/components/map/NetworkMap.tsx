@@ -70,6 +70,30 @@ const MapController: React.FC<{ centerCoords: [number, number] | null }> = ({ ce
   return null;
 };
 
+// Component to automatically fit bounds for all assets
+const MapBoundsAutoFitter: React.FC<{ assets: SewerAsset[] }> = ({ assets }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (assets && assets.length > 0) {
+      const points: [number, number][] = assets
+        .map(a => {
+          const item = a as any;
+          const lat = Number(item.coordinates?.lat ?? item.latitude);
+          const lng = Number(item.coordinates?.lng ?? item.longitude);
+          if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) return [lat, lng] as [number, number];
+          return null;
+        })
+        .filter((p): p is [number, number] => p !== null);
+
+      if (points.length > 0) {
+        const bounds = L.latLngBounds(points);
+        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+      }
+    }
+  }, [assets, map]);
+  return null;
+};
+
 export const NetworkMap: React.FC<NetworkMapProps> = ({
   manholes,
   pumpStations,
@@ -121,20 +145,20 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
     }
   };
 
+  // Center Coordinates for Bukit Indah
+  const defaultCenter: [number, number] = [-6.444, 107.452];
+  const [panTarget, setPanTarget] = useState<[number, number] | null>(null);
+
   // Defensive Coordinate Extractor
-  const getCoords = (asset: any): [number, number] | null => {
+  const getRawCoords = (asset: any): [number, number] | null => {
     if (!asset) return null;
     const lat = Number(asset.coordinates?.lat ?? asset.latitude);
     const lng = Number(asset.coordinates?.lng ?? asset.longitude);
     if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
       return [lat, lng];
     }
-    return [-6.444, 107.452];
+    return null;
   };
-
-  // Center Coordinates for Bukit Indah
-  const defaultCenter: [number, number] = [-6.444, 107.452];
-  const [panTarget, setPanTarget] = useState<[number, number] | null>(null);
 
   // Synchronize when asset is selected from parent or table
   useEffect(() => {
@@ -142,7 +166,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       setSelectedAssetId(selectedAssetIdFromParent);
       const matched = [...manholes, ...pumpStations].find(a => a.id === selectedAssetIdFromParent);
       if (matched) {
-        const c = getCoords(matched);
+        const c = getRawCoords(matched);
         if (c) setPanTarget(c);
       }
     }
@@ -152,15 +176,44 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
     setSelectedAssetId(asset ? asset.id : null);
   };
 
+  // Duplicate Coordinate Disambiguation Tracker
+  const dupMap = new Map<string, number>();
+
+  const getDisambiguatedCoords = (asset: any, idx: number): [number, number] => {
+    const raw = getRawCoords(asset);
+    if (!raw) {
+      // Offset default fallback
+      const angle = idx * 2.094; // 120 deg
+      const radius = 0.0015;
+      return [
+        Number((-6.444 + Math.sin(angle) * radius).toFixed(6)),
+        Number((107.452 + Math.cos(angle) * radius).toFixed(6))
+      ];
+    }
+
+    const key = `${raw[0].toFixed(4)}_${raw[1].toFixed(4)}`;
+    const count = dupMap.get(key) || 0;
+    dupMap.set(key, count + 1);
+
+    if (count > 0) {
+      const angle = count * 1.57; // 90 deg steps
+      const radius = 0.0008 * count; // ~80 meters per duplicate
+      return [
+        Number((raw[0] + Math.sin(angle) * radius).toFixed(6)),
+        Number((raw[1] + Math.cos(angle) * radius).toFixed(6))
+      ];
+    }
+
+    return raw;
+  };
+
   // Combined asset node coordinates mapping for polyline connections
   const nodeCoordsMap = new Map<string, [number, number]>();
-  manholes.forEach(m => {
-    const c = getCoords(m);
-    if (c) nodeCoordsMap.set(m.id, c);
+  manholes.forEach((m, idx) => {
+    nodeCoordsMap.set(m.id, getDisambiguatedCoords(m, idx));
   });
-  pumpStations.forEach(p => {
-    const c = getCoords(p);
-    if (c) nodeCoordsMap.set(p.id, c);
+  pumpStations.forEach((p, idx) => {
+    nodeCoordsMap.set(p.id, getDisambiguatedCoords(p, idx));
   });
 
   // Filters logic
@@ -219,7 +272,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
             basemap === 'esri_satellite' ? 'bg-[#2563EB] text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'
           }`}
-          title="Foto Satelit Real gratis dari Esri ArcGIS"
+          title="Foto Satelit Real World Imagery"
         >
           <span>🛰️</span>
           <span>Foto Satelit</span>
@@ -254,6 +307,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         zoomControl={false}
       >
         <MapController centerCoords={panTarget} />
+        <MapBoundsAutoFitter assets={allAssets} />
 
         {/* Dynamic Basemap Tile Layer */}
         <TileLayer
@@ -315,8 +369,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         })}
 
         {/* Render Manhole Markers */}
-        {showManholes && filteredManholes.map((mh) => {
-          const coords = getCoords(mh);
+        {showManholes && filteredManholes.map((mh, idx) => {
+          const coords = getDisambiguatedCoords(mh, idx);
           if (!coords) return null;
           const inTrace = isAssetInTrace(mh.id);
           const icon = createManholeIcon(mh.condition, inTrace);
@@ -361,8 +415,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         })}
 
         {/* Render Pump Station Markers */}
-        {showPumpStations && filteredPumpStations.map((ps) => {
-          const coords = getCoords(ps);
+        {showPumpStations && filteredPumpStations.map((ps, idx) => {
+          const coords = getDisambiguatedCoords(ps, idx);
           if (!coords) return null;
           const inTrace = isAssetInTrace(ps.id);
           const icon = createPumpStationIcon(inTrace);

@@ -39,8 +39,9 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [depthMeters, setDepthMeters] = useState(3.5);
   const [diameterMm, setDiameterMm] = useState(1000);
   const [material, setMaterial] = useState('Precast Concrete');
-  const [lat, setLat] = useState(-6.2100);
-  const [lng, setLng] = useState(106.8240);
+  // Dynamic initial coordinates near Kota Bukit Indah
+  const [lat, setLat] = useState(() => -6.444 + ((existingManholes.length || 0) * 0.0025));
+  const [lng, setLng] = useState(() => 107.452 + ((existingManholes.length || 0) * 0.003));
   const [googleMapsInput, setGoogleMapsInput] = useState('');
 
   // Form states for Pump Station
@@ -164,6 +165,8 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
           installationYear: 2026,
           lastInspectedAt: today,
           nextInspectionDue: nextDue,
+          latitude: Number(lat),
+          longitude: Number(lng),
           coordinates: { lat: Number(lat), lng: Number(lng), elevation: 10 },
           depthMeters: Number(depthMeters),
           diameterMm: Number(diameterMm),
@@ -186,6 +189,8 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
         installationYear: 2026,
         lastInspectedAt: today,
         nextInspectionDue: nextDue,
+        latitude: Number(lat),
+        longitude: Number(lng),
         coordinates: { lat: Number(lat), lng: Number(lng), elevation: 10 },
         capacityLps: Number(capacityLps),
         pumpCount: Number(pumpCount),

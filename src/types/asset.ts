@@ -21,6 +21,8 @@ export interface BaseAsset {
   installationYear: number;
   lastInspectedAt: string;
   nextInspectionDue: string;
+  latitude?: number;
+  longitude?: number;
   qrCodeUrl?: string;
   photos: string[];
 }
