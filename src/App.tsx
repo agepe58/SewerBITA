@@ -213,35 +213,10 @@ export const App: React.FC = () => {
 
   // Dynamic User List Synchronization Function
   const reloadUsersList = useCallback(async () => {
-    const savedStr = localStorage.getItem('sewerbita_users');
-    let localUsers: UserProfile[] = [];
-    if (savedStr) {
-      try {
-        const parsed = JSON.parse(savedStr);
-        if (Array.isArray(parsed)) localUsers = parsed;
-      } catch (e) { console.error(e); }
-    }
-
     const serverUsers = await apiClient.getUsers();
-
-    if (serverUsers && serverUsers.length > 0) {
-      const mergedMap = new Map<string, UserProfile>();
-      serverUsers.forEach(su => mergedMap.set((su.email || '').trim().toLowerCase(), su));
-      localUsers.forEach(lu => {
-        const key = (lu.email || '').trim().toLowerCase();
-        if (!mergedMap.has(key)) {
-          mergedMap.set(key, lu);
-          apiClient.createUser(lu);
-        }
-      });
-      const finalUsers = Array.from(mergedMap.values());
-      setUsers(finalUsers);
-      localStorage.setItem('sewerbita_users', JSON.stringify(finalUsers));
-    } else if (localUsers.length > 0) {
-      setUsers(localUsers);
-      for (const u of localUsers) {
-        apiClient.createUser(u);
-      }
+    if (serverUsers && Array.isArray(serverUsers)) {
+      setUsers(serverUsers);
+      localStorage.setItem('sewerbita_users', JSON.stringify(serverUsers));
     }
   }, []);
 
@@ -263,7 +238,7 @@ export const App: React.FC = () => {
 
   // One-time Purge of Legacy Demo Cache
   useEffect(() => {
-    const isPurged = localStorage.getItem('sewerbita_demo_purged_v2');
+    const isPurged = localStorage.getItem('sewerbita_demo_purged_v3');
     if (!isPurged) {
       localStorage.removeItem('sewerbita_manholes');
       localStorage.removeItem('sewerbita_pump_stations');
@@ -271,7 +246,8 @@ export const App: React.FC = () => {
       localStorage.removeItem('sewerbita_inspections');
       localStorage.removeItem('sewerbita_work_orders');
       localStorage.removeItem('sewerbita_projects');
-      localStorage.setItem('sewerbita_demo_purged_v2', 'true');
+      localStorage.removeItem('sewerbita_users');
+      localStorage.setItem('sewerbita_demo_purged_v3', 'true');
     }
   }, []);
 
@@ -468,6 +444,11 @@ export const App: React.FC = () => {
 
   const handleDeleteUser = async (id: string) => {
     await apiClient.deleteUser(id);
+    setUsers(prev => {
+      const updated = prev.filter(u => u.id !== id);
+      localStorage.setItem('sewerbita_users', JSON.stringify(updated));
+      return updated;
+    });
     await reloadUsersList();
   };
 
