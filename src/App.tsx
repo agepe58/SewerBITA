@@ -160,19 +160,10 @@ export const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load areas', e); }
     }
-    return [
-      'Zone A - Sudirman',
-      'Zone A - Setiabudi',
-      'Zone A - Manggarai',
-      'Zone B - Tebet',
-      'Zone C - Pluit',
-      'WWTP',
-      'WTP',
-      'Pump Station Sektor A'
-    ];
+    return [];
   });
 
   useEffect(() => {
@@ -253,8 +244,9 @@ export const App: React.FC = () => {
 
   // One-time Purge of Legacy Demo Cache
   useEffect(() => {
-    const isPurged = localStorage.getItem('sewerbita_demo_purged_v3');
+    const isPurged = localStorage.getItem('sewerbita_demo_purged_v4');
     if (!isPurged) {
+      localStorage.removeItem('sewerbita_areas');
       localStorage.removeItem('sewerbita_manholes');
       localStorage.removeItem('sewerbita_pump_stations');
       localStorage.removeItem('sewerbita_pipes');
@@ -262,7 +254,7 @@ export const App: React.FC = () => {
       localStorage.removeItem('sewerbita_work_orders');
       localStorage.removeItem('sewerbita_projects');
       localStorage.removeItem('sewerbita_users');
-      localStorage.setItem('sewerbita_demo_purged_v3', 'true');
+      localStorage.setItem('sewerbita_demo_purged_v4', 'true');
     }
   }, []);
 
@@ -280,6 +272,14 @@ export const App: React.FC = () => {
         localStorage.setItem('sewerbita_manholes', JSON.stringify(m));
         localStorage.setItem('sewerbita_pump_stations', JSON.stringify(ps));
         localStorage.setItem('sewerbita_pipes', JSON.stringify(p));
+
+        // Dynamically derive unique areas present in database assets
+        const realDbAreas = Array.from(new Set([...m, ...ps, ...p].map((a: any) => a.area).filter(Boolean)));
+        setAreas(prev => {
+          const merged = Array.from(new Set([...prev, ...realDbAreas]));
+          localStorage.setItem('sewerbita_areas', JSON.stringify(merged));
+          return merged;
+        });
       }
 
       const inspectionData = await apiClient.getInspections();

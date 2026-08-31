@@ -17,6 +17,7 @@ interface MapFiltersProps {
   onClearTrace: () => void;
   basemap: string;
   onSelectBasemap: (basemap: string) => void;
+  availableAreas?: string[];
 }
 
 export const MapFilters: React.FC<MapFiltersProps> = ({
@@ -33,11 +34,12 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
   isTraceActive,
   onClearTrace,
   basemap,
-  onSelectBasemap
+  onSelectBasemap,
+  availableAreas = []
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const areas = ['All Areas', 'Zone A - Sudirman', 'Zone A - Setiabudi', 'Zone A - Manggarai', 'Zone B - Tebet', 'Zone C - Pluit'];
+  const areas = ['All Areas', ...Array.from(new Set(availableAreas))];
   const conditions = ['All Conditions', 'Good', 'Fair', 'Warning', 'Critical'];
 
   // Render Collapsed (Minimized Pill View)

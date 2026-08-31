@@ -209,6 +209,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         onClearTrace={onClearTrace}
         basemap={basemap}
         onSelectBasemap={(b) => setBasemap(b as BasemapType)}
+        availableAreas={Array.from(new Set([...manholes, ...pumpStations, ...pipes].map(a => a.area).filter(Boolean)))}
       />
 
       {/* Floating Quick Basemap Switcher Pill (Top Right) */}

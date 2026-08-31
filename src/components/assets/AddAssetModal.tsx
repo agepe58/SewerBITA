@@ -29,7 +29,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [assetType, setAssetType] = useState<AssetType>('manhole');
 
   // Dynamic Area management state
-  const [area, setArea] = useState(areas[0] || 'Zone A - Sudirman');
+  const [area, setArea] = useState(areas[0] || '');
   const [isAddingNewArea, setIsAddingNewArea] = useState(false);
   const [customAreaName, setCustomAreaName] = useState('');
 
@@ -121,14 +121,10 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
         setName(`Manhole Sisipan ${autoCode}`);
       }
     } else if (area) {
-      const prefixMap: Record<string, string> = {
-        'Zone A - Sudirman': 'MH-SD',
-        'Zone A - Setiabudi': 'MH-SB',
-        'Zone A - Manggarai': 'MH-MG',
-        'Zone B - Tebet': 'MH-TB',
-        'Zone C - Pluit': 'MH-PL'
-      };
-      const prefix = prefixMap[area] || `MH-${area.split(' ')[0].toUpperCase()}`;
+      const cleanArea = area.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+      const areaParts = cleanArea.split(/\s+/);
+      const areaTag = areaParts.map(p => p[0]?.toUpperCase() || '').join('').slice(0, 3) || 'AR';
+      const prefix = `MH-${areaTag}`;
       const count = existingManholes.filter(m => m.area === area).length + 1;
       const autoCode = `${prefix}-${String(count).padStart(2, '0')}`;
       setAssetCode(autoCode);
