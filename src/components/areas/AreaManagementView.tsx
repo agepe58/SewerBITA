@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Map, Plus, Edit2, Trash2, Search, Boxes, AlertTriangle, X, Check, Filter } from 'lucide-react';
 import { SewerAsset } from '../../types/asset';
+import { UserRole, hasPermission } from '../../types/rbac';
 
 interface AreaManagementViewProps {
   areas: string[];
   allAssets: SewerAsset[];
+  currentUserRole?: UserRole;
   onAddArea: (newArea: string) => void;
   onEditArea: (oldArea: string, newArea: string) => void;
   onDeleteArea: (areaToDelete: string) => void;
@@ -14,6 +16,7 @@ interface AreaManagementViewProps {
 export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
   areas,
   allAssets,
+  currentUserRole = 'Technician',
   onAddArea,
   onEditArea,
   onDeleteArea,
@@ -111,16 +114,18 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            setNewAreaName('');
-            setIsAddModalOpen(true);
-          }}
-          className="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-blue-700 text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Area Baru</span>
-        </button>
+        {hasPermission(currentUserRole, 'add_asset') && (
+          <button
+            onClick={() => {
+              setNewAreaName('');
+              setIsAddModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-blue-700 text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Area Baru</span>
+          </button>
+        )}
       </div>
 
       {/* SUMMARY STATS BAR */}
@@ -221,24 +226,28 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
                     <div className="text-[10px] text-slate-400 font-bold">Total Terhubung</div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setAreaToEdit(stat.name);
-                      setEditedAreaName(stat.name);
-                    }}
-                    className="p-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition cursor-pointer"
-                    title="Edit Nama Area"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+                  {hasPermission(currentUserRole, 'edit_asset') && (
+                    <button
+                      onClick={() => {
+                        setAreaToEdit(stat.name);
+                        setEditedAreaName(stat.name);
+                      }}
+                      className="p-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition cursor-pointer"
+                      title="Edit Nama Area"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => setAreaToDelete(stat.name)}
-                    className="p-2 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition cursor-pointer"
-                    title="Hapus Area"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {hasPermission(currentUserRole, 'delete_asset') && (
+                    <button
+                      onClick={() => setAreaToDelete(stat.name)}
+                      className="p-2 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition cursor-pointer"
+                      title="Hapus Area"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

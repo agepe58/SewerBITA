@@ -13,9 +13,11 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import { InspectionRecord } from '../../types/inspection';
+import { UserRole, hasPermission } from '../../types/rbac';
 
 interface InspectionViewProps {
   inspections: InspectionRecord[];
+  currentUserRole?: UserRole;
   onOpenNewModal: () => void;
   onOpenScheduleModal?: () => void;
   onEditInspection: (inspection: InspectionRecord) => void;
@@ -25,6 +27,7 @@ interface InspectionViewProps {
 
 export const InspectionView: React.FC<InspectionViewProps> = ({
   inspections = [],
+  currentUserRole = 'Technician',
   onOpenNewModal,
   onOpenScheduleModal,
   onEditInspection,
@@ -88,23 +91,27 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
           <span>Export .xlsx / .csv</span>
         </button>
 
-        {onOpenScheduleModal && (
-          <button
-            onClick={onOpenScheduleModal}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/40 bg-blue-950/30 hover:bg-blue-950/60 text-blue-400 text-xs font-bold transition shadow-xs cursor-pointer"
-          >
-            <Calendar className="w-4 h-4 text-blue-400" />
-            <span>Jadwal Inspeksi Manhole</span>
-          </button>
-        )}
+        {hasPermission(currentUserRole, 'create_inspection') && (
+          <>
+            {onOpenScheduleModal && (
+              <button
+                onClick={onOpenScheduleModal}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/40 bg-blue-950/30 hover:bg-blue-950/60 text-blue-400 text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                <Calendar className="w-4 h-4 text-blue-400" />
+                <span>Jadwal Inspeksi Manhole</span>
+              </button>
+            )}
 
-        <button
-          onClick={onOpenNewModal}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Catat Inspeksi Baru</span>
-        </button>
+            <button
+              onClick={onOpenNewModal}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Catat Inspeksi Baru</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* 2. FILTER & SEARCH TOOLBAR */}
@@ -206,24 +213,28 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
                       </td>
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => onEditInspection(insp)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
-                            title="Edit Inspeksi"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Hapus catatan inspeksi aset ${insp.assetCode}?`)) {
-                                onDeleteInspection(insp.id);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
-                            title="Hapus Inspeksi"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {hasPermission(currentUserRole, 'create_inspection') && (
+                            <>
+                              <button
+                                onClick={() => onEditInspection(insp)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
+                                title="Edit Inspeksi"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Hapus catatan inspeksi aset ${insp.assetCode}?`)) {
+                                    onDeleteInspection(insp.id);
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                                title="Hapus Inspeksi"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

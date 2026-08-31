@@ -1,6 +1,7 @@
 import { ManholeAsset, PumpStationAsset, PipeAsset } from '../types/asset';
 import { InspectionRecord } from '../types/inspection';
 import { UserProfile } from '../types/rbac';
+import { authService } from './authService';
 
 const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
@@ -11,6 +12,15 @@ const getApiBaseUrl = (): string => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+const getAuthHeaders = (): Record<string, string> => {
+  const session = authService.getCurrentSession();
+  const role = session?.role || 'Technician';
+  return {
+    'Content-Type': 'application/json',
+    'x-user-role': role
+  };
+};
 
 export const apiClient = {
   // Check Health Endpoint
@@ -97,7 +107,7 @@ export const apiClient = {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ type, data })
       });
       if (!res.ok) return null;
@@ -113,7 +123,7 @@ export const apiClient = {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ type, data })
       });
       if (!res.ok) return null;
@@ -128,7 +138,8 @@ export const apiClient = {
   deleteAsset: async (id: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
       if (!res.ok) return null;
       return await res.json();

@@ -65,3 +65,30 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'export_data',
   ],
 };
+
+export const TAB_REQUIRED_PERMISSION: Record<string, PermissionAction> = {
+  dashboard: 'view_dashboard',
+  map: 'view_map',
+  topology: 'edit_topology',
+  assets: 'view_assets',
+  areas: 'add_asset',
+  inspections: 'create_inspection',
+  qr_scanner: 'view_assets',
+  data: 'export_data',
+  users: 'manage_users',
+  backup: 'manage_backups',
+  profile: 'view_dashboard',
+};
+
+export const isTabAllowed = (tab: string, role: UserRole): boolean => {
+  if (tab === 'profile' || tab === 'dashboard') return true;
+  const required = TAB_REQUIRED_PERMISSION[tab];
+  if (!required) return true;
+  const permissions = ROLE_PERMISSIONS[role] || [];
+  return permissions.includes(required);
+};
+
+export const hasPermission = (role: UserRole, action: PermissionAction): boolean => {
+  const permissions = ROLE_PERMISSIONS[role] || [];
+  return permissions.includes(action);
+};

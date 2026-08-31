@@ -13,7 +13,7 @@ import {
   LogOut,
   Map
 } from 'lucide-react';
-import { UserRole } from '../../types/rbac';
+import { UserRole, isTabAllowed } from '../../types/rbac';
 
 export type NavTab =
   | 'dashboard'
@@ -39,7 +39,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
-  currentUserRole: _currentUserRole,
+  currentUserRole,
   onLogout,
   isDarkMode = true
 }) => {
@@ -102,6 +102,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   ];
 
+  const visibleNavItems = navItems.filter(item => isTabAllowed(item.id, currentUserRole));
+
   return (
     <aside className={`w-64 border-r p-4 flex flex-col justify-between shrink-0 font-sans select-none transition-colors duration-300 ${
       isDarkMode ? 'bg-[#0B0F17] border-slate-800/80 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
@@ -128,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Item Links */}
         <nav className="space-y-1">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
 

@@ -12,11 +12,14 @@ import Papa from 'papaparse';
 import { ManholeAsset, PipeAsset, PumpStationAsset, SewerAsset } from '../../types/asset';
 import { InspectionRecord } from '../../types/inspection';
 
+import { UserRole, hasPermission } from '../../types/rbac';
+
 interface ImportExportViewProps {
   manholes: ManholeAsset[];
   pumpStations: PumpStationAsset[];
   pipes: PipeAsset[];
   inspections: InspectionRecord[];
+  currentUserRole?: UserRole;
   onBatchImportManholes: (newManholes: ManholeAsset[]) => void;
 }
 
@@ -25,6 +28,7 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
   pumpStations,
   pipes,
   inspections,
+  currentUserRole = 'Technician',
   onBatchImportManholes
 }) => {
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -104,37 +108,39 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+      <div className={`grid grid-cols-1 ${hasPermission(currentUserRole, 'import_data') ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-6 sm:gap-8`}>
         {/* Import Section */}
-        <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <Upload className="w-5 h-5 text-[#2563EB]" />
-            <span>Import Data Aset (CSV / Excel)</span>
-          </h2>
+        {hasPermission(currentUserRole, 'import_data') && (
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <Upload className="w-5 h-5 text-[#2563EB]" />
+              <span>Import Data Aset (CSV / Excel)</span>
+            </h2>
 
-          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-            Unggah file CSV berisi data Manhole, Pipa, atau Stasiun Pompa untuk migrasi massal dari spreadsheet existing.
-          </p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+              Unggah file CSV berisi data Manhole, Pipa, atau Stasiun Pompa untuk migrasi massal dari spreadsheet existing.
+            </p>
 
-          <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-[#2563EB] p-8 rounded-2xl text-center space-y-3 bg-slate-50 dark:bg-slate-800/80 transition cursor-pointer relative group">
-            <input
-              type="file"
-              accept=".csv,.xlsx"
-              onChange={handleFileUpload}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
-            <FileSpreadsheet className="w-12 h-12 mx-auto text-[#2563EB] group-hover:scale-110 transition" />
-            <div className="text-sm font-extrabold text-slate-900 dark:text-white">Klik atau Tarik File CSV ke Sini</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono font-medium">Format yang didukung: .csv, .xlsx (Maks 10MB)</div>
-          </div>
-
-          {importStatus && (
-            <div className="bg-emerald-50 dark:bg-emerald-950/60 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 text-sm text-[#16A34A] dark:text-emerald-300 font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 shrink-0" />
-              <span>{importStatus}</span>
+            <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-[#2563EB] p-8 rounded-2xl text-center space-y-3 bg-slate-50 dark:bg-slate-800/80 transition cursor-pointer relative group">
+              <input
+                type="file"
+                accept=".csv,.xlsx"
+                onChange={handleFileUpload}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+              <FileSpreadsheet className="w-12 h-12 mx-auto text-[#2563EB] group-hover:scale-110 transition" />
+              <div className="text-sm font-extrabold text-slate-900 dark:text-white">Klik atau Tarik File CSV ke Sini</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-mono font-medium">Format yang didukung: .csv, .xlsx (Maks 10MB)</div>
             </div>
-          )}
-        </div>
+
+            {importStatus && (
+              <div className="bg-emerald-50 dark:bg-emerald-950/60 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 text-sm text-[#16A34A] dark:text-emerald-300 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <span>{importStatus}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Export Section */}
         <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">

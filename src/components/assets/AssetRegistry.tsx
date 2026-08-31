@@ -13,11 +13,13 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset, AssetCondition } from '../../types/asset';
+import { UserRole, hasPermission } from '../../types/rbac';
 
 interface AssetRegistryProps {
   manholes: ManholeAsset[];
   pumpStations: PumpStationAsset[];
   pipes: PipeAsset[];
+  currentUserRole?: UserRole;
   onOpenAddModal: () => void;
   onOpenQrModal: (assetId: string) => void;
   onNavigateToMapWithAsset: (assetId: string) => void;
@@ -30,6 +32,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
   manholes = [],
   pumpStations = [],
   pipes = [],
+  currentUserRole = 'Technician',
   onOpenAddModal,
   onOpenQrModal,
   onNavigateToMapWithAsset,
@@ -147,13 +150,15 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
           <span>Export .xlsx / .csv</span>
         </button>
 
-        <button
-          onClick={onOpenAddModal}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Aset Baru</span>
-        </button>
+        {hasPermission(currentUserRole, 'add_asset') && (
+          <button
+            onClick={onOpenAddModal}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Aset Baru</span>
+          </button>
+        )}
       </div>
 
       {/* 2. FILTER & SEARCH TOOLBAR (matching Screenshot 2 layout) */}
@@ -371,26 +376,30 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
                           </button>
 
                           {/* Edit */}
-                          <button
-                            onClick={() => onEditAsset(asset)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
-                            title="Edit Aset"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
+                          {hasPermission(currentUserRole, 'edit_asset') && (
+                            <button
+                              onClick={() => onEditAsset(asset)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
+                              title="Edit Aset"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
 
                           {/* Delete */}
-                          <button
-                            onClick={() => {
-                              if (confirm(`Apakah Anda yakin ingin menghapus aset "${asset.name}" (${asset.assetCode})?`)) {
-                                onDeleteAsset(asset.id);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
-                            title="Hapus Aset"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {hasPermission(currentUserRole, 'delete_asset') && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Apakah Anda yakin ingin menghapus aset "${asset.name}" (${asset.assetCode})?`)) {
+                                  onDeleteAsset(asset.id);
+                                }
+                              }}
+                              className="p-1.5 rounded-lg text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                              title="Hapus Aset"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

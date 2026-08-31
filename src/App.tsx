@@ -34,13 +34,39 @@ import { QrScannerModal } from './components/qr/QrScannerModal';
 
 import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset } from './types/asset';
 import { InspectionRecord } from './types/inspection';
-import { UserRole, UserProfile } from './types/rbac';
 import { WorkOrder, MaintenanceProject, DailyReport, ActivityLog } from './types/workOrder';
+import { UserProfile, UserRole, isTabAllowed } from './types/rbac';
 import { NetworkGraphEngine } from './services/graphEngine';
 import { NetworkTraceResult } from './types/topology';
 import { apiClient } from './services/api';
 import { authService } from './services/authService';
 import { AuthModal } from './components/auth/AuthModal';
+import { ShieldAlert } from 'lucide-react';
+
+const AccessDeniedView: React.FC<{ role: string; tab: string; onGoHome: () => void; isDarkMode: boolean }> = ({
+  role,
+  tab,
+  onGoHome,
+  isDarkMode
+}) => (
+  <div className="p-8 max-w-lg mx-auto my-16 text-center space-y-5">
+    <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto border border-red-500/20 shadow-lg">
+      <ShieldAlert className="w-8 h-8" />
+    </div>
+    <div className="space-y-2">
+      <h3 className={`text-xl font-extrabold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Akses Dibatasi (RBAC)</h3>
+      <p className="text-xs text-slate-400 leading-relaxed">
+        Peran akun Anda saat ini sebagai <span className="font-bold text-blue-400">{role}</span> tidak memiliki hak akses untuk membuka halaman <span className="font-bold text-slate-200 uppercase">{tab}</span>.
+      </p>
+    </div>
+    <button
+      onClick={onGoHome}
+      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition cursor-pointer"
+    >
+      Kembali ke Dashboard
+    </button>
+  </div>
+);
 
 export const App: React.FC = () => {
   // App view & Theme state
@@ -551,158 +577,173 @@ export const App: React.FC = () => {
 
           {/* Main View Router */}
           <main className="flex-1 overflow-y-auto">
-            {activeTab === 'dashboard' && (
-              <DashboardView
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
-                inspections={inspections}
-                onNavigate={setActiveTab}
+            {!isTabAllowed(activeTab, currentUser.role) ? (
+              <AccessDeniedView
+                role={currentUser.role}
+                tab={activeTab}
+                onGoHome={() => setActiveTab('dashboard')}
                 isDarkMode={isDarkMode}
               />
-            )}
-
-            {activeTab === 'map' && (
-              <div className="h-[calc(100vh-5rem)] p-4">
-                <div className="h-full rounded-2xl overflow-hidden border border-slate-800 shadow-md">
-                  <NetworkMap
+            ) : (
+              <>
+                {activeTab === 'dashboard' && (
+                  <DashboardView
                     manholes={manholes}
                     pumpStations={pumpStations}
                     pipes={pipes}
                     inspections={inspections}
-                    activeTraceResult={activeTraceResult}
-                    onTraceDownstream={handleTraceDownstreamFromMap}
-                    onTraceUpstream={handleTraceUpstreamFromMap}
-                    onClearTrace={() => setActiveTraceResult(null)}
-                    onOpenQrModal={(id) => setActiveQrAssetId(id)}
-                    onOpenNewInspection={(id) => {
-                      setSelectedAssetIdForMap(id);
-                      setIsNewInspectionModalOpen(true);
-                    }}
-                    selectedAssetIdFromParent={selectedAssetIdForMap}
+                    onNavigate={setActiveTab}
+                    isDarkMode={isDarkMode}
                   />
-                </div>
-              </div>
-            )}
+                )}
 
-            {activeTab === 'topology' && (
-              <TopologyView
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
-                graphEngine={graphEngine}
-                onApplyTraceResult={(trace) => {
-                  setActiveTraceResult(trace);
-                  setActiveTab('map');
-                }}
-                onNavigateToMap={() => setActiveTab('map')}
-              />
-            )}
+                {activeTab === 'map' && (
+                  <div className="h-[calc(100vh-5rem)] p-4">
+                    <div className="h-full rounded-2xl overflow-hidden border border-slate-800 shadow-md">
+                      <NetworkMap
+                        manholes={manholes}
+                        pumpStations={pumpStations}
+                        pipes={pipes}
+                        inspections={inspections}
+                        activeTraceResult={activeTraceResult}
+                        onTraceDownstream={handleTraceDownstreamFromMap}
+                        onTraceUpstream={handleTraceUpstreamFromMap}
+                        onClearTrace={() => setActiveTraceResult(null)}
+                        onOpenQrModal={(id) => setActiveQrAssetId(id)}
+                        onOpenNewInspection={(id) => {
+                          setSelectedAssetIdForMap(id);
+                          setIsNewInspectionModalOpen(true);
+                        }}
+                        selectedAssetIdFromParent={selectedAssetIdForMap}
+                      />
+                    </div>
+                  </div>
+                )}
 
-            {activeTab === 'assets' && (
-              <AssetRegistry
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
-                onOpenAddModal={() => setIsAddAssetModalOpen(true)}
-                onOpenQrModal={(id) => setActiveQrAssetId(id)}
-                onNavigateToMapWithAsset={(id) => {
-                  setSelectedAssetIdForMap(id);
-                  setActiveTab('map');
-                }}
-                onEditAsset={(asset) => setAssetToEdit(asset)}
-                onDeleteAsset={(id: string) => {
-                  if (manholes.some(m => m.id === id)) {
-                    handleDeleteAsset(id, 'manhole');
-                  } else if (pumpStations.some(ps => ps.id === id)) {
-                    handleDeleteAsset(id, 'pumpStation');
-                  } else {
-                    handleDeleteAsset(id, 'pipe');
-                  }
-                }}
-                isDarkMode={isDarkMode}
-              />
-            )}
+                {activeTab === 'topology' && (
+                  <TopologyView
+                    manholes={manholes}
+                    pumpStations={pumpStations}
+                    pipes={pipes}
+                    graphEngine={graphEngine}
+                    onApplyTraceResult={(trace) => {
+                      setActiveTraceResult(trace);
+                      setActiveTab('map');
+                    }}
+                    onNavigateToMap={() => setActiveTab('map')}
+                  />
+                )}
 
-            {activeTab === 'areas' && (
-              <AreaManagementView
-                areas={areas}
-                allAssets={allAssets}
-                onAddArea={handleAddArea}
-                onEditArea={handleEditArea}
-                onDeleteArea={handleDeleteArea}
-                isDarkMode={isDarkMode}
-              />
-            )}
+                {activeTab === 'assets' && (
+                  <AssetRegistry
+                    manholes={manholes}
+                    pumpStations={pumpStations}
+                    pipes={pipes}
+                    currentUserRole={currentUser.role}
+                    onOpenAddModal={() => setIsAddAssetModalOpen(true)}
+                    onOpenQrModal={(id) => setActiveQrAssetId(id)}
+                    onNavigateToMapWithAsset={(id) => {
+                      setSelectedAssetIdForMap(id);
+                      setActiveTab('map');
+                    }}
+                    onEditAsset={(asset) => setAssetToEdit(asset)}
+                    onDeleteAsset={(id: string) => {
+                      if (manholes.some(m => m.id === id)) {
+                        handleDeleteAsset(id, 'manhole');
+                      } else if (pumpStations.some(ps => ps.id === id)) {
+                        handleDeleteAsset(id, 'pumpStation');
+                      } else {
+                        handleDeleteAsset(id, 'pipe');
+                      }
+                    }}
+                    isDarkMode={isDarkMode}
+                  />
+                )}
 
-            {activeTab === 'inspections' && (
-              <InspectionView
-                inspections={inspections}
-                onOpenNewModal={() => setIsNewInspectionModalOpen(true)}
-                onOpenScheduleModal={() => setIsManholeScheduleModalOpen(true)}
-                onEditInspection={(insp) => setInspectionToEdit(insp)}
-                onDeleteInspection={handleDeleteInspection}
-                isDarkMode={isDarkMode}
-              />
-            )}
+                {activeTab === 'areas' && (
+                  <AreaManagementView
+                    areas={areas}
+                    allAssets={allAssets}
+                    currentUserRole={currentUser.role}
+                    onAddArea={handleAddArea}
+                    onEditArea={handleEditArea}
+                    onDeleteArea={handleDeleteArea}
+                    isDarkMode={isDarkMode}
+                  />
+                )}
 
-            {activeTab === 'qr_scanner' && (
-              <div className="p-6">
-                <div className="p-8 rounded-2xl border max-w-lg mx-auto text-center space-y-4 bg-[#111827] border-slate-800">
-                  <h3 className="text-base font-extrabold text-white">Pemindai QR Code Lapangan</h3>
-                  <p className="text-xs text-slate-400">Pindai kode QR fisik yang terpasang pada tutup manhole atau stasiun pompa</p>
-                  <button
-                    onClick={() => setIsQrScannerModalOpen(true)}
-                    className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition cursor-pointer"
-                  >
-                    Buka Kamera Scanner
-                  </button>
-                </div>
-              </div>
-            )}
+                {activeTab === 'inspections' && (
+                  <InspectionView
+                    inspections={inspections}
+                    currentUserRole={currentUser.role}
+                    onOpenNewModal={() => setIsNewInspectionModalOpen(true)}
+                    onOpenScheduleModal={() => setIsManholeScheduleModalOpen(true)}
+                    onEditInspection={(insp) => setInspectionToEdit(insp)}
+                    onDeleteInspection={handleDeleteInspection}
+                    isDarkMode={isDarkMode}
+                  />
+                )}
 
-            {activeTab === 'data' && (
-              <ImportExportView
-                manholes={manholes}
-                pumpStations={pumpStations}
-                pipes={pipes}
-                inspections={inspections}
-                onBatchImportManholes={(newMhs) => setManholes(prev => [...newMhs, ...prev])}
-              />
-            )}
+                {activeTab === 'qr_scanner' && (
+                  <div className="p-6">
+                    <div className="p-8 rounded-2xl border max-w-lg mx-auto text-center space-y-4 bg-[#111827] border-slate-800">
+                      <h3 className="text-base font-extrabold text-white">Pemindai QR Code Lapangan</h3>
+                      <p className="text-xs text-slate-400">Pindai kode QR fisik yang terpasang pada tutup manhole atau stasiun pompa</p>
+                      <button
+                        onClick={() => setIsQrScannerModalOpen(true)}
+                        className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition cursor-pointer"
+                      >
+                        Buka Kamera Scanner
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-            {activeTab === 'users' && (
-              <UserManagementView
-                users={users}
-                currentUser={currentUser}
-                onRoleChange={handleRoleChange}
-                onEditUser={(usr) => setUserToEdit(usr)}
-                onDeleteUser={handleDeleteUser}
-                onOpenAddUserModal={() => setIsAddUserModalOpen(true)}
-                onRefreshUsers={reloadUsersList}
-              />
-            )}
+                {activeTab === 'data' && (
+                  <ImportExportView
+                    manholes={manholes}
+                    pumpStations={pumpStations}
+                    pipes={pipes}
+                    inspections={inspections}
+                    currentUserRole={currentUser.role}
+                    onBatchImportManholes={(newMhs) => setManholes(prev => [...newMhs, ...prev])}
+                  />
+                )}
 
-            {activeTab === 'backup' && (
-              <BackupRestoreView
-                currentUserRole={currentUser.role}
-                onRestoreDataToSystem={(record) => {
-                  alert(`Data sistem berhasil dipulihkan dari arsip snapshot '${record.filename}'.`);
-                }}
-              />
-            )}
+                {activeTab === 'users' && (
+                  <UserManagementView
+                    users={users}
+                    currentUser={currentUser}
+                    onRoleChange={handleRoleChange}
+                    onEditUser={(usr) => setUserToEdit(usr)}
+                    onDeleteUser={handleDeleteUser}
+                    onOpenAddUserModal={() => setIsAddUserModalOpen(true)}
+                    onRefreshUsers={reloadUsersList}
+                  />
+                )}
 
-            {activeTab === 'profile' && (
-              <ProfileView
-                currentUser={currentUser}
-                onUpdateProfile={(updated) => {
-                  setCurrentUser(updated);
-                  authService.saveSession(updated);
-                  apiClient.updateUser(updated.id, updated);
-                  reloadUsersList();
-                }}
-                isDarkMode={isDarkMode}
-              />
+                {activeTab === 'backup' && (
+                  <BackupRestoreView
+                    currentUserRole={currentUser.role}
+                    onRestoreDataToSystem={(record) => {
+                      alert(`Data sistem berhasil dipulihkan dari arsip snapshot '${record.filename}'.`);
+                    }}
+                  />
+                )}
+
+                {activeTab === 'profile' && (
+                  <ProfileView
+                    currentUser={currentUser}
+                    onUpdateProfile={(updated) => {
+                      setCurrentUser(updated);
+                      authService.saveSession(updated);
+                      apiClient.updateUser(updated.id, updated);
+                      reloadUsersList();
+                    }}
+                    isDarkMode={isDarkMode}
+                  />
+                )}
+              </>
             )}
           </main>
         </div>
