@@ -1,6 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const http = require('http');
+const https = require('https');
+const zlib = require('zlib');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -947,12 +952,6 @@ app.post('/api/auth/google', async (req, res) => {
 // --------------------------------------------------------------------
 // 9. BACKUP & DISASTER RECOVERY ENDPOINTS (SYNOLOGY NAS & LOCAL DUMP)
 // --------------------------------------------------------------------
-const http = require('http');
-const https = require('https');
-const zlib = require('zlib');
-const path = require('path');
-const fs = require('fs');
-
 const BACKUP_DIR = path.join(__dirname, '../backups');
 if (!fs.existsSync(BACKUP_DIR)) {
   try {
@@ -1279,8 +1278,6 @@ app.post('/api/backup/restore', async (req, res) => {
 // --------------------------------------------------------------------
 // 10. SERVE PRODUCTION STATIC FRONTEND (SPA ROUTING)
 // --------------------------------------------------------------------
-const path = require('path');
-const fs = require('fs');
 const distPath = path.join(__dirname, '../dist');
 
 if (fs.existsSync(distPath)) {
