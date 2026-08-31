@@ -32,7 +32,6 @@ import { ManholeScheduleModal } from './components/inspections/ManholeScheduleMo
 import { QrCodeModal } from './components/qr/QrCodeModal';
 import { QrScannerModal } from './components/qr/QrScannerModal';
 
-import { INITIAL_MANHOLES, INITIAL_PUMP_STATIONS, INITIAL_PIPES, INITIAL_INSPECTIONS, INITIAL_USERS } from './services/mockData';
 import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset } from './types/asset';
 import { InspectionRecord } from './types/inspection';
 import { UserRole, UserProfile } from './types/rbac';
@@ -73,7 +72,7 @@ export const App: React.FC = () => {
         if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load manholes', e); }
     }
-    return INITIAL_MANHOLES;
+    return [];
   });
 
   const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>(() => {
@@ -84,7 +83,7 @@ export const App: React.FC = () => {
         if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load pumpStations', e); }
     }
-    return INITIAL_PUMP_STATIONS;
+    return [];
   });
 
   const [pipes, setPipes] = useState<PipeAsset[]>(() => {
@@ -95,7 +94,7 @@ export const App: React.FC = () => {
         if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load pipes', e); }
     }
-    return INITIAL_PIPES;
+    return [];
   });
 
   const [inspections, setInspections] = useState<InspectionRecord[]>(() => {
@@ -106,7 +105,7 @@ export const App: React.FC = () => {
         if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load inspections', e); }
     }
-    return INITIAL_INSPECTIONS;
+    return [];
   });
 
   const [users, setUsers] = useState<UserProfile[]>(() => {
@@ -114,10 +113,10 @@ export const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load users', e); }
     }
-    return INITIAL_USERS;
+    return [];
   });
 
   // Work Orders & Maintenance Projects State
@@ -307,7 +306,15 @@ export const App: React.FC = () => {
 
   // Active User & Role Session Initialization
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
-    return authService.getCurrentSession() || INITIAL_USERS[0];
+    return authService.getCurrentSession() || {
+      id: 'usr-session',
+      name: 'Pengguna Operasional',
+      email: '',
+      role: 'Technician',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Operator',
+      department: 'Divisi Air Limbah',
+      status: 'Active'
+    };
   });
 
   // Auth Modal State

@@ -235,26 +235,23 @@ export const authService = {
     } catch {
       // Local fallback
       if (!localMatchedUser) {
-        const isDefaultAdmin = normalizedEmail === 'angga.purbaya@gmail.com';
         localMatchedUser = {
           id: `usr-g-${Date.now()}`,
           name: googlePayload.name,
           email: normalizedEmail,
-          role: isDefaultAdmin ? 'Admin' : 'Engineer',
+          role: 'Engineer',
           avatar: googlePayload.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(googlePayload.name)}`,
           department: 'Direksi / Internal Team',
-          status: isDefaultAdmin ? 'Active' : 'Pending Approval'
+          status: 'Pending Approval'
         };
         cachePendingUserLocally(localMatchedUser);
 
-        if (!isDefaultAdmin) {
-          return {
-            success: false,
-            user: localMatchedUser,
-            pending: true,
-            error: `Pendaftaran via Google SSO berhasil! Akun Google Anda (${normalizedEmail}) telah terdaftar dan menunggu persetujuan Administrator.`
-          };
-        }
+        return {
+          success: false,
+          user: localMatchedUser,
+          pending: true,
+          error: `Pendaftaran via Google SSO berhasil! Akun Google Anda (${normalizedEmail}) telah terdaftar dan menunggu persetujuan Administrator.`
+        };
       }
 
       if (localMatchedUser.status === 'Pending Approval' || localMatchedUser.status === 'Pending') {
