@@ -10,7 +10,8 @@ import {
   Users,
   HardDriveDownload,
   UserCircle,
-  LogOut
+  LogOut,
+  Map
 } from 'lucide-react';
 import { UserRole } from '../../types/rbac';
 
@@ -19,6 +20,7 @@ export type NavTab =
   | 'map'
   | 'topology'
   | 'assets'
+  | 'areas'
   | 'inspections'
   | 'qr_scanner'
   | 'data'
@@ -62,6 +64,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'assets' as NavTab,
       label: 'Registri Aset Master',
       icon: Boxes
+    },
+    {
+      id: 'areas' as NavTab,
+      label: 'Manajemen Area / Zona',
+      icon: Map
     },
     {
       id: 'inspections' as NavTab,

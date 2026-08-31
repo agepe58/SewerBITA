@@ -59,6 +59,11 @@ export const Header: React.FC<HeaderProps> = ({
           title: 'Registri Aset Master',
           subtitle: 'Katalog terpadu data teknis manhole, stasiun pompa, dan segmen pipa'
         };
+      case 'areas':
+        return {
+          title: 'Manajemen Area & Zona Sektor',
+          subtitle: 'Kelola wilayah operasional jaringan air limbah dan pemetaan aset per zona'
+        };
       case 'inspections':
         return {
           title: 'Inspeksi Lapangan',

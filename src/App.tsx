@@ -21,6 +21,7 @@ import { ProfileView } from './components/common/ProfileView';
 import { UserManagementView } from './components/rbac/UserManagementView';
 import { EditUserModal } from './components/rbac/EditUserModal';
 import { AddUserModal } from './components/rbac/AddUserModal';
+import { AreaManagementView } from './components/areas/AreaManagementView';
 import { BackupRestoreView } from './components/admin/BackupRestoreView';
 
 import { AddAssetModal } from './components/assets/AddAssetModal';
@@ -152,17 +153,30 @@ export const App: React.FC = () => {
   const [dailyReports] = useState<DailyReport[]>([]);
   const [activityLogs] = useState<ActivityLog[]>([]);
 
-  // Areas state
-  const [areas, setAreas] = useState<string[]>([
-    'Zone A - Sudirman',
-    'Zone A - Setiabudi',
-    'Zone A - Manggarai',
-    'Zone B - Tebet',
-    'Zone C - Pluit',
-    'WWTP',
-    'WTP',
-    'Pump Station Sektor A'
-  ]);
+  // Areas state with LocalStorage persistence
+  const [areas, setAreas] = useState<string[]>(() => {
+    const saved = localStorage.getItem('sewerbita_areas');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) { console.error('Failed to load areas', e); }
+    }
+    return [
+      'Zone A - Sudirman',
+      'Zone A - Setiabudi',
+      'Zone A - Manggarai',
+      'Zone B - Tebet',
+      'Zone C - Pluit',
+      'WWTP',
+      'WTP',
+      'Pump Station Sektor A'
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sewerbita_areas', JSON.stringify(areas));
+  }, [areas]);
 
   // Sync state changes automatically to LocalStorage
   useEffect(() => {
@@ -464,6 +478,17 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleEditArea = (oldArea: string, newArea: string) => {
+    setAreas(prev => prev.map(a => a === oldArea ? newArea : a));
+    setManholes(prev => prev.map(m => m.area === oldArea ? { ...m, area: newArea } : m));
+    setPumpStations(prev => prev.map(ps => ps.area === oldArea ? { ...ps, area: newArea } : ps));
+    setPipes(prev => prev.map(p => p.area === oldArea ? { ...p, area: newArea } : p));
+  };
+
+  const handleDeleteArea = (areaToDelete: string) => {
+    setAreas(prev => prev.filter(a => a !== areaToDelete));
+  };
+
   const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
   const qrTargetAsset = activeQrAssetId ? allAssets.find(a => a.id === activeQrAssetId) || null : null;
 
@@ -606,6 +631,17 @@ export const App: React.FC = () => {
                     handleDeleteAsset(id, 'pipe');
                   }
                 }}
+                isDarkMode={isDarkMode}
+              />
+            )}
+
+            {activeTab === 'areas' && (
+              <AreaManagementView
+                areas={areas}
+                allAssets={allAssets}
+                onAddArea={handleAddArea}
+                onEditArea={handleEditArea}
+                onDeleteArea={handleDeleteArea}
                 isDarkMode={isDarkMode}
               />
             )}

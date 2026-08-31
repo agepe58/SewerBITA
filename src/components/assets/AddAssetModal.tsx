@@ -284,48 +284,22 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* Dynamic Area Selector Component */}
           <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-800 mb-1">
               <span className="flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-[#2563EB]" />
                 <span>Area / Zona / Sektor</span>
               </span>
-              <button
-                type="button"
-                onClick={() => setIsAddingNewArea(!isAddingNewArea)}
-                className="text-[11px] text-[#2563EB] font-extrabold hover:underline"
-              >
-                {isAddingNewArea ? '← Pilih dari Daftar' : '+ Tambah Area Baru'}
-              </button>
             </div>
 
-            {!isAddingNewArea ? (
-              <select
-                value={area}
-                onChange={e => setArea(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 font-bold text-sm focus:outline-none focus:border-[#2563EB]"
-              >
-                {areas.map(a => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={customAreaName}
-                  onChange={e => setCustomAreaName(e.target.value)}
-                  placeholder="mis. Zone D - Kemang / Sektor 4"
-                  className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#2563EB]"
-                />
-                <button
-                  type="button"
-                  onClick={handleCreateNewArea}
-                  className="bg-[#2563EB] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-blue-700 transition"
-                >
-                  Simpan Area
-                </button>
-              </div>
-            )}
+            <select
+              value={area}
+              onChange={e => setArea(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 font-bold text-sm focus:outline-none focus:border-[#2563EB]"
+            >
+              {areas.map(a => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
           </div>
 
           {assetType === 'manhole' && (
