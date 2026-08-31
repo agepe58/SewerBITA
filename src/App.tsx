@@ -261,6 +261,20 @@ export const App: React.FC = () => {
     });
   }, [reloadUsersList]);
 
+  // One-time Purge of Legacy Demo Cache
+  useEffect(() => {
+    const isPurged = localStorage.getItem('sewerbita_demo_purged_v2');
+    if (!isPurged) {
+      localStorage.removeItem('sewerbita_manholes');
+      localStorage.removeItem('sewerbita_pump_stations');
+      localStorage.removeItem('sewerbita_pipes');
+      localStorage.removeItem('sewerbita_inspections');
+      localStorage.removeItem('sewerbita_work_orders');
+      localStorage.removeItem('sewerbita_projects');
+      localStorage.setItem('sewerbita_demo_purged_v2', 'true');
+    }
+  }, []);
+
   // Load Real Data from Backend PostgreSQL API on App Startup
   useEffect(() => {
     const loadRealDatabaseData = async () => {
