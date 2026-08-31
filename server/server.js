@@ -212,15 +212,8 @@ const initDb = async () => {
       );
     `);
 
-    // 12. Seed Default Admin User Only If Table Is Completely Empty
-    const userCountRes = await pool.query('SELECT COUNT(*) FROM user_profiles;');
-    if (parseInt(userCountRes.rows[0].count, 10) === 0) {
-      await pool.query(`
-        INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
-        VALUES ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
-        ON CONFLICT (email) DO NOTHING;
-      `);
-    }
+    // 12. Purge Any Legacy Demo Admin User
+    await pool.query("DELETE FROM user_profiles WHERE id = 'usr-admin-01' OR LOWER(email) = 'angga.purbaya@gmail.com';");
 
     // 13. Seed Default Project If Empty
     await pool.query(`
@@ -978,10 +971,8 @@ app.post('/api/auth/google', async (req, res) => {
       return res.json({ message: 'Login Google berhasil', user: existingUser });
     }
 
-    // Default admin angga.purbaya@gmail.com is Active automatically
-    const isDefaultAdmin = normalizedEmail === 'angga.purbaya@gmail.com';
-    const initialStatus = isDefaultAdmin ? 'Active' : 'Pending Approval';
-    const defaultRole = (normalizedEmail.includes('admin') || isDefaultAdmin) ? 'Admin' : 'Engineer';
+    const initialStatus = 'Pending Approval';
+    const defaultRole = normalizedEmail.includes('admin') ? 'Admin' : 'Engineer';
 
     const newId = `usr-google-${Date.now().toString().slice(-4)}`;
     const userName = (name && name.trim()) ? name.trim() : normalizedEmail.split('@')[0];

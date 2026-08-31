@@ -48,7 +48,29 @@ export const App: React.FC = () => {
     const activeSession = authService.getCurrentSession();
     return !activeSession; // Stay on dashboard if session exists!
   });
-  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
+    const validTabs: NavTab[] = [
+      'dashboard', 'map', 'topology', 'assets', 'areas', 'inspections',
+      'qr_scanner', 'data', 'users', 'backup', 'profile'
+    ];
+    const hash = window.location.hash.replace('#', '') as NavTab;
+    if (hash && validTabs.includes(hash)) {
+      return hash;
+    }
+    const saved = localStorage.getItem('sewerbita_active_tab') as NavTab;
+    if (saved && validTabs.includes(saved)) {
+      return saved;
+    }
+    return 'dashboard';
+  });
+
+  // Persist activeTab to LocalStorage and URL hash
+  useEffect(() => {
+    localStorage.setItem('sewerbita_active_tab', activeTab);
+    if (window.location.hash !== `#${activeTab}`) {
+      window.history.replaceState(null, '', `#${activeTab}`);
+    }
+  }, [activeTab]);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('sewerbita_theme') === 'dark';
   });
