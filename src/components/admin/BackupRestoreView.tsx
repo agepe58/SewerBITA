@@ -246,7 +246,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
   // Handle Restore
   const handleRestore = async (bk: BackupItem) => {
     if (confirm(`Apakah Anda yakin ingin memulihkan sistem dari arsip '${bk.namaBerkas}'?`)) {
-      const res = await apiClient.restoreBackup(bk.namaBerkas);
+      const res = await apiClient.restoreBackup(bk.namaBerkas, getNasConfig());
       if (res.ok && res.data?.success) {
         if (onRestoreDataToSystem) onRestoreDataToSystem(bk);
         alert(`Pemulihan database dari '${bk.namaBerkas}' berhasil diselesaikan!`);

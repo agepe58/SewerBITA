@@ -1213,6 +1213,53 @@ const generateSqlDump = async () => {
   return sqlDump;
 };
 
+// Helper: Download file from Synology NAS via WebDAV GET
+const downloadFromWebDAV = (nasConfig, filename) => {
+  return new Promise((resolve) => {
+    try {
+      const { ip, port = 5005, username, password, useSsl = false, targetFolder = '/sewer_bita' } = nasConfig || {};
+      if (!ip) return resolve({ success: false, error: 'IP Address Synology NAS belum dikonfigurasi' });
+
+      const client = (useSsl || port === 5006 || port === '5006') ? https : http;
+      let cleanFolder = (targetFolder || '/sewer_bita').replace(/\\/g, '/');
+      if (!cleanFolder.startsWith('/')) cleanFolder = '/' + cleanFolder;
+      if (!cleanFolder.endsWith('/')) cleanFolder = cleanFolder + '/';
+
+      const targetPath = encodeURI(`${cleanFolder}${filename}`);
+      const auth = 'Basic ' + Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
+
+      const options = {
+        hostname: ip,
+        port: parseInt(port, 10) || 5005,
+        path: targetPath,
+        method: 'GET',
+        headers: { 'Authorization': auth },
+        timeout: 20000,
+        rejectUnauthorized: false
+      };
+
+      const req = client.request(options, (res) => {
+        if (res.statusCode === 200) {
+          const chunks = [];
+          res.on('data', chunk => chunks.push(chunk));
+          res.on('end', () => {
+            const buffer = Buffer.concat(chunks);
+            resolve({ success: true, buffer });
+          });
+        } else {
+          resolve({ success: false, error: `Synology WebDAV GET HTTP ${res.statusCode} ${res.statusMessage || ''}` });
+        }
+      });
+
+      req.on('error', (err) => resolve({ success: false, error: err.message }));
+      req.on('timeout', () => { req.destroy(); resolve({ success: false, error: 'Timeout (20s)' }); });
+      req.end();
+    } catch (e) {
+      resolve({ success: false, error: e.message });
+    }
+  });
+};
+
 // 1. Test NAS Connectivity Endpoint
 app.post('/api/backup/test-nas', async (req, res) => {
   const nasConfig = req.body || {};
@@ -1224,7 +1271,7 @@ app.post('/api/backup/test-nas', async (req, res) => {
     if (result.success) {
       res.json({
         success: true,
-        message: `Koneksi WebDAV ke Synology NAS (${nasConfig.ip}:${nasConfig.port}) terverifikasi online! Folder target '${nasConfig.targetFolder}' siap digunakan.`
+        message: `Koneksi WebDAV ke Synology NAS (${nasConfig.ip}:${nasConfig.port}) terverifikasi online! Folder target '${nasConfig.targetFolder || '/sewer_bita'}' siap digunakan.`
       });
     } else {
       res.status(400).json({
@@ -1265,7 +1312,7 @@ app.post('/api/backup/execute', async (req, res) => {
       nasResult = await uploadToWebDAV(nasConfig, filename, gzippedBuffer);
       if (nasResult.success) {
         uploadStatus = 'NAS (Synology)';
-        notes = `${type} Backup berhasil. Tersimpan di Synology NAS (${nasConfig.targetFolder}) dan lokal.`;
+        notes = `${type} Backup berhasil. Tersimpan di Synology NAS (${nasConfig.targetFolder || '/sewer_bita'}) dan lokal.`;
       } else {
         notes = `${type} Backup tersimpan di server. WebDAV NAS notice: ${nasResult.error}`;
       }
@@ -1340,7 +1387,7 @@ app.get('/api/backup/download/:filename', (req, res) => {
 
 // 5. Restore Database from Backup File Endpoint
 app.post('/api/backup/restore', async (req, res) => {
-  const { filename } = req.body || {};
+  const { filename, nasConfig } = req.body || {};
   try {
     if (!filename) {
       return res.status(400).json({ error: 'Nama berkas snapshot tidak valid.' });
@@ -1348,11 +1395,25 @@ app.post('/api/backup/restore', async (req, res) => {
     const safeFilename = path.basename(filename);
     const filePath = path.join(BACKUP_DIR, safeFilename);
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: `Berkas snapshot '${safeFilename}' tidak ditemukan di direktori backup.` });
+    let compressedBuffer;
+    if (fs.existsSync(filePath)) {
+      compressedBuffer = fs.readFileSync(filePath);
+    } else if (nasConfig && nasConfig.ip) {
+      const nasDl = await downloadFromWebDAV(nasConfig, safeFilename);
+      if (nasDl.success && nasDl.buffer) {
+        compressedBuffer = nasDl.buffer;
+        try {
+          fs.writeFileSync(filePath, compressedBuffer);
+        } catch (e) {
+          console.warn('Failed to cache downloaded backup file:', e);
+        }
+      } else {
+        return res.status(404).json({ error: `Berkas snapshot '${safeFilename}' tidak ditemukan di server maupun Synology NAS: ${nasDl.error}` });
+      }
+    } else {
+      return res.status(404).json({ error: `Berkas snapshot '${safeFilename}' tidak ditemukan di direktori backup server.` });
     }
 
-    const compressedBuffer = fs.readFileSync(filePath);
     const sqlText = zlib.gunzipSync(compressedBuffer).toString('utf-8');
 
     // Execute SQL queries inside a transaction

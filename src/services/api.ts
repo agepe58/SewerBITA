@@ -424,12 +424,12 @@ export const apiClient = {
     }
   },
 
-  restoreBackup: async (filename: string) => {
+  restoreBackup: async (filename: string, nasConfig?: any) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/backup/restore`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename })
+        body: JSON.stringify({ filename, nasConfig })
       });
       const data = await res.json();
       return { ok: res.ok, data };
