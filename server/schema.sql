@@ -124,12 +124,8 @@ CREATE TRIGGER trigger_pump_station_geom
 BEFORE INSERT OR UPDATE ON pump_station_assets
 FOR EACH ROW EXECUTE FUNCTION update_asset_geom();
 
--- 8. Seed Initial Full Admin User
+-- 8. Seed Initial Full Admin User (Initial Setup Only)
 INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
 VALUES 
     ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
-ON CONFLICT (id) DO UPDATE SET
-    full_name = EXCLUDED.full_name,
-    email = EXCLUDED.email,
-    role = EXCLUDED.role,
-    department = EXCLUDED.department;
+ON CONFLICT (email) DO NOTHING;

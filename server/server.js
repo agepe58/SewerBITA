@@ -212,12 +212,15 @@ const initDb = async () => {
       );
     `);
 
-    // 12. Seed Default Admin User
-    await pool.query(`
-      INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
-      VALUES ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
-      ON CONFLICT (email) DO NOTHING;
-    `);
+    // 12. Seed Default Admin User Only If Table Is Completely Empty
+    const userCountRes = await pool.query('SELECT COUNT(*) FROM user_profiles;');
+    if (parseInt(userCountRes.rows[0].count, 10) === 0) {
+      await pool.query(`
+        INSERT INTO user_profiles (id, full_name, email, role, department, phone, status, avatar_url)
+        VALUES ('usr-admin-01', 'Angga Purbaya', 'angga.purbaya@gmail.com', 'Admin', 'Direksi / System Administrator', '+62 812-0000-0000', 'Active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250')
+        ON CONFLICT (email) DO NOTHING;
+      `);
+    }
 
     // 13. Seed Default Project If Empty
     await pool.query(`
