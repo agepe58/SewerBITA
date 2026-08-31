@@ -52,13 +52,18 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
   const [nasUser, setNasUser] = useState(() => localStorage.getItem('sewerbita_nas_user') || 'Maia');
   const [nasPassword, setNasPassword] = useState(() => localStorage.getItem('sewerbita_nas_pass') || '••••••••');
   const [useSsl, setUseSsl] = useState(() => localStorage.getItem('sewerbita_nas_ssl') === 'true');
-  const [targetFolder, setTargetFolder] = useState(() => localStorage.getItem('sewerbita_nas_folder') || '/Maia/MTC/mms_backup');
+  const [targetFolder, setTargetFolder] = useState(() => {
+    const saved = localStorage.getItem('sewerbita_nas_folder');
+    if (saved && !saved.includes('/Maia/MTC/mms_backup')) return saved;
+    return '/sewer_bita';
+  });
   const [apkUrl, setApkUrl] = useState(() => localStorage.getItem('sewerbita_nas_apk_url') || 'https://nas.kbi.web.id:5001/fbsharing/xyz123 atau /downloads/bita-mms-v1.2.0-release.apk');
   const [mainStorageDestination, setMainStorageDestination] = useState<'Synology NAS' | 'Google Drive' | 'Local Storage'>('Synology NAS');
 
   // Testing NAS status
   const [isTestingNas, setIsTestingNas] = useState(false);
   const [nasTestAlert, setNasTestAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [backupExecutionAlert, setBackupExecutionAlert] = useState<{ type: 'success' | 'warning' | 'error'; message: string } | null>(null);
 
   // Auto Schedule State
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
@@ -206,6 +211,14 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     setBackupCurrentStep('Backup berhasil diselesaikan!');
 
     if (result && result.success) {
+      const isNasUploaded = result.destination?.includes('NAS') || result.nasUpload?.success;
+      setBackupExecutionAlert({
+        type: isNasUploaded ? 'success' : 'warning',
+        message: isNasUploaded
+          ? `Berkas '${result.filename}' (${result.fileSize}) BERHASIL disimpan ke Synology NAS di folder '${targetFolder}' dan server!`
+          : `Berkas '${result.filename}' tersimpan di server lokal, tetapi WebDAV NAS notice: ${result.nasUpload?.error || 'Koneksi NAS gagal'}.`
+      });
+
       const newRecord: BackupItem = {
         id: result.id || `bk-${Date.now()}`,
         waktuExec: result.waktuExec || 'Baru Saja',
@@ -218,6 +231,11 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       };
       setBackupHistory(prev => [newRecord, ...prev]);
       await reloadHistoryFromApi();
+    } else {
+      setBackupExecutionAlert({
+        type: 'error',
+        message: result?.error || 'Gagal mengeksekusi backup database.'
+      });
     }
 
     setTimeout(() => {
@@ -326,6 +344,32 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Execution Result Alert Banner */}
+      {backupExecutionAlert && (
+        <div className={`p-4 rounded-2xl border text-xs font-semibold flex items-center justify-between gap-3 animate-in fade-in ${
+          backupExecutionAlert.type === 'success'
+            ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+            : backupExecutionAlert.type === 'warning'
+            ? 'bg-amber-950/40 border-amber-500/40 text-amber-300'
+            : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            {backupExecutionAlert.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+            )}
+            <span>{backupExecutionAlert.message}</span>
+          </div>
+          <button
+            onClick={() => setBackupExecutionAlert(null)}
+            className="p-1 rounded-lg hover:bg-white/10 transition cursor-pointer text-slate-400 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* 3. SUB-NAVIGATION TABS */}
       <div className={`p-1.5 rounded-2xl border flex items-center gap-2 max-w-2xl shadow-xs ${cardBg}`}>

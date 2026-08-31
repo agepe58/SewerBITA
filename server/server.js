@@ -962,20 +962,56 @@ if (!fs.existsSync(BACKUP_DIR)) {
   }
 }
 
+// Helper: Ensure directory exists on Synology NAS via WebDAV MKCOL
+const ensureWebDAVDirectory = async (nasConfig, folderPath) => {
+  const { ip, port = 5005, username, password, useSsl = false } = nasConfig || {};
+  if (!ip) return false;
+  const client = (useSsl || port === 5006 || port === '5006') ? https : http;
+  const auth = 'Basic ' + Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
+  
+  const segments = (folderPath || '').split('/').filter(Boolean);
+  let currentPath = '';
+
+  for (const seg of segments) {
+    currentPath += '/' + seg;
+    await new Promise((resolve) => {
+      const options = {
+        hostname: ip,
+        port: parseInt(port, 10) || 5005,
+        path: encodeURI(currentPath),
+        method: 'MKCOL',
+        headers: { 'Authorization': auth },
+        timeout: 5000,
+        rejectUnauthorized: false
+      };
+      const req = client.request(options, () => {
+        resolve(true);
+      });
+      req.on('error', () => resolve(false));
+      req.on('timeout', () => { req.destroy(); resolve(false); });
+      req.end();
+    });
+  }
+  return true;
+};
+
 // Helper: Upload file buffer to Synology NAS via WebDAV PUT
-const uploadToWebDAV = (nasConfig, filename, fileBuffer) => {
+const uploadToWebDAV = async (nasConfig, filename, fileBuffer) => {
+  const { ip, port = 5005, username, password, useSsl = false, targetFolder = '/sewer_bita' } = nasConfig || {};
+  if (!ip) {
+    return { success: false, error: 'IP Address Synology NAS belum dikonfigurasi' };
+  }
+
+  let cleanFolder = (targetFolder || '/sewer_bita').replace(/\\/g, '/');
+  if (!cleanFolder.startsWith('/')) cleanFolder = '/' + cleanFolder;
+  if (!cleanFolder.endsWith('/')) cleanFolder = cleanFolder + '/';
+
+  // 1. Ensure target directory exists on Synology NAS
+  await ensureWebDAVDirectory(nasConfig, cleanFolder);
+
   return new Promise((resolve) => {
     try {
-      const { ip, port = 5005, username, password, useSsl = false, targetFolder = '/Maia/MTC/mms_backup' } = nasConfig || {};
-      if (!ip) {
-        return resolve({ success: false, error: 'IP Address Synology NAS belum dikonfigurasi' });
-      }
-
       const client = (useSsl || port === 5006 || port === '5006') ? https : http;
-      let cleanFolder = (targetFolder || '/').replace(/\\/g, '/');
-      if (!cleanFolder.startsWith('/')) cleanFolder = '/' + cleanFolder;
-      if (!cleanFolder.endsWith('/')) cleanFolder = cleanFolder + '/';
-
       const targetPath = encodeURI(`${cleanFolder}${filename}`);
       const auth = 'Basic ' + Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
 
@@ -989,18 +1025,29 @@ const uploadToWebDAV = (nasConfig, filename, fileBuffer) => {
           'Content-Type': 'application/gzip',
           'Content-Length': fileBuffer.length
         },
-        timeout: 10000,
+        timeout: 15000,
         rejectUnauthorized: false
       };
 
       const req = client.request(options, (res) => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve({ success: true, statusCode: res.statusCode, targetPath });
-        } else if (res.statusCode === 201 || res.statusCode === 204) {
-          resolve({ success: true, statusCode: res.statusCode, targetPath });
-        } else {
-          resolve({ success: false, statusCode: res.statusCode, error: `Synology WebDAV HTTP ${res.statusCode} ${res.statusMessage}` });
-        }
+        let respData = '';
+        res.on('data', chunk => { respData += chunk; });
+        res.on('end', () => {
+          const targetUrl = `${useSsl ? 'https' : 'http'}://${ip}:${port}${targetPath}`;
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({ success: true, statusCode: res.statusCode, targetUrl, targetPath });
+          } else if (res.statusCode === 201 || res.statusCode === 204) {
+            resolve({ success: true, statusCode: res.statusCode, targetUrl, targetPath });
+          } else if (res.statusCode === 401) {
+            resolve({ success: false, statusCode: 401, error: 'Autentikasi Synology gagal (401 Unauthorized). Cek username & password DSM.' });
+          } else if (res.statusCode === 403) {
+            resolve({ success: false, statusCode: 403, error: `Akses ditolak (403 Forbidden) pada folder '${cleanFolder}'. Pastikan user '${username}' memiliki izin Read/Write di DSM Shared Folder.` });
+          } else if (res.statusCode === 404) {
+            resolve({ success: false, statusCode: 404, error: `Folder '${cleanFolder}' tidak ditemukan di WebDAV DiskStation (404 Not Found).` });
+          } else {
+            resolve({ success: false, statusCode: res.statusCode, error: `Synology WebDAV HTTP ${res.statusCode} ${res.statusMessage || ''}` });
+          }
+        });
       });
 
       req.on('error', (err) => {
@@ -1009,7 +1056,7 @@ const uploadToWebDAV = (nasConfig, filename, fileBuffer) => {
 
       req.on('timeout', () => {
         req.destroy();
-        resolve({ success: false, error: `Koneksi WebDAV ke ${ip}:${port} timeout (10s)` });
+        resolve({ success: false, error: `Koneksi WebDAV ke ${ip}:${port} timeout (15s)` });
       });
 
       req.write(fileBuffer);
