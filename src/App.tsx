@@ -169,41 +169,36 @@ export const App: React.FC = () => {
     localStorage.setItem('sewerbita_areas', JSON.stringify(areas));
   }, [areas]);
 
-  // Sync state changes automatically to LocalStorage
-  useEffect(() => {
-    localStorage.setItem('sewerbita_manholes', JSON.stringify(manholes));
-  }, [manholes]);
+  // Reload Assets from Backend PostgreSQL API
+  const reloadAssetsList = useCallback(async () => {
+    const assetData = await apiClient.getAssets();
+    if (assetData) {
+      const m = assetData.manholes || [];
+      const ps = assetData.pumpStations || [];
+      const p = assetData.pipes || [];
+      setManholes(m);
+      setPumpStations(ps);
+      setPipes(p);
 
-  useEffect(() => {
-    localStorage.setItem('sewerbita_pump_stations', JSON.stringify(pumpStations));
-  }, [pumpStations]);
+      // Dynamically derive unique areas present in database assets
+      const realDbAreas = Array.from(new Set([...m, ...ps, ...p].map((a: any) => a.area).filter(Boolean)));
+      setAreas(prev => Array.from(new Set([...prev, ...realDbAreas])));
+    }
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('sewerbita_pipes', JSON.stringify(pipes));
-  }, [pipes]);
-
-  useEffect(() => {
-    localStorage.setItem('sewerbita_inspections', JSON.stringify(inspections));
-  }, [inspections]);
-
-  useEffect(() => {
-    localStorage.setItem('sewerbita_users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('sewerbita_work_orders', JSON.stringify(workOrders));
-  }, [workOrders]);
-
-  useEffect(() => {
-    localStorage.setItem('sewerbita_projects', JSON.stringify(projects));
-  }, [projects]);
+  // Reload Inspections from Backend API
+  const reloadInspectionsList = useCallback(async () => {
+    const inspectionData = await apiClient.getInspections();
+    if (inspectionData && Array.isArray(inspectionData)) {
+      setInspections(inspectionData);
+    }
+  }, []);
 
   // Reload Work Orders from Backend API
   const reloadWorkOrders = useCallback(async () => {
     const serverWos = await apiClient.getWorkOrders();
     if (serverWos && Array.isArray(serverWos)) {
       setWorkOrders(serverWos);
-      localStorage.setItem('sewerbita_work_orders', JSON.stringify(serverWos));
     }
   }, []);
 
@@ -212,7 +207,6 @@ export const App: React.FC = () => {
     const serverProjs = await apiClient.getProjects();
     if (serverProjs && Array.isArray(serverProjs) && serverProjs.length > 0) {
       setProjects(serverProjs);
-      localStorage.setItem('sewerbita_projects', JSON.stringify(serverProjs));
     }
   }, []);
 
@@ -221,7 +215,6 @@ export const App: React.FC = () => {
     const serverUsers = await apiClient.getUsers();
     if (serverUsers && Array.isArray(serverUsers)) {
       setUsers(serverUsers);
-      localStorage.setItem('sewerbita_users', JSON.stringify(serverUsers));
     }
   }, []);
 
@@ -229,21 +222,13 @@ export const App: React.FC = () => {
   const handleUserRegistered = useCallback(async (newUser: UserProfile) => {
     const normalizedEmail = (newUser.email || '').trim().toLowerCase();
     const updatedUser = { ...newUser, email: normalizedEmail };
-
     await apiClient.createUser(updatedUser);
     await reloadUsersList();
-
-    setUsers(prevUsers => {
-      const filtered = prevUsers.filter(u => u.email && u.email.trim().toLowerCase() !== normalizedEmail);
-      const updated = [updatedUser, ...filtered];
-      localStorage.setItem('sewerbita_users', JSON.stringify(updated));
-      return updated;
-    });
   }, [reloadUsersList]);
 
   // One-time Purge of Legacy Demo Cache
   useEffect(() => {
-    const isPurged = localStorage.getItem('sewerbita_demo_purged_v4');
+    const isPurged = localStorage.getItem('sewerbita_demo_purged_v5');
     if (!isPurged) {
       localStorage.removeItem('sewerbita_areas');
       localStorage.removeItem('sewerbita_manholes');
@@ -253,56 +238,33 @@ export const App: React.FC = () => {
       localStorage.removeItem('sewerbita_work_orders');
       localStorage.removeItem('sewerbita_projects');
       localStorage.removeItem('sewerbita_users');
-      localStorage.setItem('sewerbita_demo_purged_v4', 'true');
+      localStorage.setItem('sewerbita_demo_purged_v5', 'true');
     }
   }, []);
 
   // Load Real Data from Backend PostgreSQL API on App Startup
   useEffect(() => {
     const loadRealDatabaseData = async () => {
-      const assetData = await apiClient.getAssets();
-      if (assetData) {
-        const m = assetData.manholes || [];
-        const ps = assetData.pumpStations || [];
-        const p = assetData.pipes || [];
-        setManholes(m);
-        setPumpStations(ps);
-        setPipes(p);
-        localStorage.setItem('sewerbita_manholes', JSON.stringify(m));
-        localStorage.setItem('sewerbita_pump_stations', JSON.stringify(ps));
-        localStorage.setItem('sewerbita_pipes', JSON.stringify(p));
-
-        // Dynamically derive unique areas present in database assets
-        const realDbAreas = Array.from(new Set([...m, ...ps, ...p].map((a: any) => a.area).filter(Boolean)));
-        setAreas(prev => {
-          const merged = Array.from(new Set([...prev, ...realDbAreas]));
-          localStorage.setItem('sewerbita_areas', JSON.stringify(merged));
-          return merged;
-        });
-      }
-
-      const inspectionData = await apiClient.getInspections();
-      if (inspectionData) {
-        setInspections(inspectionData);
-        localStorage.setItem('sewerbita_inspections', JSON.stringify(inspectionData));
-      }
-
+      await reloadAssetsList();
+      await reloadInspectionsList();
       await reloadWorkOrders();
       await reloadProjects();
       await reloadUsersList();
     };
     loadRealDatabaseData();
-  }, [reloadWorkOrders, reloadProjects, reloadUsersList]);
+  }, [reloadAssetsList, reloadInspectionsList, reloadWorkOrders, reloadProjects, reloadUsersList]);
 
-  // Realtime Polling (Every 3 seconds Live Sync)
+  // Realtime Polling (Every 3 seconds Live Sync for ALL connected devices PC & Mobile)
   useEffect(() => {
     const interval = setInterval(() => {
+      reloadAssetsList();
+      reloadInspectionsList();
       reloadWorkOrders();
       reloadProjects();
       reloadUsersList();
     }, 3000);
     return () => clearInterval(interval);
-  }, [reloadWorkOrders, reloadProjects, reloadUsersList]);
+  }, [reloadAssetsList, reloadInspectionsList, reloadWorkOrders, reloadProjects, reloadUsersList]);
 
   // Active User & Role Session Initialization
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
@@ -371,82 +333,78 @@ export const App: React.FC = () => {
   };
 
   // Asset Handlers
-  const handleAddManhole = (newMh: Omit<ManholeAsset, 'id'>) => {
+  const handleAddManhole = async (newMh: Omit<ManholeAsset, 'id'>) => {
     const createdMh: ManholeAsset = {
       ...newMh,
       id: `mh-${Date.now()}`
     };
-    apiClient.createAsset('manhole', createdMh);
-    setManholes(prev => [createdMh, ...prev]);
+    await apiClient.createAsset('manhole', createdMh);
+    await reloadAssetsList();
+    setIsAddAssetModalOpen(false);
   };
 
-  const handleAddPumpStation = (newPs: Omit<PumpStationAsset, 'id'>) => {
+  const handleAddPumpStation = async (newPs: Omit<PumpStationAsset, 'id'>) => {
     const createdPs: PumpStationAsset = {
       ...newPs,
       id: `ps-${Date.now()}`
     };
-    apiClient.createAsset('pumpStation', createdPs);
-    setPumpStations(prev => [createdPs, ...prev]);
+    await apiClient.createAsset('pumpStation', createdPs);
+    await reloadAssetsList();
+    setIsAddAssetModalOpen(false);
   };
 
-  const handleAddPipe = (newPipe: Omit<PipeAsset, 'id'>) => {
+  const handleAddPipe = async (newPipe: Omit<PipeAsset, 'id'>) => {
     const createdPipe: PipeAsset = {
       ...newPipe,
       id: `p-${Date.now()}`
     };
-    apiClient.createAsset('pipe', createdPipe);
-    setPipes(prev => [createdPipe, ...prev]);
+    await apiClient.createAsset('pipe', createdPipe);
+    await reloadAssetsList();
+    setIsAddAssetModalOpen(false);
   };
 
-  const handleEditManhole = (updatedMh: ManholeAsset) => {
-    apiClient.updateAsset(updatedMh.id, 'manhole', updatedMh);
-    setManholes(prev => prev.map(m => m.id === updatedMh.id ? updatedMh : m));
+  const handleEditManhole = async (updatedMh: ManholeAsset) => {
+    await apiClient.updateAsset(updatedMh.id, 'manhole', updatedMh);
+    await reloadAssetsList();
     setAssetToEdit(null);
   };
 
-  const handleEditPumpStation = (updatedPs: PumpStationAsset) => {
-    apiClient.updateAsset(updatedPs.id, 'pumpStation', updatedPs);
-    setPumpStations(prev => prev.map(ps => ps.id === updatedPs.id ? updatedPs : ps));
+  const handleEditPumpStation = async (updatedPs: PumpStationAsset) => {
+    await apiClient.updateAsset(updatedPs.id, 'pumpStation', updatedPs);
+    await reloadAssetsList();
     setAssetToEdit(null);
   };
 
-  const handleEditPipe = (updatedPipe: PipeAsset) => {
-    apiClient.updateAsset(updatedPipe.id, 'pipe', updatedPipe);
-    setPipes(prev => prev.map(p => p.id === updatedPipe.id ? updatedPipe : p));
+  const handleEditPipe = async (updatedPipe: PipeAsset) => {
+    await apiClient.updateAsset(updatedPipe.id, 'pipe', updatedPipe);
+    await reloadAssetsList();
     setAssetToEdit(null);
   };
 
-  const handleDeleteAsset = (id: string, type: 'manhole' | 'pumpStation' | 'pipe') => {
-    apiClient.deleteAsset(id);
-    if (type === 'manhole') {
-      setManholes(prev => prev.filter(m => m.id !== id));
-      setPipes(prev => prev.filter(p => p.fromAssetId !== id && p.toAssetId !== id));
-    } else if (type === 'pumpStation') {
-      setPumpStations(prev => prev.filter(ps => ps.id !== id));
-      setPipes(prev => prev.filter(p => p.fromAssetId !== id && p.toAssetId !== id));
-    } else {
-      setPipes(prev => prev.filter(p => p.id !== id));
-    }
+  const handleDeleteAsset = async (id: string, _type: 'manhole' | 'pumpStation' | 'pipe') => {
+    await apiClient.deleteAsset(id);
+    await reloadAssetsList();
   };
 
-  const handleAddInspection = (newInsp: Omit<InspectionRecord, 'id'>) => {
+  const handleAddInspection = async (newInsp: Omit<InspectionRecord, 'id'>) => {
     const createdInsp: InspectionRecord = {
       ...newInsp,
       id: `insp-${Date.now()}`
     };
-    apiClient.createInspection(createdInsp);
-    setInspections(prev => [createdInsp, ...prev]);
+    await apiClient.createInspection(createdInsp);
+    await reloadInspectionsList();
+    setIsNewInspectionModalOpen(false);
   };
 
-  const handleSaveEditedInspection = (updatedInsp: InspectionRecord) => {
-    apiClient.updateInspection(updatedInsp.id, updatedInsp);
-    setInspections(prev => prev.map(i => i.id === updatedInsp.id ? updatedInsp : i));
+  const handleSaveEditedInspection = async (updatedInsp: InspectionRecord) => {
+    await apiClient.updateInspection(updatedInsp.id, updatedInsp);
+    await reloadInspectionsList();
     setInspectionToEdit(null);
   };
 
-  const handleDeleteInspection = (id: string) => {
-    apiClient.deleteInspection(id);
-    setInspections(prev => prev.filter(i => i.id !== id));
+  const handleDeleteInspection = async (id: string) => {
+    await apiClient.deleteInspection(id);
+    await reloadInspectionsList();
   };
 
   const handleAddUser = async (newUser: Omit<UserProfile, 'id'>) => {
