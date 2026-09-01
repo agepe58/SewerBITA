@@ -13,17 +13,6 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-@theme {
-  --text-2xs: 0.75rem;
-  --text-xs: 0.875rem;
-  --text-sm: 1rem;
-  --text-base: 1.125rem;
-  --text-lg: 1.25rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.625rem;
-  --text-3xl: 2rem;
-}
-
 body {
   background-color: var(--bg-app);
   color: var(--text-main);

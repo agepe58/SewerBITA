@@ -83,10 +83,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   return (
-    <div className={`px-8 pt-10 pb-20 space-y-16 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`px-8 pt-10 pb-20 space-y-10 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       
       {/* 1. TOP METRIC STAT CARDS (4 Columns) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" style={{ marginBottom: '32px' }}>
         {/* Card 1: Total Aset Jaringan */}
         <div
           onClick={() => onNavigate('assets')}
@@ -145,7 +145,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 2. MIDDLE ROW: TREN 7 HARI & DISTRIBUSI KONDISI ASET */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" style={{ marginBottom: '32px' }}>
         {/* Left: Tren 7 Hari Terakhir (Curved Area Chart) */}
         <div className={`p-6 rounded-2xl border lg:col-span-2 shadow-md ${cardBg}`}>
           <div className="text-sm font-extrabold tracking-tight pb-3 mb-4 border-b border-slate-800/80 flex items-center justify-between">
@@ -259,7 +259,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 3. LOWER ROW: DISTRIBUSI TIPE ASET & PENGINGAT JATUH TEMPO (3 Columns) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8" style={{ marginBottom: '32px' }}>
         
         {/* Col 1: Distribusi Tipe Aset (Bar Chart) */}
         <div className={`p-6 rounded-2xl border shadow-md ${cardBg}`}>
