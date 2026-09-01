@@ -143,29 +143,43 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
       style={{ padding: '16px 16px 32px 16px' }}
     >
       
-      {/* 1. TOP ACTION BUTTONS (Export & + Tambah Aset) */}
-      <div className="flex items-center justify-end gap-3">
-        <button
-          onClick={handleExportCsv}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
-        >
-          <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-          <span>Export .xlsx / .csv</span>
-        </button>
+      {/* Workspace Header Bar Card */}
+      <div className="bg-white dark:bg-[#111827] p-6 sm:p-7 rounded-xl border border-slate-300 dark:border-slate-700/90 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ marginBottom: '14px' }}>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
+              <Boxes className="w-5 h-5" />
+            </div>
+            <span>Registri Aset Master</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold mt-1">
+            Katalog lengkap dan manajemen data master aset Manhole, Stasiun Pompa, dan Pipa Jaringan.
+          </p>
+        </div>
 
-        {hasPermission(currentUserRole, 'add_asset') && (
+        <div className="flex items-center gap-3">
           <button
-            onClick={onOpenAddModal}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
+            onClick={handleExportCsv}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Tambah Aset Baru</span>
+            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <span>Export .csv</span>
           </button>
-        )}
+
+          {hasPermission(currentUserRole, 'add_asset') && (
+            <button
+              onClick={onOpenAddModal}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tambah Aset Baru</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* 2. FILTER & SEARCH TOOLBAR (matching Screenshot 2 layout) */}
-      <div className={`p-4 rounded-2xl border space-y-4 shadow-xs ${cardBg}`}>
+      {/* 2. FILTER & SEARCH TOOLBAR */}
+      <div className={`p-4 rounded-2xl border space-y-4 shadow-xs ${cardBg}`} style={{ marginBottom: '14px' }}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Search Input */}
           <div className="relative lg:col-span-1">
