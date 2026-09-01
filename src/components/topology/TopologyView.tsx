@@ -59,9 +59,9 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1920px] mx-auto font-sans">
+    <div className="font-sans min-h-full" style={{ padding: '16px 16px 32px 16px' }}>
       {/* Workspace Header Bar Card */}
-      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#111827] p-6 sm:p-7 rounded-xl border border-slate-300 dark:border-slate-700/90 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ marginBottom: '14px' }}>
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
@@ -83,11 +83,11 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5" style={{ marginBottom: '14px' }}>
         {/* Left Column: Trace Configurator */}
-        <div className="lg:col-span-5 space-y-6 sm:space-y-8">
+        <div className="lg:col-span-5 space-y-4">
           {/* Card Configurator */}
-          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-xl border border-slate-300 dark:border-slate-700/90 shadow-md space-y-5" style={{ marginBottom: '14px' }}>
             <h2 className="text-lg font-extrabold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">
               Konfigurasi Flow Tracing
             </h2>
@@ -154,7 +154,7 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
 
           {/* Validation Summary Card */}
           {validationReport && (
-            <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+            <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-xl border border-slate-300 dark:border-slate-700/90 shadow-md space-y-5">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                 <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Laporan Diagnostic Topology</h2>
                 <span className={`px-3.5 py-1 rounded-full text-xs font-black ${validationReport.isValid ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#FEE2E2] text-[#DC2626]'}`}>
@@ -201,8 +201,8 @@ export const TopologyView: React.FC<TopologyViewProps> = ({
         </div>
 
         {/* Right Column: Trace Result Path Breakdown */}
-        <div className="lg:col-span-7 space-y-6 sm:space-y-8">
-          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+        <div className="lg:col-span-7 space-y-4">
+          <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-xl border border-slate-300 dark:border-slate-700/90 shadow-md space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Hasil Penelusuran Jalur</h2>
