@@ -324,8 +324,20 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           if (!fromCoords || !toCoords) return null;
 
           const inTrace = isAssetInTrace(pipe.id);
+          const isTransmission = pipe.pipeCategory === 'transmission';
 
-          let strokeColor = '#0284C7'; // default cyan
+          // Waypoints support for non-straight transmission lines
+          const positions: [number, number][] = [fromCoords];
+          if (isTransmission && pipe.waypoints && Array.isArray(pipe.waypoints) && pipe.waypoints.length > 0) {
+            pipe.waypoints.forEach(w => {
+              if (w && typeof w.lat === 'number' && typeof w.lng === 'number') {
+                positions.push([w.lat, w.lng]);
+              }
+            });
+          }
+          positions.push(toCoords);
+
+          let strokeColor = isTransmission ? '#F59E0B' : '#0284C7'; // Amber/Orange for Force Main Transmission, Cyan for Gravity
           if (pipe.condition === 'Warning') strokeColor = '#CA8A04';
           if (pipe.condition === 'Critical') strokeColor = '#DC2626';
 
@@ -333,18 +345,20 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
             strokeColor = inTrace ? '#2563EB' : '#94A3B8'; // Highlight trace, dim rest
           }
 
-          const weight = inTrace ? 6 : 4;
-          const opacity = activeTraceResult && !inTrace ? 0.3 : 0.9;
+          const weight = inTrace ? 7 : (isTransmission ? 6 : 4);
+          const opacity = activeTraceResult && !inTrace ? 0.3 : 0.95;
+          const dashArray = isTransmission ? '10, 8' : undefined;
 
           return (
             <Polyline
               key={pipe.id}
-              positions={[fromCoords, toCoords]}
+              positions={positions}
               pathOptions={{
                 color: strokeColor,
                 weight: weight,
                 opacity: opacity,
-                className: 'flowing-pipe'
+                dashArray: dashArray,
+                className: isTransmission ? 'flowing-transmission-pipe' : 'flowing-pipe'
               }}
               eventHandlers={{
                 click: () => handleSelectAsset(pipe)
@@ -352,10 +366,23 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
             >
               <Popup>
                 <div className="text-xs space-y-1">
-                  <div className="font-bold text-[#2563EB] font-mono">{pipe.assetCode}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-[#2563EB] font-mono">{pipe.assetCode}</span>
+                    {isTransmission && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                        ⚡ Transmission (Force Main)
+                      </span>
+                    )}
+                  </div>
                   <div className="font-semibold text-slate-900">{pipe.name}</div>
                   <div className="text-slate-600">Diameter: {pipe.diameterMm}mm ({pipe.material})</div>
-                  <div className="text-slate-600">Panjang: {pipe.lengthMeters}m</div>
+                  {isTransmission && pipe.pressureBar && (
+                    <div className="text-amber-600 font-bold">Tekanan Kerja: {pipe.pressureBar} bar</div>
+                  )}
+                  {isTransmission && pipe.destinationWwtpName && (
+                    <div className="text-slate-600 font-semibold">Tujuan: 🏢 {pipe.destinationWwtpName}</div>
+                  )}
+                  <div className="text-slate-600">Panjang: {pipe.lengthMeters}m {pipe.waypoints?.length ? `(${pipe.waypoints.length} Tikungan Waypoint)` : ''}</div>
                   <button
                     onClick={() => handleSelectAsset(pipe)}
                     className="mt-2 text-[10px] bg-[#2563EB] text-white font-bold px-2.5 py-1 rounded-full w-full hover:bg-blue-700 transition"

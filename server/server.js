@@ -113,6 +113,10 @@ const initDb = async () => {
           diameter_mm INT NOT NULL DEFAULT 300,
           material VARCHAR(100) NOT NULL DEFAULT 'HDPE',
           slope_percent DOUBLE PRECISION NOT NULL DEFAULT 0.5,
+          pipe_category VARCHAR(50) DEFAULT 'gravity',
+          waypoints JSONB DEFAULT '[]'::jsonb,
+          pressure_bar DOUBLE PRECISION DEFAULT 0.0,
+          destination_wwtp_name VARCHAR(255),
           status VARCHAR(50) NOT NULL DEFAULT 'Active',
           condition VARCHAR(50) NOT NULL DEFAULT 'Good',
           next_inspection_due DATE NOT NULL DEFAULT CURRENT_DATE + INTERVAL '90 days',
@@ -120,6 +124,12 @@ const initDb = async () => {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- Migration queries for existing pipe_assets tables
+      await pool.query("ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS pipe_category VARCHAR(50) DEFAULT 'gravity';");
+      await pool.query("ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS waypoints JSONB DEFAULT '[]'::jsonb;");
+      await pool.query("ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS pressure_bar DOUBLE PRECISION DEFAULT 0.0;");
+      await pool.query("ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS destination_wwtp_name VARCHAR(255);");
     `);
 
     // 6. Inspection Records Table
@@ -240,7 +250,7 @@ app.get('/api/assets', async (req, res) => {
     const [manholesRes, pumpStationsRes, pipesRes] = await Promise.all([
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue" FROM manhole_assets ORDER BY created_at DESC;'),
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue" FROM pump_station_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", status, condition, next_inspection_due AS "nextInspectionDue" FROM pipe_assets ORDER BY created_at DESC;')
+      pool.query('SELECT id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue" FROM pipe_assets ORDER BY created_at DESC;')
     ]);
 
     res.json({
@@ -355,8 +365,8 @@ app.post('/api/assets', async (req, res) => {
     if (type === 'pipe') {
       const q = `
         INSERT INTO pipe_assets 
-        (id, asset_code, name, area, from_asset_id, to_asset_id, length_meters, diameter_mm, material, slope_percent, status, condition, next_inspection_due)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        (id, asset_code, name, area, from_asset_id, to_asset_id, length_meters, diameter_mm, material, slope_percent, pipe_category, waypoints, pressure_bar, destination_wwtp_name, status, condition, next_inspection_due)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         ON CONFLICT (id) DO UPDATE SET
           asset_code = EXCLUDED.asset_code,
           name = EXCLUDED.name,
@@ -367,10 +377,14 @@ app.post('/api/assets', async (req, res) => {
           diameter_mm = EXCLUDED.diameter_mm,
           material = EXCLUDED.material,
           slope_percent = EXCLUDED.slope_percent,
+          pipe_category = EXCLUDED.pipe_category,
+          waypoints = EXCLUDED.waypoints,
+          pressure_bar = EXCLUDED.pressure_bar,
+          destination_wwtp_name = EXCLUDED.destination_wwtp_name,
           status = EXCLUDED.status,
           condition = EXCLUDED.condition,
           next_inspection_due = EXCLUDED.next_inspection_due
-        RETURNING id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", status, condition, next_inspection_due AS "nextInspectionDue";
+        RETURNING id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
       const values = [
         data.id || `p-${Date.now()}`,
@@ -383,6 +397,10 @@ app.post('/api/assets', async (req, res) => {
         Number(data.diameterMm) || 300,
         data.material || 'HDPE',
         Number(data.slopePercent) || 0.5,
+        data.pipeCategory || 'gravity',
+        JSON.stringify(data.waypoints || []),
+        Number(data.pressureBar) || 0.0,
+        data.destinationWwtpName || '',
         data.status || 'Active',
         data.condition || 'Good',
         data.nextInspectionDue || new Date().toISOString().split('T')[0]
@@ -434,10 +452,17 @@ app.put('/api/assets/:id', async (req, res) => {
       const q = `
         UPDATE pipe_assets SET
           asset_code = $1, name = $2, area = $3, from_asset_id = $4, to_asset_id = $5,
-          length_meters = $6, diameter_mm = $7, material = $8, slope_percent = $9, status = $10, condition = $11, next_inspection_due = $12
-        WHERE id = $13 RETURNING *;
+          length_meters = $6, diameter_mm = $7, material = $8, slope_percent = $9,
+          pipe_category = $10, waypoints = $11, pressure_bar = $12, destination_wwtp_name = $13,
+          status = $14, condition = $15, next_inspection_due = $16
+        WHERE id = $17 RETURNING *;
       `;
-      const values = [data.assetCode, data.name, data.area, data.fromAssetId, data.toAssetId, data.lengthMeters, data.diameterMm, data.material, data.slopePercent, data.status, data.condition, data.nextInspectionDue, id];
+      const values = [
+        data.assetCode, data.name, data.area, data.fromAssetId, data.toAssetId,
+        data.lengthMeters, data.diameterMm, data.material, data.slopePercent,
+        data.pipeCategory || 'gravity', JSON.stringify(data.waypoints || []), Number(data.pressureBar) || 0.0, data.destinationWwtpName || '',
+        data.status, data.condition, data.nextInspectionDue, id
+      ];
       const result = await pool.query(q, values);
       return res.json(result.rows[0]);
     }

@@ -52,12 +52,17 @@ export interface PipeAsset extends BaseAsset {
   fromAssetId: string;
   toAssetId: string;
   diameterMm: number;
-  material: string; // e.g. PVC, HDPE, Ductile Iron
+  material: string; // e.g. PVC, HDPE, Ductile Iron, Steel
   lengthMeters: number;
   flowDirection: 'downstream' | 'upstream' | 'bi-directional';
   slopePercent?: number;
   depthStartMeters?: number;
   depthEndMeters?: number;
+  // Transmission Pipe (Force Main to WWTP) specific fields
+  pipeCategory?: 'gravity' | 'transmission'; // 'gravity' vs 'transmission'
+  waypoints?: LocationCoordinates[]; // Array of intermediate curve coordinates (lat/lng)
+  pressureBar?: number; // Working pressure rating in bar (e.g. 6.0 bar, 10.0 bar)
+  destinationWwtpName?: string; // Target WWTP / IPAL plant name
 }
 
 export type SewerAsset = ManholeAsset | PumpStationAsset | PipeAsset;

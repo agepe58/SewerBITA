@@ -335,8 +335,18 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
                       </td>
 
                       {/* Tipe */}
-                      <td className="py-3.5 px-4 text-slate-300 font-semibold uppercase text-[10px]">
-                        {asset.type === 'pump_station' ? 'Stasiun Pompa' : asset.type}
+                      <td className="py-3.5 px-4 text-slate-300 font-semibold text-[10px]">
+                        {asset.type === 'pump_station' ? (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-extrabold">Stasiun Pompa</span>
+                        ) : asset.type === 'pipe' ? (
+                          (asset as any).pipeCategory === 'transmission' ? (
+                            <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30">⚡ Transmisi (Force Main)</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-400 font-extrabold">💧 Pipa Gravitasi</span>
+                          )
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 font-extrabold">Manhole</span>
+                        )}
                       </td>
 
                       {/* Area */}

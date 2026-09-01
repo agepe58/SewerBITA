@@ -12,6 +12,7 @@ interface AddAssetModalProps {
   onAddPipe: (pipe: Omit<PipeAsset, 'id'>) => void;
   onAddPumpStation: (pumpStation: Omit<PumpStationAsset, 'id'>) => void;
   existingManholes: ManholeAsset[];
+  existingPumpStations?: PumpStationAsset[];
   areas: string[];
   onAddArea: (newAreaName: string) => void;
 }
@@ -23,6 +24,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   onAddPipe,
   onAddPumpStation,
   existingManholes,
+  existingPumpStations = [],
   areas,
   onAddArea
 }) => {
@@ -107,8 +109,14 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [fromAssetId, setFromAssetId] = useState(existingManholes[0]?.id || '');
   const [toAssetId, setToAssetId] = useState(existingManholes[1]?.id || '');
   const [pipeDiameter, setPipeDiameter] = useState(800);
-  const [pipeMaterial, setPipeMaterial] = useState('Precast Concrete');
-  const [pipeLength, setPipeLength] = useState(250);
+  const [pipeMaterial, setPipeMaterial] = useState('HDPE');
+  const [pipeLength, setPipeLength] = useState(450);
+
+  // Transmission Pipe specific state
+  const [pipeCategory, setPipeCategory] = useState<'gravity' | 'transmission'>('gravity');
+  const [pressureBar, setPressureBar] = useState<number>(6.0);
+  const [destinationWwtpName, setDestinationWwtpName] = useState<string>('WWTP Bukit Indah Central');
+  const [waypoints, setWaypoints] = useState<{ lat: number; lng: number }[]>([]);
 
   // Auto-generate Manhole Code based on Civil Engineering Standards (e.g. MH-SD-01, MH-SD-01.1)
   React.useEffect(() => {
@@ -133,18 +141,25 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
     }
   }, [isIntermediate, upstreamMhId, area, isOpen]);
 
-  // Auto-generate Pipe Code based on Civil Engineering Standards (P-{FromCode}_{ToCode})
+  // Auto-generate Pipe Code based on Category & Connected Assets
   React.useEffect(() => {
-    if (fromAssetId && toAssetId) {
-      const fromMh = existingManholes.find(m => m.id === fromAssetId);
-      const toMh = existingManholes.find(m => m.id === toAssetId);
-      if (fromMh && toMh) {
-        const code = `P-${fromMh.assetCode}_${toMh.assetCode}`;
-        setPipeCode(code);
-        setPipeName(`Pipa Segmen ${fromMh.assetCode} → ${toMh.assetCode}`);
-      }
+    const allNodes = [...existingManholes, ...existingPumpStations];
+    const fromNode = allNodes.find(m => m.id === fromAssetId);
+    const toNode = allNodes.find(m => m.id === toAssetId);
+
+    if (pipeCategory === 'transmission') {
+      const psNode = existingPumpStations.find(p => p.id === fromAssetId) || existingPumpStations[0];
+      const code = `P-TR-${psNode ? psNode.assetCode : 'PS'}_WWTP`;
+      setPipeCode(code);
+      setPipeName(`Pipa Transmisi Tekanan ${psNode ? psNode.assetCode : 'Stasiun Pompa'} → WWTP IPAL`);
+      setPipeMaterial('HDPE PN16');
+      setPipeDiameter(400);
+    } else if (fromNode && toNode) {
+      const code = `P-${fromNode.assetCode}_${toNode.assetCode}`;
+      setPipeCode(code);
+      setPipeName(`Pipa Segmen ${fromNode.assetCode} → ${toNode.assetCode}`);
     }
-  }, [fromAssetId, toAssetId, isOpen]);
+  }, [fromAssetId, toAssetId, pipeCategory, isOpen]);
 
   if (!isOpen) return null;
 
@@ -209,12 +224,16 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
         installationYear: 2026,
         lastInspectedAt: today,
         nextInspectionDue: nextDue,
-        fromAssetId,
-        toAssetId,
+        fromAssetId: pipeCategory === 'transmission' && existingPumpStations[0] ? (fromAssetId || existingPumpStations[0].id) : fromAssetId,
+        toAssetId: pipeCategory === 'transmission' && existingManholes[0] ? (toAssetId || existingManholes[0].id) : toAssetId,
         diameterMm: Number(pipeDiameter),
         material: pipeMaterial,
         lengthMeters: Number(pipeLength),
         flowDirection: 'downstream',
+        pipeCategory,
+        waypoints: pipeCategory === 'transmission' ? waypoints : [],
+        pressureBar: pipeCategory === 'transmission' ? Number(pressureBar) : undefined,
+        destinationWwtpName: pipeCategory === 'transmission' ? destinationWwtpName : undefined,
         photos: []
       });
     }
@@ -570,6 +589,35 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
 
           {assetType === 'pipe' && (
             <>
+              {/* Category Selector Tab */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+                <label className="text-xs text-slate-500 font-extrabold uppercase tracking-wider">Kategori Pipa Jaringan</label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setPipeCategory('gravity')}
+                    className={`p-2.5 rounded-xl border text-xs font-extrabold transition flex items-center justify-center gap-1.5 ${
+                      pipeCategory === 'gravity'
+                        ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>💧 Gravitasi (Lurus)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPipeCategory('transmission')}
+                    className={`p-2.5 rounded-xl border text-xs font-extrabold transition flex items-center justify-center gap-1.5 ${
+                      pipeCategory === 'transmission'
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>⚡ Transmisi (Force Main WWTP)</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-600 font-bold">Kode Pipa (ID)</label>
@@ -583,7 +631,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-600 font-bold">Panjang Pipa (meter)</label>
+                  <label className="text-xs text-slate-600 font-bold">Panjang Total (meter)</label>
                   <input
                     type="number"
                     value={pipeLength}
@@ -593,31 +641,142 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs text-slate-600 font-bold">Node Asal (From Manhole)</label>
-                <select
-                  value={fromAssetId}
-                  onChange={e => setFromAssetId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
-                >
-                  {existingManholes.map(mh => (
-                    <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
-                  ))}
-                </select>
-              </div>
+              {pipeCategory === 'gravity' ? (
+                <>
+                  <div>
+                    <label className="text-xs text-slate-600 font-bold">Node Asal (From Manhole)</label>
+                    <select
+                      value={fromAssetId}
+                      onChange={e => setFromAssetId(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
+                    >
+                      {existingManholes.map(mh => (
+                        <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="text-xs text-slate-600 font-bold">Node Tujuan (To Manhole / Station)</label>
-                <select
-                  value={toAssetId}
-                  onChange={e => setToAssetId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
-                >
-                  {existingManholes.map(mh => (
-                    <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
-                  ))}
-                </select>
-              </div>
+                  <div>
+                    <label className="text-xs text-slate-600 font-bold">Node Tujuan (To Manhole)</label>
+                    <select
+                      value={toAssetId}
+                      onChange={e => setToAssetId(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
+                    >
+                      {existingManholes.map(mh => (
+                        <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Transmission Pipe Form Fields */}
+                  <div>
+                    <label className="text-xs text-amber-700 dark:text-amber-400 font-extrabold">Stasiun Pompa Pengirim (Force Main Origin)</label>
+                    <select
+                      value={fromAssetId}
+                      onChange={e => setFromAssetId(e.target.value)}
+                      className="w-full bg-amber-50/50 border border-amber-300 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-amber-500 font-bold text-sm"
+                    >
+                      {existingPumpStations.length > 0 ? (
+                        existingPumpStations.map(ps => (
+                          <option key={ps.id} value={ps.id}>⚡ {ps.assetCode} — {ps.name} ({ps.capacityLps} L/s)</option>
+                        ))
+                      ) : (
+                        existingManholes.map(mh => (
+                          <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-slate-600 font-bold">Nama Tujuan IPAL / WWTP</label>
+                    <input
+                      type="text"
+                      value={destinationWwtpName}
+                      onChange={e => setDestinationWwtpName(e.target.value)}
+                      placeholder="mis. WWTP Bukit Indah Central Main Plant"
+                      required
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-600 font-bold">Tekanan Kerja (Bar)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={pressureBar}
+                        onChange={e => setPressureBar(Number(e.target.value))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-slate-600 font-bold">Material Pipa Bertekanan</label>
+                      <select
+                        value={pipeMaterial}
+                        onChange={e => setPipeMaterial(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-bold text-sm focus:outline-none focus:border-amber-500"
+                      >
+                        <option value="HDPE PN16">HDPE PN16 (High Density Polyethylene)</option>
+                        <option value="Ductile Iron (DI)">Ductile Iron (DI Pipe)</option>
+                        <option value="Carbon Steel">Carbon Steel / Baja Lapis</option>
+                        <option value="uPVC Pressure">uPVC Pressure Pipe</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Waypoints Route Curve Generator */}
+                  <div className="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-black text-amber-800">Waypoint Tikungan Jalur ({waypoints.length})</div>
+                        <div className="text-[11px] text-amber-700/80 font-medium">Lekukan rute berbelok mengikuti jalan raya</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ps = existingPumpStations.find(p => p.id === fromAssetId) || existingPumpStations[0];
+                          const rawLat = ps?.latitude ?? ps?.coordinates?.lat ?? -6.444;
+                          const rawLng = ps?.longitude ?? ps?.coordinates?.lng ?? 107.452;
+                          const baseLat = typeof rawLat === 'number' && !isNaN(rawLat) ? rawLat : -6.444;
+                          const baseLng = typeof rawLng === 'number' && !isNaN(rawLng) ? rawLng : 107.452;
+                          const autoWaypoints = [
+                            { lat: Number((baseLat + 0.0018).toFixed(6)), lng: Number((baseLng + 0.0012).toFixed(6)) },
+                            { lat: Number((baseLat + 0.0035).toFixed(6)), lng: Number((baseLng + 0.0028).toFixed(6)) }
+                          ];
+                          setWaypoints(autoWaypoints);
+                          setPipeLength(680);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] transition shadow-2xs cursor-pointer"
+                      >
+                        ⚡ Generate Rute Tikungan
+                      </button>
+                    </div>
+
+                    {waypoints.length > 0 && (
+                      <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                        {waypoints.map((wp, idx) => (
+                          <div key={idx} className="bg-white p-2 rounded-xl border border-amber-200/80 flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-800">Tikungan #{idx + 1}: <span className="font-mono text-amber-700">{wp.lat}, {wp.lng}</span></span>
+                            <button
+                              type="button"
+                              onClick={() => setWaypoints(waypoints.filter((_, i) => i !== idx))}
+                              className="text-rose-500 font-bold hover:text-rose-700 px-1.5 py-0.5 rounded"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

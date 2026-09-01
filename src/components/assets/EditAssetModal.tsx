@@ -38,6 +38,9 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
   // Pipe states
   const [lengthMeters, setLengthMeters] = useState(asset.type === 'pipe' ? asset.lengthMeters : 100);
   const [pipeMaterial, setPipeMaterial] = useState(asset.type === 'pipe' ? asset.material : 'PVC');
+  const [pipeCategory, setPipeCategory] = useState<'gravity' | 'transmission'>(asset.type === 'pipe' ? asset.pipeCategory || 'gravity' : 'gravity');
+  const [pressureBar, setPressureBar] = useState<number>(asset.type === 'pipe' ? asset.pressureBar || 6.0 : 6.0);
+  const [destinationWwtpName, setDestinationWwtpName] = useState<string>(asset.type === 'pipe' ? asset.destinationWwtpName || 'WWTP Bukit Indah Central' : 'WWTP Bukit Indah Central');
 
   // Pump Station states
   const [capacityLps, setCapacityLps] = useState(asset.type === 'pump_station' ? asset.capacityLps : 450);
@@ -64,6 +67,9 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
         setLengthMeters(asset.lengthMeters);
         setDiameterMm(asset.diameterMm);
         setPipeMaterial(asset.material);
+        setPipeCategory(asset.pipeCategory || 'gravity');
+        setPressureBar(asset.pressureBar || 6.0);
+        setDestinationWwtpName(asset.destinationWwtpName || 'WWTP Bukit Indah Central');
       } else if (asset.type === 'pump_station') {
         setCapacityLps(asset.capacityLps);
         setPumpCount(asset.pumpCount);
@@ -101,7 +107,10 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
         nextInspectionDue,
         lengthMeters: Number(lengthMeters),
         diameterMm: Number(diameterMm),
-        material: pipeMaterial
+        material: pipeMaterial,
+        pipeCategory,
+        pressureBar: pipeCategory === 'transmission' ? Number(pressureBar) : undefined,
+        destinationWwtpName: pipeCategory === 'transmission' ? destinationWwtpName : undefined,
       });
     } else if (asset.type === 'pump_station') {
       onSavePumpStation({
@@ -264,12 +273,65 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
           {/* Pipe Technical Fields */}
           {asset.type === 'pipe' && (
             <div className="space-y-3 pt-2 border-t border-slate-100">
-              <div className="text-xs text-[#0284C7] font-black uppercase tracking-wider flex items-center gap-1.5">
-                <GitBranch className="w-4 h-4" />
-                <span>Spesifikasi Fisik Pipa Segmen</span>
+              <div className="text-xs text-[#0284C7] font-black uppercase tracking-wider flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <GitBranch className="w-4 h-4" />
+                  <span>Spesifikasi Fisik Pipa Segmen</span>
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] ${pipeCategory === 'transmission' ? 'bg-amber-100 text-amber-800 font-extrabold border border-amber-300' : 'bg-sky-100 text-sky-800 font-bold'}`}>
+                  {pipeCategory === 'transmission' ? '⚡ Transmisi (Force Main)' : '💧 Gravitasi'}
+                </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Kategori Pipa</label>
+                  <select
+                    value={pipeCategory}
+                    onChange={e => setPipeCategory(e.target.value as any)}
+                    className="w-full bg-slate-50 font-bold text-slate-900 border border-slate-200 rounded-xl p-2.5 mt-1"
+                  >
+                    <option value="gravity">💧 Gravitasi Standard</option>
+                    <option value="transmission">⚡ Transmisi (Force Main WWTP)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Material Pipa</label>
+                  <input
+                    type="text"
+                    value={pipeMaterial}
+                    onChange={e => setPipeMaterial(e.target.value)}
+                    className="w-full bg-slate-50 font-bold text-slate-900 border border-slate-200 rounded-xl p-2.5 mt-1"
+                  />
+                </div>
+              </div>
+
+              {pipeCategory === 'transmission' && (
+                <div className="grid grid-cols-2 gap-3 bg-amber-50/60 p-3 rounded-xl border border-amber-200">
+                  <div>
+                    <label className="text-xs text-amber-800 font-bold">Tekanan Kerja (Bar)</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={pressureBar}
+                      onChange={e => setPressureBar(Number(e.target.value))}
+                      className="w-full bg-white font-mono font-bold text-slate-900 border border-amber-300 rounded-xl p-2.5 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-amber-800 font-bold">Tujuan WWTP / IPAL</label>
+                    <input
+                      type="text"
+                      value={destinationWwtpName}
+                      onChange={e => setDestinationWwtpName(e.target.value)}
+                      className="w-full bg-white font-semibold text-slate-900 border border-amber-300 rounded-xl p-2.5 mt-1 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-600 font-bold">Panjang (Meter)</label>
                   <input
@@ -286,15 +348,6 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
                     value={diameterMm}
                     onChange={e => setDiameterMm(Number(e.target.value))}
                     className="w-full bg-slate-50 font-mono font-bold text-slate-900 border border-slate-200 rounded-xl p-2.5 mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-600 font-bold">Material</label>
-                  <input
-                    type="text"
-                    value={pipeMaterial}
-                    onChange={e => setPipeMaterial(e.target.value)}
-                    className="w-full bg-slate-50 font-bold text-slate-900 border border-slate-200 rounded-xl p-2.5 mt-1"
                   />
                 </div>
               </div>

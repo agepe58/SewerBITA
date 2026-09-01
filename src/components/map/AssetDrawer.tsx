@@ -166,12 +166,38 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
 
               {asset.type === 'pipe' && (
                 <div className="space-y-2.5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <div className="font-extrabold text-[#0284C7] text-xs">Spesifikasi Pipa Jaringan</div>
+                  <div className="font-extrabold text-[#0284C7] text-xs flex items-center justify-between">
+                    <span>Spesifikasi Pipa Jaringan</span>
+                    {asset.pipeCategory === 'transmission' ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-700 font-extrabold border border-amber-300">
+                        ⚡ Transmisi (Force Main)
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-sky-500/20 text-sky-700 font-extrabold">
+                        💧 Gravitasi
+                      </span>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 gap-2 text-xs font-medium">
-                    <div>Panjang: <span className="font-extrabold text-slate-900">{asset.lengthMeters} m</span></div>
+                    <div>Panjang Total: <span className="font-extrabold text-slate-900">{asset.lengthMeters} m</span></div>
                     <div>Diameter: <span className="font-extrabold text-slate-900">{asset.diameterMm} mm</span></div>
                     <div>Material: <span className="font-extrabold text-slate-900">{asset.material}</span></div>
                     <div>Arah Aliran: <span className="font-extrabold text-[#2563EB] capitalize">{asset.flowDirection}</span></div>
+                    {asset.pipeCategory === 'transmission' && (
+                      <>
+                        <div className="col-span-2 pt-1 border-t border-slate-200/60 font-bold text-amber-700">
+                          Tekanan Kerja: <span className="font-extrabold text-slate-900">{asset.pressureBar || 6.0} Bar</span>
+                        </div>
+                        <div className="col-span-2 font-bold text-slate-700">
+                          Tujuan WWTP / IPAL: <span className="font-extrabold text-slate-900">🏢 {asset.destinationWwtpName || 'WWTP Main Plant'}</span>
+                        </div>
+                        {asset.waypoints && asset.waypoints.length > 0 && (
+                          <div className="col-span-2 font-bold text-amber-700">
+                            Tikungan Rute: <span className="font-extrabold text-slate-900">{asset.waypoints.length} Point Lekukan Jalan</span>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               )}

@@ -661,6 +661,7 @@ export const App: React.FC = () => {
         onAddPipe={handleAddPipe}
         onAddPumpStation={handleAddPumpStation}
         existingManholes={manholes}
+        existingPumpStations={pumpStations}
         areas={areas}
         onAddArea={handleAddArea}
       />
