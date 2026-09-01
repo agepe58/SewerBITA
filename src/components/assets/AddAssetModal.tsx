@@ -131,8 +131,8 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [pipeMaterial, setPipeMaterial] = useState('HDPE');
   const [pipeLength, setPipeLength] = useState(450);
 
-  // Transmission Pipe specific state
-  const [pipeCategory, setPipeCategory] = useState<'gravity' | 'transmission'>('gravity');
+  // Transmission & Clean Water Pipe specific state
+  const [pipeCategory, setPipeCategory] = useState<'gravity' | 'transmission' | 'clean_water_distribution'>('gravity');
   const [pressureBar, setPressureBar] = useState<number>(6.0);
   const [destinationWwtpName, setDestinationWwtpName] = useState<string>('WWTP Bukit Indah Central');
   const [waypoints, setWaypoints] = useState<{ lat: number; lng: number }[]>([]);
@@ -166,13 +166,21 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
     const fromNode = allNodes.find(m => m.id === fromAssetId);
     const toNode = allNodes.find(m => m.id === toAssetId);
 
-    if (pipeCategory === 'transmission') {
+    if (pipeCategory === 'clean_water_distribution') {
+      const code = `P-CW-${Math.floor(100 + Math.random() * 900)}`;
+      setPipeCode(code);
+      setPipeName(`Pipa Distribusi Air Bersih PAM ${code}`);
+      setPipeMaterial('HDPE PN10 / Ductile Iron');
+      setPipeDiameter(300);
+      setPressureBar(6.0);
+    } else if (pipeCategory === 'transmission') {
       const psNode = existingPumpStations.find(p => p.id === fromAssetId) || existingPumpStations[0];
       const code = `P-TR-${psNode ? psNode.assetCode : 'PS'}_WWTP`;
       setPipeCode(code);
       setPipeName(`Pipa Transmisi Tekanan ${psNode ? psNode.assetCode : 'Stasiun Pompa'} → WWTP IPAL`);
       setPipeMaterial('HDPE PN16');
       setPipeDiameter(400);
+      setPressureBar(10.0);
     } else if (fromNode && toNode) {
       const code = `P-${fromNode.assetCode}_${toNode.assetCode}`;
       setPipeCode(code);
@@ -283,21 +291,22 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
         name: pipeName || `Pipa ${pipeCode}`,
         type: 'pipe',
         area,
+        systemCategory: pipeCategory === 'clean_water_distribution' ? 'clean_water' : 'sewerage',
         status: 'Active',
         condition: 'Good',
         installationYear: 2026,
         lastInspectedAt: today,
         nextInspectionDue: nextDue,
-        fromAssetId: pipeCategory === 'transmission' && existingPumpStations[0] ? (fromAssetId || existingPumpStations[0].id) : fromAssetId,
-        toAssetId: pipeCategory === 'transmission' && existingManholes[0] ? (toAssetId || existingManholes[0].id) : toAssetId,
+        fromAssetId: (pipeCategory === 'transmission' || pipeCategory === 'clean_water_distribution') && existingPumpStations[0] ? (fromAssetId || existingPumpStations[0].id) : fromAssetId,
+        toAssetId: (pipeCategory === 'transmission' || pipeCategory === 'clean_water_distribution') && existingManholes[0] ? (toAssetId || existingManholes[0].id) : toAssetId,
         diameterMm: Number(pipeDiameter),
         material: pipeMaterial,
         lengthMeters: Number(pipeLength),
         flowDirection: 'downstream',
         pipeCategory,
-        waypoints: pipeCategory === 'transmission' ? waypoints : [],
-        pressureBar: pipeCategory === 'transmission' ? Number(pressureBar) : undefined,
-        destinationWwtpName: pipeCategory === 'transmission' ? destinationWwtpName : undefined,
+        waypoints: (pipeCategory === 'transmission' || pipeCategory === 'clean_water_distribution') ? waypoints : [],
+        pressureBar: (pipeCategory === 'transmission' || pipeCategory === 'clean_water_distribution') ? Number(pressureBar) : undefined,
+        destinationWwtpName: pipeCategory === 'transmission' ? destinationWwtpName : (pipeCategory === 'clean_water_distribution' ? 'Zona Distribusi Pelanggan' : undefined),
         photos: []
       });
     }
@@ -678,30 +687,41 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
           {assetType === 'pipe' && (
             <>
               {/* Category Selector Tab */}
-              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-2">
                 <label className="text-xs text-slate-500 font-extrabold uppercase tracking-wider">Kategori Pipa Jaringan</label>
-                <div className="grid grid-cols-2 gap-2 mt-1">
+                <div className="grid grid-cols-3 gap-1.5 mt-1">
                   <button
                     type="button"
                     onClick={() => setPipeCategory('gravity')}
-                    className={`p-2.5 rounded-xl border text-xs font-extrabold transition flex items-center justify-center gap-1.5 ${
+                    className={`p-2 rounded-xl border text-[11px] font-extrabold transition flex items-center justify-center gap-1 ${
                       pipeCategory === 'gravity'
                         ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    <span>💧 Gravitasi (Lurus)</span>
+                    <span>💧 Gravitasi</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPipeCategory('transmission')}
-                    className={`p-2.5 rounded-xl border text-xs font-extrabold transition flex items-center justify-center gap-1.5 ${
+                    className={`p-2 rounded-xl border text-[11px] font-extrabold transition flex items-center justify-center gap-1 ${
                       pipeCategory === 'transmission'
                         ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    <span>⚡ Transmisi (Force Main WWTP)</span>
+                    <span>⚡ Transmisi (WWTP)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPipeCategory('clean_water_distribution')}
+                    className={`p-2 rounded-xl border text-[11px] font-extrabold transition flex items-center justify-center gap-1 ${
+                      pipeCategory === 'clean_water_distribution'
+                        ? 'bg-cyan-600 text-white border-cyan-600 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🚰 Air Bersih (PAM)</span>
                   </button>
                 </div>
               </div>
