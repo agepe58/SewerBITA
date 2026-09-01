@@ -132,42 +132,42 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
       </div>
 
       {/* SUMMARY STATS BAR */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5" style={{ marginBottom: '14px' }}>
+        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-2xl shadow-md flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">Total Area / Zona</span>
             <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{areas.length}</div>
           </div>
-          <div className="p-2.5 bg-blue-500/10 text-blue-500 rounded-lg">
+          <div className="p-2.5 bg-blue-500/10 text-blue-500 rounded-xl border border-blue-500/20">
             <Map className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-2xl shadow-md flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">Total Aset Terdaftar</span>
             <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{allAssets.length}</div>
           </div>
-          <div className="p-2.5 bg-emerald-500/10 text-emerald-500 rounded-lg">
+          <div className="p-2.5 bg-emerald-500/10 text-emerald-500 rounded-xl border border-emerald-500/20">
             <Boxes className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-2xl shadow-md flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">Rata-rata Aset / Area</span>
             <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
               {areas.length > 0 ? Math.round(allAssets.length / areas.length) : 0}
             </div>
           </div>
-          <div className="p-2.5 bg-indigo-500/10 text-indigo-500 rounded-lg">
+          <div className="p-2.5 bg-indigo-500/10 text-indigo-500 rounded-xl border border-indigo-500/20">
             <Filter className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* SEARCH BAR */}
-      <div className="flex items-center gap-3 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xs">
+      <div className="flex items-center gap-3 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-3.5 rounded-2xl shadow-md" style={{ marginBottom: '14px' }}>
         <Search className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
         <input
           type="text"
@@ -184,7 +184,7 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
       </div>
 
       {/* AREA GRID / TABLE LIST */}
-      <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 rounded-2xl overflow-hidden shadow-md">
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h2 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Daftar Wilayah Operasional ({filteredAreaStats.length})
