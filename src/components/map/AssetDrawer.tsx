@@ -213,6 +213,38 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
                 </div>
               )}
 
+              {asset.type === 'wtp' && (
+                <div className="space-y-2.5 bg-[#0284C7]/5 p-4 rounded-2xl border border-cyan-200">
+                  <div className="font-extrabold text-[#0284C7] text-xs flex items-center justify-between">
+                    <span>Spesifikasi WTP Air Bersih</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-700 font-extrabold border border-cyan-300">
+                      🏭 WTP Air Bersih
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs font-medium">
+                    <div>Kapasitas Produksi: <span className="font-extrabold text-slate-900">{asset.productionCapacityLps} L/s</span></div>
+                    <div>Sumber Air Baku: <span className="font-extrabold text-slate-900">{asset.rawWaterSource}</span></div>
+                    <div className="col-span-2 text-emerald-600 font-bold">Status Kualitas: <span className="font-extrabold text-slate-900">{asset.waterQualityStatus}</span></div>
+                  </div>
+                </div>
+              )}
+
+              {asset.type === 'water_accessory' && (
+                <div className="space-y-2.5 bg-indigo-50/60 p-4 rounded-2xl border border-indigo-200">
+                  <div className="font-extrabold text-indigo-700 text-xs flex items-center justify-between">
+                    <span>Aksesoris & Valve Pipa Air Bersih</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-indigo-500/20 text-indigo-700 font-extrabold uppercase border border-indigo-300">
+                      {asset.accessoryType.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs font-medium">
+                    <div>Diameter Aksesoris: <span className="font-extrabold text-slate-900">{asset.diameterMm} mm</span></div>
+                    <div>Tekanan Kerja: <span className="font-extrabold text-slate-900">{asset.pressureBar || 6.0} Bar</span></div>
+                    <div className="col-span-2 text-indigo-700 font-bold">Status Operasi: <span className="font-extrabold text-slate-900">{asset.operatingStatus}</span></div>
+                  </div>
+                </div>
+              )}
+
               {/* Coordinates */}
               {'coordinates' in asset && asset.coordinates && (
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">

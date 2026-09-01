@@ -1,4 +1,4 @@
-import { ManholeAsset, PumpStationAsset, PipeAsset } from '../types/asset';
+import { ManholeAsset, PumpStationAsset, PipeAsset, WtpAsset, WaterAccessoryAsset } from '../types/asset';
 import { InspectionRecord } from '../types/inspection';
 import { UserProfile } from '../types/rbac';
 import { authService } from './authService';
@@ -35,7 +35,7 @@ export const apiClient = {
   },
 
   // Fetch All Assets
-  getAssets: async (): Promise<{ manholes: ManholeAsset[]; pumpStations: PumpStationAsset[]; pipes: PipeAsset[] } | null> => {
+  getAssets: async (): Promise<{ manholes: ManholeAsset[]; pumpStations: PumpStationAsset[]; pipes: PipeAsset[]; wtps: WtpAsset[]; waterAccessories: WaterAccessoryAsset[] } | null> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets`);
       if (!res.ok) return null;
@@ -95,7 +95,36 @@ export const apiClient = {
         };
       });
 
-      return { manholes, pumpStations, pipes };
+      const wtps: WtpAsset[] = (raw.wtps || []).map((w: any) => {
+        return {
+          ...w,
+          type: 'wtp' as const,
+          coordinates: { lat: Number(w.latitude ?? -6.444), lng: Number(w.longitude ?? 107.452) },
+          productionCapacityLps: Number(w.productionCapacityLps ?? 500),
+          rawWaterSource: w.rawWaterSource || 'Sungai Citarum',
+          waterQualityStatus: w.waterQualityStatus || 'Safe - Permenkes 2023',
+          status: w.status || 'Active',
+          condition: w.condition || 'Good',
+          photos: Array.isArray(w.photos) ? w.photos : []
+        };
+      });
+
+      const waterAccessories: WaterAccessoryAsset[] = (raw.waterAccessories || []).map((a: any) => {
+        return {
+          ...a,
+          type: 'water_accessory' as const,
+          coordinates: { lat: Number(a.latitude ?? -6.444), lng: Number(a.longitude ?? 107.452) },
+          accessoryType: a.accessoryType || 'air_valve',
+          diameterMm: Number(a.diameterMm ?? 150),
+          pressureBar: Number(a.pressureBar ?? 6.0),
+          operatingStatus: a.operatingStatus || 'Normal Open',
+          status: a.status || 'Active',
+          condition: a.condition || 'Good',
+          photos: Array.isArray(a.photos) ? a.photos : []
+        };
+      });
+
+      return { manholes, pumpStations, pipes, wtps, waterAccessories };
     } catch (e) {
       console.warn('Backend API unavailable, using fallback storage:', e);
       return null;
@@ -103,7 +132,7 @@ export const apiClient = {
   },
 
   // Create Asset
-  createAsset: async (type: 'manhole' | 'pumpStation' | 'pipe', data: any) => {
+  createAsset: async (type: 'manhole' | 'pumpStation' | 'pipe' | 'wtp' | 'water_accessory', data: any) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets`, {
         method: 'POST',
@@ -119,7 +148,7 @@ export const apiClient = {
   },
 
   // Update Asset
-  updateAsset: async (id: string, type: 'manhole' | 'pumpStation' | 'pipe', data: any) => {
+  updateAsset: async (id: string, type: 'manhole' | 'pumpStation' | 'pipe' | 'wtp' | 'water_accessory', data: any) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets/${id}`, {
         method: 'PUT',

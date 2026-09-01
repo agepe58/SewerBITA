@@ -1,4 +1,8 @@
-export type AssetType = 'manhole' | 'pipe' | 'pump_station' | 'valve';
+export type AssetType = 'manhole' | 'pipe' | 'pump_station' | 'valve' | 'wtp' | 'water_accessory';
+
+export type SystemCategory = 'sewerage' | 'clean_water';
+
+export type WaterAccessoryType = 'gate_valve' | 'air_valve' | 'dresser_joint' | 'check_valve' | 'tee_fitting' | 'reducer_joint';
 
 export type AssetCondition = 'Good' | 'Fair' | 'Warning' | 'Critical';
 
@@ -16,6 +20,7 @@ export interface BaseAsset {
   name: string;
   type: AssetType;
   area: string;
+  systemCategory?: SystemCategory; // 'sewerage' (Air Limbah) vs 'clean_water' (Air Bersih PAM)
   status: AssetStatus;
   condition: AssetCondition;
   installationYear: number;
@@ -45,6 +50,7 @@ export interface PumpStationAsset extends BaseAsset {
   pumpCount: number;
   activePumps: number;
   powerSource: string;
+  systemCategory?: SystemCategory;
 }
 
 export interface PipeAsset extends BaseAsset {
@@ -58,14 +64,34 @@ export interface PipeAsset extends BaseAsset {
   slopePercent?: number;
   depthStartMeters?: number;
   depthEndMeters?: number;
-  // Transmission Pipe (Force Main to WWTP) specific fields
-  pipeCategory?: 'gravity' | 'transmission'; // 'gravity' vs 'transmission'
+  // Transmission & Clean Water Pipe specific fields
+  pipeCategory?: 'gravity' | 'transmission' | 'clean_water_distribution';
   waypoints?: LocationCoordinates[]; // Array of intermediate curve coordinates (lat/lng)
   pressureBar?: number; // Working pressure rating in bar (e.g. 6.0 bar, 10.0 bar)
-  destinationWwtpName?: string; // Target WWTP / IPAL plant name
+  destinationWwtpName?: string; // Target WWTP / IPAL or WTP plant name
 }
 
-export type SewerAsset = ManholeAsset | PumpStationAsset | PipeAsset;
+export interface WtpAsset extends BaseAsset {
+  type: 'wtp';
+  coordinates: LocationCoordinates;
+  productionCapacityLps: number; // e.g. 500 L/s
+  rawWaterSource: string; // e.g. Sungai Citarum / Waduk Jatiluhur
+  waterQualityStatus: string; // e.g. Safe - Permenkes 2023
+  reservoirCapacityM3?: number; // m3 storage
+}
+
+export interface WaterAccessoryAsset extends BaseAsset {
+  type: 'water_accessory';
+  coordinates: LocationCoordinates;
+  accessoryType: WaterAccessoryType;
+  pipeId?: string;
+  diameterMm: number;
+  pressureBar?: number;
+  elevationMeters?: number;
+  operatingStatus: 'Normal Open' | 'Normal Closed' | 'Active' | 'Under Maintenance';
+}
+
+export type SewerAsset = ManholeAsset | PumpStationAsset | PipeAsset | WtpAsset | WaterAccessoryAsset;
 
 export interface AssetSummaryStats {
   totalManholes: number;

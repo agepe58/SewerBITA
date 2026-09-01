@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset } from '../../types/asset';
+import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset, WtpAsset, WaterAccessoryAsset } from '../../types/asset';
 import { NetworkTraceResult } from '../../types/topology';
 import { MapFilters } from './MapFilters';
 import { AssetDrawer } from './AssetDrawer';
@@ -11,6 +11,8 @@ interface NetworkMapProps {
   manholes: ManholeAsset[];
   pumpStations: PumpStationAsset[];
   pipes: PipeAsset[];
+  wtps?: WtpAsset[];
+  waterAccessories?: WaterAccessoryAsset[];
   inspections: InspectionRecord[];
   activeTraceResult: NetworkTraceResult | null;
   onTraceDownstream: (assetId: string) => void;
@@ -59,6 +61,48 @@ const createPumpStationIcon = (isHighlighted: boolean) => {
   });
 };
 
+const createWtpIcon = (isHighlighted: boolean) => {
+  return L.divIcon({
+    className: 'custom-wtp-icon',
+    html: `
+      <div class="relative flex items-center justify-center w-10 h-10 bg-[#0284C7] text-white rounded-2xl border-2 border-white shadow-xl ${isHighlighted ? 'scale-125' : ''}">
+        <span class="text-base">🏭</span>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+  });
+};
+
+const createWaterAccessoryIcon = (accessoryType: string, isHighlighted: boolean) => {
+  const bg = accessoryType === 'air_valve'
+    ? 'bg-cyan-500'
+    : accessoryType === 'dresser_joint'
+    ? 'bg-emerald-500'
+    : accessoryType === 'gate_valve'
+    ? 'bg-indigo-600'
+    : 'bg-sky-500';
+
+  const symbol = accessoryType === 'air_valve'
+    ? '💨'
+    : accessoryType === 'dresser_joint'
+    ? '🔗'
+    : accessoryType === 'gate_valve'
+    ? '🚰'
+    : '🔀';
+
+  return L.divIcon({
+    className: 'custom-accessory-icon',
+    html: `
+      <div class="relative flex items-center justify-center w-7 h-7 ${bg} text-white rounded-lg border-2 border-white shadow-md ${isHighlighted ? 'scale-125' : ''}">
+        <span class="text-xs font-bold">${symbol}</span>
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  });
+};
+
 // Component to handle pan to selected asset
 const MapController: React.FC<{ centerCoords: [number, number] | null }> = ({ centerCoords }) => {
   const map = useMap();
@@ -98,6 +142,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   manholes,
   pumpStations,
   pipes,
+  wtps = [],
+  waterAccessories = [],
   inspections,
   activeTraceResult,
   onTraceDownstream,
@@ -112,6 +158,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   const [showManholes, setShowManholes] = useState(true);
   const [showPipes, setShowPipes] = useState(true);
   const [showPumpStations, setShowPumpStations] = useState(true);
+  const [showWtps, setShowWtps] = useState(true);
+  const [showWaterAccessories, setShowWaterAccessories] = useState(true);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   // Basemap Switcher State (Default: Esri Satellite / CARTO Voyager)
@@ -235,8 +283,20 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
     return areaMatch && condMatch;
   });
 
-  const selectedAsset = [...manholes, ...pumpStations, ...pipes].find(a => a.id === selectedAssetId) || null;
-  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
+  const filteredWtps = wtps.filter(w => {
+    const areaMatch = selectedArea === 'All Areas' || w.area === selectedArea;
+    const condMatch = selectedCondition === 'All Conditions' || w.condition === selectedCondition;
+    return areaMatch && condMatch;
+  });
+
+  const filteredWaterAccessories = waterAccessories.filter(a => {
+    const areaMatch = selectedArea === 'All Areas' || a.area === selectedArea;
+    const condMatch = selectedCondition === 'All Conditions' || a.condition === selectedCondition;
+    return areaMatch && condMatch;
+  });
+
+  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes, ...wtps, ...waterAccessories];
+  const selectedAsset = allAssets.find(a => a.id === selectedAssetId) || null;
 
   // Active Topology Trace Path Check
   const isAssetInTrace = (id: string) => {
@@ -467,6 +527,85 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
                     className="mt-2 text-[10px] bg-[#2563EB] text-white font-bold px-2.5 py-1 rounded-full w-full hover:bg-blue-700 transition"
                   >
                     Buka Detail Stasiun Pompa
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {/* Render WTP (Water Treatment Plant) Markers */}
+        {showWtps && filteredWtps.map((wtp, idx) => {
+          const coords = getDisambiguatedCoords(wtp, idx);
+          if (!coords) return null;
+          const inTrace = isAssetInTrace(wtp.id);
+          const icon = createWtpIcon(inTrace);
+
+          return (
+            <Marker
+              key={wtp.id}
+              position={coords}
+              icon={icon}
+              eventHandlers={{
+                click: () => handleSelectAsset(wtp)
+              }}
+            >
+              <Popup>
+                <div className="text-xs space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-[#0284C7] font-mono">{wtp.assetCode}</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/20 text-cyan-700 border border-cyan-300">
+                      🏭 WTP Air Bersih
+                    </span>
+                  </div>
+                  <div className="font-extrabold text-slate-900">{wtp.name}</div>
+                  <div className="text-slate-600 font-medium">Kapasitas Produksi: <span className="font-bold text-slate-900">{wtp.productionCapacityLps} L/detik</span></div>
+                  <div className="text-slate-600 font-medium">Sumber Air Baku: <span className="font-bold text-slate-900">{wtp.rawWaterSource}</span></div>
+                  <div className="text-emerald-600 font-bold">Kualitas: {wtp.waterQualityStatus}</div>
+                  <button
+                    onClick={() => handleSelectAsset(wtp)}
+                    className="mt-2 text-[10px] bg-[#0284C7] text-white font-bold px-2.5 py-1 rounded-full w-full hover:bg-sky-700 transition"
+                  >
+                    Buka Detail Instalasi WTP
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {/* Render Water Accessories & Valves Markers */}
+        {showWaterAccessories && filteredWaterAccessories.map((acc, idx) => {
+          const coords = getDisambiguatedCoords(acc, idx);
+          if (!coords) return null;
+          const inTrace = isAssetInTrace(acc.id);
+          const icon = createWaterAccessoryIcon(acc.accessoryType, inTrace);
+
+          return (
+            <Marker
+              key={acc.id}
+              position={coords}
+              icon={icon}
+              eventHandlers={{
+                click: () => handleSelectAsset(acc)
+              }}
+            >
+              <Popup>
+                <div className="text-xs space-y-1">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className="font-bold text-cyan-700 font-mono">{acc.assetCode}</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 uppercase">
+                      {acc.accessoryType.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="font-extrabold text-slate-900">{acc.name}</div>
+                  <div className="text-slate-600">Diameter: {acc.diameterMm}mm | Tekanan: {acc.pressureBar || 6.0} bar</div>
+                  <div className="text-cyan-700 font-bold">Status Operasi: {acc.operatingStatus}</div>
+                  <button
+                    onClick={() => handleSelectAsset(acc)}
+                    className="mt-2 text-[10px] bg-cyan-600 text-white font-bold px-2.5 py-1 rounded-full w-full hover:bg-cyan-700 transition"
+                  >
+                    Buka Detail Aksesoris
                   </button>
                 </div>
               </Popup>

@@ -132,6 +132,50 @@ const initDb = async () => {
       await pool.query("ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS destination_wwtp_name VARCHAR(255);");
     `);
 
+    // 5.5 WTP Assets (Water Treatment Plant / IPA Air Bersih)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wtp_assets (
+          id VARCHAR(100) PRIMARY KEY,
+          asset_code VARCHAR(50) UNIQUE NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          area VARCHAR(100) NOT NULL,
+          latitude DOUBLE PRECISION NOT NULL,
+          longitude DOUBLE PRECISION NOT NULL,
+          production_capacity_lps DOUBLE PRECISION NOT NULL DEFAULT 500.0,
+          raw_water_source VARCHAR(255) NOT NULL DEFAULT 'Sungai Citarum / Waduk',
+          water_quality_status VARCHAR(100) NOT NULL DEFAULT 'Safe - Permenkes 2023',
+          reservoir_capacity_m3 DOUBLE PRECISION DEFAULT 5000.0,
+          status VARCHAR(50) NOT NULL DEFAULT 'Active',
+          condition VARCHAR(50) NOT NULL DEFAULT 'Good',
+          next_inspection_due DATE NOT NULL DEFAULT CURRENT_DATE + INTERVAL '90 days',
+          geom GEOMETRY(Point, 4326),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 5.6 Water Accessory & Valve Assets (Air Release Valve, Dresser Joint, Gate Valve, Tee)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS water_accessory_assets (
+          id VARCHAR(100) PRIMARY KEY,
+          asset_code VARCHAR(50) UNIQUE NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          area VARCHAR(100) NOT NULL,
+          latitude DOUBLE PRECISION NOT NULL,
+          longitude DOUBLE PRECISION NOT NULL,
+          accessory_type VARCHAR(50) NOT NULL DEFAULT 'air_valve',
+          pipe_id VARCHAR(100),
+          diameter_mm INT NOT NULL DEFAULT 150,
+          pressure_bar DOUBLE PRECISION DEFAULT 6.0,
+          elevation_meters DOUBLE PRECISION DEFAULT 15.0,
+          operating_status VARCHAR(50) NOT NULL DEFAULT 'Active',
+          status VARCHAR(50) NOT NULL DEFAULT 'Active',
+          condition VARCHAR(50) NOT NULL DEFAULT 'Good',
+          next_inspection_due DATE NOT NULL DEFAULT CURRENT_DATE + INTERVAL '90 days',
+          geom GEOMETRY(Point, 4326),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // 6. Inspection Records Table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS inspection_records (
@@ -247,16 +291,20 @@ app.get('/api/health', async (req, res) => {
 // --------------------------------------------------------------------
 app.get('/api/assets', async (req, res) => {
   try {
-    const [manholesRes, pumpStationsRes, pipesRes] = await Promise.all([
+    const [manholesRes, pumpStationsRes, pipesRes, wtpsRes, accessoriesRes] = await Promise.all([
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue" FROM manhole_assets ORDER BY created_at DESC;'),
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue" FROM pump_station_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue" FROM pipe_assets ORDER BY created_at DESC;')
+      pool.query('SELECT id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue" FROM pipe_assets ORDER BY created_at DESC;'),
+      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue" FROM wtp_assets ORDER BY created_at DESC;'),
+      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue" FROM water_accessory_assets ORDER BY created_at DESC;')
     ]);
 
     res.json({
       manholes: manholesRes.rows,
       pumpStations: pumpStationsRes.rows,
-      pipes: pipesRes.rows
+      pipes: pipesRes.rows,
+      wtps: wtpsRes.rows,
+      waterAccessories: accessoriesRes.rows
     });
   } catch (err) {
     console.error('Error fetching assets:', err);
@@ -401,6 +449,88 @@ app.post('/api/assets', async (req, res) => {
         JSON.stringify(data.waypoints || []),
         Number(data.pressureBar) || 0.0,
         data.destinationWwtpName || '',
+        data.status || 'Active',
+        data.condition || 'Good',
+        data.nextInspectionDue || new Date().toISOString().split('T')[0]
+      ];
+      const result = await pool.query(q, values);
+      return res.status(201).json(result.rows[0]);
+    }
+
+    if (type === 'wtp') {
+      const q = `
+        INSERT INTO wtp_assets 
+        (id, asset_code, name, area, latitude, longitude, production_capacity_lps, raw_water_source, water_quality_status, reservoir_capacity_m3, status, condition, next_inspection_due)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (id) DO UPDATE SET
+          asset_code = EXCLUDED.asset_code,
+          name = EXCLUDED.name,
+          area = EXCLUDED.area,
+          latitude = EXCLUDED.latitude,
+          longitude = EXCLUDED.longitude,
+          production_capacity_lps = EXCLUDED.production_capacity_lps,
+          raw_water_source = EXCLUDED.raw_water_source,
+          water_quality_status = EXCLUDED.water_quality_status,
+          reservoir_capacity_m3 = EXCLUDED.reservoir_capacity_m3,
+          status = EXCLUDED.status,
+          condition = EXCLUDED.condition,
+          next_inspection_due = EXCLUDED.next_inspection_due
+        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue";
+      `;
+      const values = [
+        data.id || `wtp-${Date.now()}`,
+        data.assetCode,
+        data.name,
+        data.area,
+        Number(data.latitude ?? data.coordinates?.lat) || -6.444,
+        Number(data.longitude ?? data.coordinates?.lng) || 107.452,
+        Number(data.productionCapacityLps) || 500.0,
+        data.rawWaterSource || 'Sungai Citarum',
+        data.waterQualityStatus || 'Safe - Permenkes 2023',
+        Number(data.reservoirCapacityM3) || 5000.0,
+        data.status || 'Active',
+        data.condition || 'Good',
+        data.nextInspectionDue || new Date().toISOString().split('T')[0]
+      ];
+      const result = await pool.query(q, values);
+      return res.status(201).json(result.rows[0]);
+    }
+
+    if (type === 'water_accessory') {
+      const q = `
+        INSERT INTO water_accessory_assets 
+        (id, asset_code, name, area, latitude, longitude, accessory_type, pipe_id, diameter_mm, pressure_bar, elevation_meters, operating_status, status, condition, next_inspection_due)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        ON CONFLICT (id) DO UPDATE SET
+          asset_code = EXCLUDED.asset_code,
+          name = EXCLUDED.name,
+          area = EXCLUDED.area,
+          latitude = EXCLUDED.latitude,
+          longitude = EXCLUDED.longitude,
+          accessory_type = EXCLUDED.accessory_type,
+          pipe_id = EXCLUDED.pipe_id,
+          diameter_mm = EXCLUDED.diameter_mm,
+          pressure_bar = EXCLUDED.pressure_bar,
+          elevation_meters = EXCLUDED.elevation_meters,
+          operating_status = EXCLUDED.operating_status,
+          status = EXCLUDED.status,
+          condition = EXCLUDED.condition,
+          next_inspection_due = EXCLUDED.next_inspection_due
+        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue";
+      `;
+      const values = [
+        data.id || `acc-${Date.now()}`,
+        data.assetCode,
+        data.name,
+        data.area,
+        Number(data.latitude ?? data.coordinates?.lat) || -6.444,
+        Number(data.longitude ?? data.coordinates?.lng) || 107.452,
+        data.accessoryType || 'air_valve',
+        data.pipeId || '',
+        Number(data.diameterMm) || 150,
+        Number(data.pressureBar) || 6.0,
+        Number(data.elevationMeters) || 15.0,
+        data.operatingStatus || 'Normal Open',
         data.status || 'Active',
         data.condition || 'Good',
         data.nextInspectionDue || new Date().toISOString().split('T')[0]

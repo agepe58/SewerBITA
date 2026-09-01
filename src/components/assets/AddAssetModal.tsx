@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, MapPin, Boxes, GitBranch, Zap, Layers } from 'lucide-react';
-import { ManholeAsset, PipeAsset, PumpStationAsset, AssetType, SewerAsset } from '../../types/asset';
+import { ManholeAsset, PipeAsset, PumpStationAsset, AssetType, SewerAsset, WtpAsset, WaterAccessoryAsset, WaterAccessoryType } from '../../types/asset';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -11,6 +11,8 @@ interface AddAssetModalProps {
   ) => void;
   onAddPipe: (pipe: Omit<PipeAsset, 'id'>) => void;
   onAddPumpStation: (pumpStation: Omit<PumpStationAsset, 'id'>) => void;
+  onAddWtp?: (wtp: Omit<WtpAsset, 'id'>) => void;
+  onAddWaterAccessory?: (accessory: Omit<WaterAccessoryAsset, 'id'>) => void;
   existingManholes: ManholeAsset[];
   existingPumpStations?: PumpStationAsset[];
   areas: string[];
@@ -23,6 +25,8 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   onAddManhole,
   onAddPipe,
   onAddPumpStation,
+  onAddWtp,
+  onAddWaterAccessory,
   existingManholes,
   existingPumpStations = [],
   areas,
@@ -53,6 +57,21 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [pumpCount, setPumpCount] = useState(4);
   const [activePumps, setActivePumps] = useState(3);
   const [powerSource, setPowerSource] = useState('PLN 250 kVA + Diesel Genset');
+
+  // WTP States
+  const [wtpCode, setWtpCode] = useState('WTP-' + Math.floor(100 + Math.random() * 900));
+  const [wtpName, setWtpName] = useState('');
+  const [productionCapacityLps, setProductionCapacityLps] = useState(500);
+  const [rawWaterSource, setRawWaterSource] = useState('Sungai Citarum / Waduk Jatiluhur');
+  const [waterQualityStatus, setWaterQualityStatus] = useState('Aman - Sesuai Permenkes 2023');
+
+  // Water Accessory States
+  const [accCode, setAccCode] = useState('ACC-' + Math.floor(100 + Math.random() * 900));
+  const [accName, setAccName] = useState('');
+  const [accessoryType, setAccessoryType] = useState<WaterAccessoryType>('air_valve');
+  const [accDiameter, setAccDiameter] = useState(150);
+  const [accPressure, setAccPressure] = useState(6.0);
+  const [operatingStatus, setOperatingStatus] = useState<'Normal Open' | 'Normal Closed' | 'Active' | 'Under Maintenance'>('Normal Open');
 
   // Intermediate Insertion State
   const [isIntermediate, setIsIntermediate] = useState(false);
@@ -213,6 +232,51 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
         powerSource,
         photos: []
       });
+    } else if (assetType === 'wtp') {
+      if (onAddWtp) {
+        onAddWtp({
+          assetCode: wtpCode,
+          name: wtpName || `WTP Air Bersih ${wtpCode}`,
+          type: 'wtp',
+          area,
+          systemCategory: 'clean_water',
+          status: 'Active',
+          condition: 'Good',
+          installationYear: 2026,
+          lastInspectedAt: today,
+          nextInspectionDue: nextDue,
+          latitude: Number(lat),
+          longitude: Number(lng),
+          coordinates: { lat: Number(lat), lng: Number(lng), elevation: 15 },
+          productionCapacityLps: Number(productionCapacityLps),
+          rawWaterSource,
+          waterQualityStatus,
+          photos: []
+        });
+      }
+    } else if (assetType === 'water_accessory') {
+      if (onAddWaterAccessory) {
+        onAddWaterAccessory({
+          assetCode: accCode,
+          name: accName || `Aksesoris Pipa ${accCode}`,
+          type: 'water_accessory',
+          area,
+          systemCategory: 'clean_water',
+          status: 'Active',
+          condition: 'Good',
+          installationYear: 2026,
+          lastInspectedAt: today,
+          nextInspectionDue: nextDue,
+          latitude: Number(lat),
+          longitude: Number(lng),
+          coordinates: { lat: Number(lat), lng: Number(lng), elevation: 12 },
+          accessoryType,
+          diameterMm: Number(accDiameter),
+          pressureBar: Number(accPressure),
+          operatingStatus,
+          photos: []
+        });
+      }
     } else {
       onAddPipe({
         assetCode: pipeCode,
@@ -288,14 +352,38 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
             <button
               type="button"
               onClick={() => setAssetType('pump_station')}
-              className={`p-3 rounded-2xl border font-bold transition flex items-center justify-center gap-1.5 text-xs sm:text-sm ${
+              className={`p-2.5 rounded-2xl border font-bold transition flex items-center justify-center gap-1 text-xs ${
                 assetType === 'pump_station'
                   ? 'bg-[#059669] text-white border-[#059669] shadow-xs'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
-              <Zap className="w-4 h-4" />
+              <Zap className="w-3.5 h-3.5" />
               <span>Stasiun Pompa</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAssetType('wtp')}
+              className={`p-2.5 rounded-2xl border font-bold transition flex items-center justify-center gap-1 text-xs ${
+                assetType === 'wtp'
+                  ? 'bg-cyan-600 text-white border-cyan-600 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <span>🏭 WTP Air Bersih</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAssetType('water_accessory')}
+              className={`p-2.5 rounded-2xl border font-bold transition flex items-center justify-center gap-1 text-xs ${
+                assetType === 'water_accessory'
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <span>🚰 Valve & Aksesoris</span>
             </button>
           </div>
         </div>
@@ -797,6 +885,150 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                     onChange={e => setPipeMaterial(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-[#0284C7]"
                   />
+                </div>
+              </div>
+            </>
+          )}
+
+          {assetType === 'wtp' && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Kode WTP (ID)</label>
+                  <input
+                    type="text"
+                    value={wtpCode}
+                    onChange={e => setWtpCode(e.target.value)}
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Kapasitas Produksi (L/s)</label>
+                  <input
+                    type="number"
+                    value={productionCapacityLps}
+                    onChange={e => setProductionCapacityLps(Number(e.target.value))}
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-600 font-bold">Nama Instalasi WTP Air Bersih</label>
+                <input
+                  type="text"
+                  value={wtpName}
+                  onChange={e => setWtpName(e.target.value)}
+                  placeholder="mis. WTP Instalasi Pengolahan Air Bersih Utama Jatiluhur"
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-cyan-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Sumber Air Baku</label>
+                  <input
+                    type="text"
+                    value={rawWaterSource}
+                    onChange={e => setRawWaterSource(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Status Kualitas Air</label>
+                  <input
+                    type="text"
+                    value={waterQualityStatus}
+                    onChange={e => setWaterQualityStatus(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {assetType === 'water_accessory' && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Kode Aksesoris (ID)</label>
+                  <input
+                    type="text"
+                    value={accCode}
+                    onChange={e => setAccCode(e.target.value)}
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Jenis Aksesoris / Valve</label>
+                  <select
+                    value={accessoryType}
+                    onChange={e => setAccessoryType(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-bold text-sm focus:outline-none focus:border-indigo-600"
+                  >
+                    <option value="air_valve">💨 Air Release Valve (Katup Pelepas Udara)</option>
+                    <option value="dresser_joint">🔗 Dresser Joint (Sambungan Fleksibel)</option>
+                    <option value="gate_valve">🚰 Gate Valve (Katup Penutup Aliran)</option>
+                    <option value="check_valve">🛑 Check Valve (Katup Satu Arah)</option>
+                    <option value="tee_fitting">🔀 Percabangan Tee Fitting</option>
+                    <option value="reducer_joint">📐 Reducer Joint (Pengecil Diameter)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-600 font-bold">Nama Titik Sambungan / Aksesoris</label>
+                <input
+                  type="text"
+                  value={accName}
+                  onChange={e => setAccName(e.target.value)}
+                  placeholder="mis. Air Valve Pipa Utama Jl. Sudirman KM 4"
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Diameter (mm)</label>
+                  <input
+                    type="number"
+                    value={accDiameter}
+                    onChange={e => setAccDiameter(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Tekanan (Bar)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={accPressure}
+                    onChange={e => setAccPressure(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Status Operasi</label>
+                  <select
+                    value={operatingStatus}
+                    onChange={e => setOperatingStatus(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-bold text-xs focus:outline-none focus:border-indigo-600"
+                  >
+                    <option value="Normal Open">Normal Open</option>
+                    <option value="Normal Closed">Normal Closed</option>
+                    <option value="Active">Active</option>
+                    <option value="Under Maintenance">Maintenance</option>
+                  </select>
                 </div>
               </div>
             </>

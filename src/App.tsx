@@ -23,7 +23,7 @@ import { ManholeScheduleModal } from './components/inspections/ManholeScheduleMo
 import { QrCodeModal } from './components/qr/QrCodeModal';
 import { QrScannerModal } from './components/qr/QrScannerModal';
 
-import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset } from './types/asset';
+import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset, WtpAsset, WaterAccessoryAsset } from './types/asset';
 import { InspectionRecord } from './types/inspection';
 import { UserProfile, UserRole, isTabAllowed } from './types/rbac';
 import { NetworkGraphEngine } from './services/graphEngine';
@@ -135,6 +135,28 @@ export const App: React.FC = () => {
     return [];
   });
 
+  const [wtps, setWtps] = useState<WtpAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_wtps');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load wtps', e); }
+    }
+    return [];
+  });
+
+  const [waterAccessories, setWaterAccessories] = useState<WaterAccessoryAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_water_accessories');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load waterAccessories', e); }
+    }
+    return [];
+  });
+
   const [inspections, setInspections] = useState<InspectionRecord[]>(() => {
     const saved = localStorage.getItem('sewerbita_inspections');
     if (saved) {
@@ -180,12 +202,16 @@ export const App: React.FC = () => {
       const m = assetData.manholes || [];
       const ps = assetData.pumpStations || [];
       const p = assetData.pipes || [];
+      const w = assetData.wtps || [];
+      const acc = assetData.waterAccessories || [];
       setManholes(m);
       setPumpStations(ps);
       setPipes(p);
+      setWtps(w);
+      setWaterAccessories(acc);
 
       // Dynamically derive unique areas present in database assets
-      const realDbAreas = Array.from(new Set([...m, ...ps, ...p].map((a: any) => a.area).filter(Boolean)));
+      const realDbAreas = Array.from(new Set([...m, ...ps, ...p, ...w, ...acc].map((a: any) => a.area).filter(Boolean)));
       setAreas(prev => Array.from(new Set([...prev, ...realDbAreas])));
     }
   }, []);
@@ -312,6 +338,26 @@ export const App: React.FC = () => {
     setIsAddAssetModalOpen(false);
   };
 
+  const handleAddWtp = async (newWtp: Omit<WtpAsset, 'id'>) => {
+    const createdWtp: WtpAsset = {
+      ...newWtp,
+      id: `wtp-${Date.now()}`
+    };
+    await apiClient.createAsset('wtp', createdWtp);
+    await reloadAssetsList();
+    setIsAddAssetModalOpen(false);
+  };
+
+  const handleAddWaterAccessory = async (newAcc: Omit<WaterAccessoryAsset, 'id'>) => {
+    const createdAcc: WaterAccessoryAsset = {
+      ...newAcc,
+      id: `acc-${Date.now()}`
+    };
+    await apiClient.createAsset('water_accessory', createdAcc);
+    await reloadAssetsList();
+    setIsAddAssetModalOpen(false);
+  };
+
   const handleEditManhole = async (updatedMh: ManholeAsset) => {
     await apiClient.updateAsset(updatedMh.id, 'manhole', updatedMh);
     await reloadAssetsList();
@@ -405,7 +451,7 @@ export const App: React.FC = () => {
     setAreas(prev => prev.filter(a => a !== areaToDelete));
   };
 
-  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes];
+  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes, ...wtps, ...waterAccessories];
   const qrTargetAsset = activeQrAssetId ? allAssets.find(a => a.id === activeQrAssetId) || null : null;
 
   // If in Landing Page mode, show landing page portal
@@ -505,6 +551,8 @@ export const App: React.FC = () => {
                         manholes={manholes}
                         pumpStations={pumpStations}
                         pipes={pipes}
+                        wtps={wtps}
+                        waterAccessories={waterAccessories}
                         inspections={inspections}
                         activeTraceResult={activeTraceResult}
                         onTraceDownstream={handleTraceDownstreamFromMap}
@@ -660,6 +708,8 @@ export const App: React.FC = () => {
         onAddManhole={handleAddManhole}
         onAddPipe={handleAddPipe}
         onAddPumpStation={handleAddPumpStation}
+        onAddWtp={handleAddWtp}
+        onAddWaterAccessory={handleAddWaterAccessory}
         existingManholes={manholes}
         existingPumpStations={pumpStations}
         areas={areas}

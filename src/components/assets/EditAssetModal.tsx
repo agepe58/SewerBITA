@@ -38,7 +38,7 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
   // Pipe states
   const [lengthMeters, setLengthMeters] = useState(asset.type === 'pipe' ? asset.lengthMeters : 100);
   const [pipeMaterial, setPipeMaterial] = useState(asset.type === 'pipe' ? asset.material : 'PVC');
-  const [pipeCategory, setPipeCategory] = useState<'gravity' | 'transmission'>(asset.type === 'pipe' ? asset.pipeCategory || 'gravity' : 'gravity');
+  const [pipeCategory, setPipeCategory] = useState<'gravity' | 'transmission' | 'clean_water_distribution'>(asset.type === 'pipe' ? asset.pipeCategory || 'gravity' : 'gravity');
   const [pressureBar, setPressureBar] = useState<number>(asset.type === 'pipe' ? asset.pressureBar || 6.0 : 6.0);
   const [destinationWwtpName, setDestinationWwtpName] = useState<string>(asset.type === 'pipe' ? asset.destinationWwtpName || 'WWTP Bukit Indah Central' : 'WWTP Bukit Indah Central');
 
