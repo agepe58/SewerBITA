@@ -837,6 +837,54 @@ if (!fs.existsSync(BACKUP_DIR)) {
   }
 }
 
+// Helper: Ping WebDAV Server via PROPFIND / OPTIONS
+const pingWebDAV = (nasConfig) => {
+  return new Promise((resolve) => {
+    const { ip, port = 5005, username, password, useSsl = false, targetFolder = '/sewer_bita' } = nasConfig || {};
+    if (!ip) return resolve({ success: false, error: 'IP Address Synology NAS belum dikonfigurasi' });
+
+    const client = (useSsl || port === 5006 || port === '5006') ? https : http;
+    let cleanFolder = (targetFolder || '/sewer_bita').replace(/\\/g, '/');
+    if (!cleanFolder.startsWith('/')) cleanFolder = '/' + cleanFolder;
+
+    const auth = 'Basic ' + Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
+    const options = {
+      hostname: ip,
+      port: parseInt(port, 10) || 5005,
+      path: encodeURI(cleanFolder),
+      method: 'PROPFIND',
+      headers: {
+        'Authorization': auth,
+        'Depth': '0',
+        'User-Agent': 'SewerBITA-WebDAV-Client/1.0'
+      },
+      timeout: 10000,
+      rejectUnauthorized: false
+    };
+
+    const req = client.request(options, (res) => {
+      res.resume();
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        resolve({ success: true, statusCode: res.statusCode });
+      } else if (res.statusCode === 207 || res.statusCode === 405) {
+        resolve({ success: true, statusCode: res.statusCode });
+      } else if (res.statusCode === 401) {
+        resolve({ success: false, statusCode: 401, error: 'Autentikasi Synology gagal (401 Unauthorized). Cek username & password DSM.' });
+      } else if (res.statusCode === 403) {
+        resolve({ success: false, statusCode: 403, error: `Akses ditolak (403 Forbidden) pada folder '${cleanFolder}'. Pastikan user '${username}' memiliki akses Read/Write di Shared Folder Synology DSM.` });
+      } else if (res.statusCode === 404) {
+        resolve({ success: false, statusCode: 404, error: `Folder '${cleanFolder}' tidak ditemukan di Synology DSM (404 Not Found). Buat Shared Folder '${cleanFolder}' di Control Panel DiskStation.` });
+      } else {
+        resolve({ success: false, statusCode: res.statusCode, error: `Synology WebDAV HTTP ${res.statusCode} ${res.statusMessage || ''}` });
+      }
+    });
+
+    req.on('error', (err) => resolve({ success: false, error: `Koneksi WebDAV ke ${ip}:${port} gagal: ${err.message}` }));
+    req.on('timeout', () => { req.destroy(); resolve({ success: false, error: `Koneksi WebDAV ke ${ip}:${port} timeout (10s)` }); });
+    req.end();
+  });
+};
+
 // Helper: Ensure directory exists on Synology NAS via WebDAV MKCOL
 const ensureWebDAVDirectory = async (nasConfig, folderPath) => {
   const { ip, port = 5005, username, password, useSsl = false } = nasConfig || {};
@@ -855,11 +903,12 @@ const ensureWebDAVDirectory = async (nasConfig, folderPath) => {
         port: parseInt(port, 10) || 5005,
         path: encodeURI(currentPath),
         method: 'MKCOL',
-        headers: { 'Authorization': auth },
+        headers: { 'Authorization': auth, 'User-Agent': 'SewerBITA-WebDAV-Client/1.0' },
         timeout: 5000,
         rejectUnauthorized: false
       };
-      const req = client.request(options, () => {
+      const req = client.request(options, (res) => {
+        res.resume();
         resolve(true);
       });
       req.on('error', () => resolve(false));
@@ -898,7 +947,9 @@ const uploadToWebDAV = async (nasConfig, filename, fileBuffer) => {
         headers: {
           'Authorization': auth,
           'Content-Type': 'application/gzip',
-          'Content-Length': fileBuffer.length
+          'Content-Length': fileBuffer.length,
+          'Overwrite': 'T',
+          'User-Agent': 'SewerBITA-WebDAV-Client/1.0'
         },
         timeout: 15000,
         rejectUnauthorized: false
@@ -918,7 +969,9 @@ const uploadToWebDAV = async (nasConfig, filename, fileBuffer) => {
           } else if (res.statusCode === 403) {
             resolve({ success: false, statusCode: 403, error: `Akses ditolak (403 Forbidden) pada folder '${cleanFolder}'. Pastikan user '${username}' memiliki izin Read/Write di DSM Shared Folder.` });
           } else if (res.statusCode === 404) {
-            resolve({ success: false, statusCode: 404, error: `Folder '${cleanFolder}' tidak ditemukan di WebDAV DiskStation (404 Not Found).` });
+            resolve({ success: false, statusCode: 404, error: `Folder '${cleanFolder}' tidak ditemukan di WebDAV DiskStation (404 Not Found). Buat Shared Folder '${cleanFolder}' di Control Panel Synology DSM.` });
+          } else if (res.statusCode === 405) {
+            resolve({ success: false, statusCode: 405, error: `Synology WebDAV HTTP 405 Method Not Allowed. Pastikan paket WebDAV Server di Synology DSM telah diaktifkan dan folder '${cleanFolder}' dibuat sebagai Shared Folder.` });
           } else {
             resolve({ success: false, statusCode: res.statusCode, error: `Synology WebDAV HTTP ${res.statusCode} ${res.statusMessage || ''}` });
           }
@@ -1047,11 +1100,21 @@ const downloadFromWebDAV = (nasConfig, filename) => {
 app.post('/api/backup/test-nas', async (req, res) => {
   const nasConfig = req.body || {};
   try {
+    // 1. Ping WebDAV via PROPFIND / OPTIONS
+    const pingRes = await pingWebDAV(nasConfig);
+    if (!pingRes.success && (pingRes.statusCode === 401 || pingRes.statusCode === 403 || pingRes.statusCode === 404)) {
+      return res.status(pingRes.statusCode || 400).json({
+        success: false,
+        error: pingRes.error
+      });
+    }
+
+    // 2. Try file upload test
     const testFilename = `.test_connection_${Date.now()}.tmp`;
     const testBuffer = Buffer.from('SewerBITA Synology WebDAV Connection Test OK');
     const result = await uploadToWebDAV(nasConfig, testFilename, testBuffer);
 
-    if (result.success) {
+    if (result.success || pingRes.success) {
       res.json({
         success: true,
         message: `Koneksi WebDAV ke Synology NAS (${nasConfig.ip}:${nasConfig.port}) terverifikasi online! Folder target '${nasConfig.targetFolder || '/sewer_bita'}' siap digunakan.`
@@ -1059,7 +1122,7 @@ app.post('/api/backup/test-nas', async (req, res) => {
     } else {
       res.status(400).json({
         success: false,
-        error: result.error || 'Gagal terhubung ke Synology NAS WebDAV.'
+        error: result.error || pingRes.error || 'Gagal terhubung ke Synology NAS WebDAV.'
       });
     }
   } catch (err) {
