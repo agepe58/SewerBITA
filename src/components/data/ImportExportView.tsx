@@ -92,9 +92,9 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto font-sans">
+    <div className="font-sans" style={{ padding: '16px 16px 32px 16px' }}>
       {/* Workspace Header Bar Card */}
-      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#111827] p-6 sm:p-7 rounded-xl border border-slate-300 dark:border-slate-700/90 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ marginBottom: '14px' }}>
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">

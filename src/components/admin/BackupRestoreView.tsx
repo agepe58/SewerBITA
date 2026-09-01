@@ -256,17 +256,20 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     }
   };
 
-  const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800/80' : 'bg-white border-slate-200';
+  const cardBg = isDarkMode ? 'bg-[#111827] border border-slate-700/90 shadow-md shadow-black/30' : 'bg-white border border-slate-300 shadow-sm';
   const inputBg = isDarkMode ? 'bg-[#0B0F17] border-slate-800 text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500';
 
   const lastFull = backupHistory.find(b => b.tipe === 'FULL')?.waktuExec || '28 Agu 2026, 23.08';
   const lastInc = backupHistory.find(b => b.tipe === 'INCREMENTAL')?.waktuExec || '30 Agu 2026, 23.09';
 
   return (
-    <div className={`p-6 space-y-6 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div
+      className={`font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}
+      style={{ padding: '16px 16px 32px 16px' }}
+    >
       
       {/* 1. TOP METRIC STAT CARDS (4 Cards matching Screenshot) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" style={{ marginBottom: '14px' }}>
         {/* Card 1: Full Backup Terakhir */}
         <div className={`p-5 rounded-2xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
           <div className="w-12 h-12 rounded-2xl bg-blue-950/60 border border-blue-500/30 flex items-center justify-center shrink-0">

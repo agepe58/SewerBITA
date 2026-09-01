@@ -19,7 +19,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [department, setDepartment] = useState(currentUser.department || '');
   const [isSaved, setIsSaved] = useState(false);
 
-  const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800' : 'bg-white border-slate-200';
+  const cardBg = isDarkMode ? 'bg-[#111827] border border-slate-700/90 shadow-md shadow-black/30' : 'bg-white border border-slate-300 shadow-sm';
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +41,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   };
 
   return (
-    <div className={`p-6 space-y-6 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div
+      className={`font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}
+      style={{ padding: '16px 16px 32px 16px' }}
+    >
       <div className={`p-8 rounded-2xl border max-w-xl mx-auto space-y-6 shadow-md ${cardBg}`}>
         <div className="flex items-center gap-4 border-b border-slate-800 pb-6">
           <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-400 font-black text-xl flex items-center justify-center shadow-md">

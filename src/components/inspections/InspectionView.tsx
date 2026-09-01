@@ -76,10 +76,13 @@ export const InspectionView: React.FC<InspectionViewProps> = ({
     document.body.removeChild(link);
   };
 
-  const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800/80' : 'bg-white border-slate-200';
+  const cardBg = isDarkMode ? 'bg-[#111827] border border-slate-700/90 shadow-md shadow-black/30' : 'bg-white border border-slate-300 shadow-sm';
 
   return (
-    <div className={`p-6 space-y-6 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div
+      className={`font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}
+      style={{ padding: '16px 16px 32px 16px' }}
+    >
       
       {/* 1. TOP ACTION BUTTONS */}
       <div className="flex flex-wrap items-center justify-end gap-3">

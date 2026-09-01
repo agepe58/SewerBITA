@@ -96,10 +96,13 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
   const selectedDeleteStat = areaToDelete ? areaStats.find(a => a.name === areaToDelete) : null;
 
   return (
-    <div className={`p-6 space-y-6 min-h-screen ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div
+      className={`min-h-screen ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}
+      style={{ padding: '16px 16px 32px 16px' }}
+    >
       
       {/* HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-5 rounded-2xl shadow-md" style={{ marginBottom: '14px' }}>
         <div className="flex items-center gap-3.5">
           <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl border border-blue-500/20">
             <Map className="w-6 h-6" />
