@@ -290,93 +290,12 @@ export const apiClient = {
   deleteUser: async (id: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
       if (!res.ok) return null;
       return await res.json();
     } catch {
-      return null;
-    }
-  },
-
-  // Work Orders (Maintenance Management)
-  getWorkOrders: async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/work-orders`);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.warn('Failed to fetch work orders from backend API:', e);
-      return null;
-    }
-  },
-
-  createWorkOrder: async (data: any) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/work-orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.warn('Failed to create work order:', e);
-      return null;
-    }
-  },
-
-  updateWorkOrder: async (id: string, data: any) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/work-orders/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.warn('Failed to update work order:', e);
-      return null;
-    }
-  },
-
-  deleteWorkOrder: async (id: string) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/work-orders/${id}`, {
-        method: 'DELETE'
-      });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.warn('Failed to delete work order:', e);
-      return null;
-    }
-  },
-
-  // Projects
-  getProjects: async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/projects`);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.warn('Failed to fetch projects from backend API:', e);
-      return null;
-    }
-  },
-
-  createProject: async (data: any) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.warn('Failed to create project:', e);
       return null;
     }
   },

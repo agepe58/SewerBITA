@@ -104,56 +104,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 7. Work Orders Table
-CREATE TABLE IF NOT EXISTS work_orders (
-    id VARCHAR(100) PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    category VARCHAR(100) NOT NULL DEFAULT 'Mekanik',
-    location VARCHAR(255) NOT NULL DEFAULT 'WWTP',
-    priority VARCHAR(50) NOT NULL DEFAULT 'Sedang',
-    status VARCHAR(50) NOT NULL DEFAULT 'Baru',
-    pic_user_id VARCHAR(100),
-    pic_name VARCHAR(255),
-    due_date TIMESTAMP WITH TIME ZONE,
-    description TEXT,
-    notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- 8. Maintenance Projects Table
-CREATE TABLE IF NOT EXISTS maintenance_projects (
-    id VARCHAR(100) PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'Direncanakan',
-    total_tasks INT NOT NULL DEFAULT 0,
-    completed_tasks INT NOT NULL DEFAULT 0,
-    target_date DATE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- 9. Daily Reports Table
-CREATE TABLE IF NOT EXISTS daily_reports (
-    id VARCHAR(100) PRIMARY KEY,
-    report_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    technician_name VARCHAR(255) NOT NULL,
-    work_summary TEXT NOT NULL,
-    work_order_id VARCHAR(100),
-    status VARCHAR(50) NOT NULL DEFAULT 'Submitted',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- 10. Activity Logs Table
-CREATE TABLE IF NOT EXISTS activity_logs (
-    id VARCHAR(100) PRIMARY KEY,
-    actor_name VARCHAR(255) NOT NULL,
-    action VARCHAR(100) NOT NULL,
-    entity VARCHAR(100) NOT NULL,
-    details TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- 11. Backup History Table
+-- 7. Backup History Table
 CREATE TABLE IF NOT EXISTS backup_history (
     id VARCHAR(100) PRIMARY KEY,
     execution_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

@@ -8,15 +8,6 @@ import { TopologyView } from './components/topology/TopologyView';
 import { AssetRegistry } from './components/assets/AssetRegistry';
 import { InspectionView } from './components/inspections/InspectionView';
 import { ImportExportView } from './components/data/ImportExportView';
-import { WorkOrderView } from './components/workorder/WorkOrderView';
-import { CreateWorkOrderModal } from './components/workorder/CreateWorkOrderModal';
-import { ProjectsView } from './components/common/ProjectsView';
-import { DailyReportsView } from './components/common/DailyReportsView';
-import { ActivityLogsView } from './components/common/ActivityLogsView';
-import { AppAndroidView } from './components/common/AppAndroidView';
-import { FlowchartView } from './components/common/FlowchartView';
-import { MasterDataView } from './components/common/MasterDataView';
-import { AiSettingsView } from './components/common/AiSettingsView';
 import { ProfileView } from './components/common/ProfileView';
 import { UserManagementView } from './components/rbac/UserManagementView';
 import { EditUserModal } from './components/rbac/EditUserModal';
@@ -34,7 +25,6 @@ import { QrScannerModal } from './components/qr/QrScannerModal';
 
 import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset } from './types/asset';
 import { InspectionRecord } from './types/inspection';
-import { WorkOrder, MaintenanceProject, DailyReport, ActivityLog } from './types/workOrder';
 import { UserProfile, UserRole, isTabAllowed } from './types/rbac';
 import { NetworkGraphEngine } from './services/graphEngine';
 import { NetworkTraceResult } from './types/topology';
@@ -167,40 +157,6 @@ export const App: React.FC = () => {
     return [];
   });
 
-  // Work Orders & Maintenance Projects State
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>(() => {
-    const saved = localStorage.getItem('sewerbita_work_orders');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load work orders', e); }
-    }
-    return [];
-  });
-
-  const [projects, setProjects] = useState<MaintenanceProject[]>(() => {
-    const saved = localStorage.getItem('sewerbita_projects');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load projects', e); }
-    }
-    return [
-      {
-        id: 'proj-01',
-        title: 'Pintu air Balance Tank',
-        status: 'Direncanakan',
-        totalTasks: 0,
-        completedTasks: 0
-      }
-    ];
-  });
-
-  const [dailyReports] = useState<DailyReport[]>([]);
-  const [activityLogs] = useState<ActivityLog[]>([]);
-
   // Areas state with LocalStorage persistence
   const [areas, setAreas] = useState<string[]>(() => {
     const saved = localStorage.getItem('sewerbita_areas');
@@ -242,22 +198,6 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Reload Work Orders from Backend API
-  const reloadWorkOrders = useCallback(async () => {
-    const serverWos = await apiClient.getWorkOrders();
-    if (serverWos && Array.isArray(serverWos)) {
-      setWorkOrders(serverWos);
-    }
-  }, []);
-
-  // Reload Projects from Backend API
-  const reloadProjects = useCallback(async () => {
-    const serverProjs = await apiClient.getProjects();
-    if (serverProjs && Array.isArray(serverProjs) && serverProjs.length > 0) {
-      setProjects(serverProjs);
-    }
-  }, []);
-
   // Dynamic User List Synchronization Function
   const reloadUsersList = useCallback(async () => {
     const serverUsers = await apiClient.getUsers();
@@ -274,45 +214,25 @@ export const App: React.FC = () => {
     await reloadUsersList();
   }, [reloadUsersList]);
 
-  // One-time Purge of Legacy Demo Cache
-  useEffect(() => {
-    const isPurged = localStorage.getItem('sewerbita_demo_purged_v5');
-    if (!isPurged) {
-      localStorage.removeItem('sewerbita_areas');
-      localStorage.removeItem('sewerbita_manholes');
-      localStorage.removeItem('sewerbita_pump_stations');
-      localStorage.removeItem('sewerbita_pipes');
-      localStorage.removeItem('sewerbita_inspections');
-      localStorage.removeItem('sewerbita_work_orders');
-      localStorage.removeItem('sewerbita_projects');
-      localStorage.removeItem('sewerbita_users');
-      localStorage.setItem('sewerbita_demo_purged_v5', 'true');
-    }
-  }, []);
-
   // Load Real Data from Backend PostgreSQL API on App Startup
   useEffect(() => {
     const loadRealDatabaseData = async () => {
       await reloadAssetsList();
       await reloadInspectionsList();
-      await reloadWorkOrders();
-      await reloadProjects();
       await reloadUsersList();
     };
     loadRealDatabaseData();
-  }, [reloadAssetsList, reloadInspectionsList, reloadWorkOrders, reloadProjects, reloadUsersList]);
+  }, [reloadAssetsList, reloadInspectionsList, reloadUsersList]);
 
   // Realtime Polling (Every 3 seconds Live Sync for ALL connected devices PC & Mobile)
   useEffect(() => {
     const interval = setInterval(() => {
       reloadAssetsList();
       reloadInspectionsList();
-      reloadWorkOrders();
-      reloadProjects();
       reloadUsersList();
     }, 3000);
     return () => clearInterval(interval);
-  }, [reloadAssetsList, reloadInspectionsList, reloadWorkOrders, reloadProjects, reloadUsersList]);
+  }, [reloadAssetsList, reloadInspectionsList, reloadUsersList]);
 
   // Active User & Role Session Initialization
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
@@ -332,9 +252,6 @@ export const App: React.FC = () => {
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
 
   // Modals state
-  const [isCreateWorkOrderModalOpen, setIsCreateWorkOrderModalOpen] = useState(false);
-  const [workOrderToEdit, setWorkOrderToEdit] = useState<WorkOrder | null>(null);
-
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
   const [isNewInspectionModalOpen, setIsNewInspectionModalOpen] = useState(false);
   const [isManholeScheduleModalOpen, setIsManholeScheduleModalOpen] = useState(false);
@@ -362,22 +279,6 @@ export const App: React.FC = () => {
   const handleTraceUpstreamFromMap = (assetId: string) => {
     const res = graphEngine.traceUpstream(assetId);
     setActiveTraceResult(res);
-  };
-
-  // Work Order Handlers
-  const handleSaveWorkOrder = async (wo: WorkOrder) => {
-    await apiClient.createWorkOrder(wo);
-    await reloadWorkOrders();
-  };
-
-  const handleDeleteWorkOrder = async (id: string) => {
-    await apiClient.deleteWorkOrder(id);
-    setWorkOrders(prev => prev.filter(w => w.id !== id));
-  };
-
-  const handleCreateProject = async (proj: MaintenanceProject) => {
-    await apiClient.createProject(proj);
-    await reloadProjects();
   };
 
   // Asset Handlers
@@ -561,8 +462,8 @@ export const App: React.FC = () => {
             currentUser={currentUser}
             onRoleChange={handleRoleChange}
             onRefresh={() => {
-              reloadWorkOrders();
-              reloadProjects();
+              reloadAssetsList();
+              reloadInspectionsList();
               reloadUsersList();
             }}
             onOpenDownloadApp={() => window.open('https://sewer.kbi.web.id/sewerbita-release.apk', '_blank')}
@@ -748,19 +649,6 @@ export const App: React.FC = () => {
           </main>
         </div>
       </div>
-
-      {/* Work Order Modal */}
-      <CreateWorkOrderModal
-        isOpen={isCreateWorkOrderModalOpen}
-        onClose={() => {
-          setIsCreateWorkOrderModalOpen(false);
-          setWorkOrderToEdit(null);
-        }}
-        onSave={handleSaveWorkOrder}
-        users={users}
-        initialData={workOrderToEdit}
-        isDarkMode={isDarkMode}
-      />
 
       {/* Asset & Inspection Modals */}
       <AddAssetModal
