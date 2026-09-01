@@ -81,10 +81,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   return (
-    <div className={`p-6 space-y-6 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`px-8 pt-8 pb-10 space-y-8 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       
       {/* 1. TOP METRIC STAT CARDS (4 Columns matching Screenshot layout) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         {/* Card 1: Total Aset Jaringan */}
         <div
           onClick={() => onNavigate('assets')}
@@ -143,7 +143,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 2. MIDDLE ROW: TREN 7 HARI & DISTRIBUSI KONDISI ASET */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Tren 7 Hari Terakhir (Curved Area Chart) */}
         <div className={`p-6 rounded-2xl border lg:col-span-2 shadow-sm ${cardBg}`}>
           <div className="text-sm font-extrabold tracking-tight mb-4">Tren Pemantauan & Inspeksi 7 Hari Terakhir</div>
