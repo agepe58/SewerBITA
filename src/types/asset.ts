@@ -1,4 +1,4 @@
-export type AssetType = 'manhole' | 'pipe' | 'pump_station' | 'valve' | 'wtp' | 'water_accessory';
+export type AssetType = 'manhole' | 'pipe' | 'pump_station' | 'valve' | 'wtp' | 'water_accessory' | 'grease_trap';
 
 export type SystemCategory = 'sewerage' | 'clean_water';
 
@@ -92,7 +92,17 @@ export interface WaterAccessoryAsset extends BaseAsset {
   operatingStatus: 'Normal Open' | 'Normal Closed' | 'Active' | 'Under Maintenance';
 }
 
-export type SewerAsset = ManholeAsset | PumpStationAsset | PipeAsset | WtpAsset | WaterAccessoryAsset;
+export interface GreaseTrapAsset extends BaseAsset {
+  type: 'grease_trap';
+  coordinates: LocationCoordinates;
+  capacityLiters: number; // e.g. 500 L, 1000 L, 2500 L
+  chamberCount: number; // e.g. 2 or 3 chambers
+  outletManholeId?: string; // Connected downstream manhole ID where treated wastewater flows into
+  cleaningFrequencyDays: number; // e.g. 30 days
+  greaseLevelPercent?: number; // Current grease accumulation level %
+}
+
+export type SewerAsset = ManholeAsset | PumpStationAsset | PipeAsset | WtpAsset | WaterAccessoryAsset | GreaseTrapAsset;
 
 export interface AssetSummaryStats {
   totalManholes: number;

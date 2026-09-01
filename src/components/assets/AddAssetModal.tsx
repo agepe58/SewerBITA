@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, MapPin, Boxes, GitBranch, Zap, Layers } from 'lucide-react';
-import { ManholeAsset, PipeAsset, PumpStationAsset, AssetType, SewerAsset, WtpAsset, WaterAccessoryAsset, WaterAccessoryType, SystemCategory } from '../../types/asset';
+import { ManholeAsset, PipeAsset, PumpStationAsset, AssetType, SewerAsset, WtpAsset, WaterAccessoryAsset, WaterAccessoryType, SystemCategory, GreaseTrapAsset } from '../../types/asset';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ interface AddAssetModalProps {
   onAddPumpStation: (pumpStation: Omit<PumpStationAsset, 'id'>) => void;
   onAddWtp?: (wtp: Omit<WtpAsset, 'id'>) => void;
   onAddWaterAccessory?: (accessory: Omit<WaterAccessoryAsset, 'id'>) => void;
+  onAddGreaseTrap?: (greaseTrap: Omit<GreaseTrapAsset, 'id'>) => void;
   existingManholes: ManholeAsset[];
   existingPumpStations?: PumpStationAsset[];
   areas: string[];
@@ -27,6 +28,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   onAddPumpStation,
   onAddWtp,
   onAddWaterAccessory,
+  onAddGreaseTrap,
   existingManholes,
   existingPumpStations = [],
   areas,
@@ -73,6 +75,15 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [accDiameter, setAccDiameter] = useState(150);
   const [accPressure, setAccPressure] = useState(6.0);
   const [operatingStatus, setOperatingStatus] = useState<'Normal Open' | 'Normal Closed' | 'Active' | 'Under Maintenance'>('Normal Open');
+
+  // Grease Trap States
+  const [gtCode, setGtCode] = useState('GT-' + Math.floor(100 + Math.random() * 900));
+  const [gtName, setGtName] = useState('');
+  const [capacityLiters, setCapacityLiters] = useState(500);
+  const [chamberCount, setChamberCount] = useState(3);
+  const [outletManholeId, setOutletManholeId] = useState(existingManholes[0]?.id || '');
+  const [cleaningFrequencyDays, setCleaningFrequencyDays] = useState(30);
+  const [greaseLevelPercent, setGreaseLevelPercent] = useState(15);
 
   // Intermediate Insertion State
   const [isIntermediate, setIsIntermediate] = useState(false);
@@ -286,6 +297,30 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
           photos: []
         });
       }
+    } else if (assetType === 'grease_trap') {
+      if (onAddGreaseTrap) {
+        onAddGreaseTrap({
+          assetCode: gtCode,
+          name: gtName || `Grease Trap ${gtCode}`,
+          type: 'grease_trap',
+          area,
+          systemCategory: 'sewerage',
+          status: 'Active',
+          condition: 'Good',
+          installationYear: 2026,
+          lastInspectedAt: today,
+          nextInspectionDue: nextDue,
+          latitude: Number(lat),
+          longitude: Number(lng),
+          coordinates: { lat: Number(lat), lng: Number(lng), elevation: 12 },
+          capacityLiters: Number(capacityLiters),
+          chamberCount: Number(chamberCount),
+          outletManholeId: outletManholeId || undefined,
+          cleaningFrequencyDays: Number(cleaningFrequencyDays),
+          greaseLevelPercent: Number(greaseLevelPercent),
+          photos: []
+        });
+      }
     } else {
       onAddPipe({
         assetCode: pipeCode,
@@ -394,6 +429,18 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
               }`}
             >
               <span>🚰 Valve & Aksesoris</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAssetType('grease_trap')}
+              className={`p-2.5 rounded-2xl border font-bold transition flex items-center justify-center gap-1 text-xs ${
+                assetType === 'grease_trap'
+                  ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <span>🍳 Grease Trap</span>
             </button>
           </div>
         </div>
@@ -1079,6 +1126,97 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                     <option value="Active">Active</option>
                     <option value="Under Maintenance">Maintenance</option>
                   </select>
+                </div>
+              </div>
+            </>
+          )}
+
+          {assetType === 'grease_trap' && (
+            <>
+              <div className="bg-amber-50/80 p-3 rounded-2xl border border-amber-200/80 space-y-1">
+                <div className="font-extrabold text-amber-800 text-xs">🍳 Perangkap Lemak & Minyak (Pre-Treatment Inlet Manhole)</div>
+                <div className="text-[11px] text-amber-700">Aset penangkap lemak dari limbah komersial/domestik sebelum dialirkan ke Manhole kolektor utama.</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Kode Aset (ID)</label>
+                  <input
+                    type="text"
+                    value={gtCode}
+                    onChange={e => setGtCode(e.target.value)}
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Outlet Manhole Tujuan (Inlet)</label>
+                  <select
+                    value={outletManholeId}
+                    onChange={e => setOutletManholeId(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-bold text-sm focus:outline-none focus:border-amber-600"
+                  >
+                    {existingManholes.map(m => (
+                      <option key={m.id} value={m.id}>{m.assetCode} - {m.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-600 font-bold">Nama Grease Trap / Titik Tangki</label>
+                <input
+                  type="text"
+                  value={gtName}
+                  onChange={e => setGtName(e.target.value)}
+                  placeholder="mis. Grease Trap Restoran Sederhana Kluster A"
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-amber-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Kapasitas Tank (Liter)</label>
+                  <input
+                    type="number"
+                    value={capacityLiters}
+                    onChange={e => setCapacityLiters(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Jumlah Sekat (Chamber)</label>
+                  <input
+                    type="number"
+                    value={chamberCount}
+                    onChange={e => setChamberCount(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Frekuensi Kuras (Hari)</label>
+                  <input
+                    type="number"
+                    value={cleaningFrequencyDays}
+                    onChange={e => setCleaningFrequencyDays(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Level Akumulasi Lemak (%)</label>
+                  <input
+                    type="number"
+                    value={greaseLevelPercent}
+                    onChange={e => setGreaseLevelPercent(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-amber-600"
+                  />
                 </div>
               </div>
             </>

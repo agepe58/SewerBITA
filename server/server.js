@@ -178,6 +178,28 @@ const initDb = async () => {
       ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS system_category VARCHAR(50) DEFAULT 'clean_water';
     `);
 
+    // 5.7 Grease Trap Pre-treatment Assets (Perangkap Lemak Inlet Manhole)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS grease_trap_assets (
+          id VARCHAR(100) PRIMARY KEY,
+          asset_code VARCHAR(50) UNIQUE NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          area VARCHAR(100) NOT NULL,
+          latitude DOUBLE PRECISION NOT NULL,
+          longitude DOUBLE PRECISION NOT NULL,
+          capacity_liters DOUBLE PRECISION NOT NULL DEFAULT 500.0,
+          chamber_count INT NOT NULL DEFAULT 3,
+          outlet_manhole_id VARCHAR(100),
+          cleaning_frequency_days INT NOT NULL DEFAULT 30,
+          grease_level_percent DOUBLE PRECISION DEFAULT 20.0,
+          status VARCHAR(50) NOT NULL DEFAULT 'Active',
+          condition VARCHAR(50) NOT NULL DEFAULT 'Good',
+          next_inspection_due DATE NOT NULL DEFAULT CURRENT_DATE + INTERVAL '90 days',
+          geom GEOMETRY(Point, 4326),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // 6. Inspection Records Table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS inspection_records (
@@ -293,12 +315,13 @@ app.get('/api/health', async (req, res) => {
 // --------------------------------------------------------------------
 app.get('/api/assets', async (req, res) => {
   try {
-    const [manholesRes, pumpStationsRes, pipesRes, wtpsRes, accessoriesRes] = await Promise.all([
+    const [manholesRes, pumpStationsRes, pipesRes, wtpsRes, accessoriesRes, greaseTrapsRes] = await Promise.all([
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue" FROM manhole_assets ORDER BY created_at DESC;'),
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue" FROM pump_station_assets ORDER BY created_at DESC;'),
       pool.query('SELECT id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue" FROM pipe_assets ORDER BY created_at DESC;'),
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue" FROM wtp_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue" FROM water_accessory_assets ORDER BY created_at DESC;')
+      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue" FROM water_accessory_assets ORDER BY created_at DESC;'),
+      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue" FROM grease_trap_assets ORDER BY created_at DESC;')
     ]);
 
     res.json({
@@ -306,7 +329,8 @@ app.get('/api/assets', async (req, res) => {
       pumpStations: pumpStationsRes.rows,
       pipes: pipesRes.rows,
       wtps: wtpsRes.rows,
-      waterAccessories: accessoriesRes.rows
+      waterAccessories: accessoriesRes.rows,
+      greaseTraps: greaseTrapsRes.rows
     });
   } catch (err) {
     console.error('Error fetching assets:', err);
@@ -535,6 +559,47 @@ app.post('/api/assets', async (req, res) => {
         Number(data.pressureBar) || 6.0,
         Number(data.elevationMeters) || 15.0,
         data.operatingStatus || 'Normal Open',
+        data.status || 'Active',
+        data.condition || 'Good',
+        data.nextInspectionDue || new Date().toISOString().split('T')[0]
+      ];
+      const result = await pool.query(q, values);
+      return res.status(201).json(result.rows[0]);
+    }
+
+    if (type === 'grease_trap') {
+      const q = `
+        INSERT INTO grease_trap_assets 
+        (id, asset_code, name, area, latitude, longitude, capacity_liters, chamber_count, outlet_manhole_id, cleaning_frequency_days, grease_level_percent, status, condition, next_inspection_due)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        ON CONFLICT (id) DO UPDATE SET
+          asset_code = EXCLUDED.asset_code,
+          name = EXCLUDED.name,
+          area = EXCLUDED.area,
+          latitude = EXCLUDED.latitude,
+          longitude = EXCLUDED.longitude,
+          capacity_liters = EXCLUDED.capacity_liters,
+          chamber_count = EXCLUDED.chamber_count,
+          outlet_manhole_id = EXCLUDED.outlet_manhole_id,
+          cleaning_frequency_days = EXCLUDED.cleaning_frequency_days,
+          grease_level_percent = EXCLUDED.grease_level_percent,
+          status = EXCLUDED.status,
+          condition = EXCLUDED.condition,
+          next_inspection_due = EXCLUDED.next_inspection_due
+        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue";
+      `;
+      const values = [
+        data.id || `gt-${Date.now()}`,
+        data.assetCode,
+        data.name,
+        data.area,
+        Number(data.latitude ?? data.coordinates?.lat) || -6.444,
+        Number(data.longitude ?? data.coordinates?.lng) || 107.452,
+        Number(data.capacityLiters) || 500.0,
+        Number(data.chamberCount) || 3,
+        data.outletManholeId || '',
+        Number(data.cleaningFrequencyDays) || 30,
+        Number(data.greaseLevelPercent) || 20.0,
         data.status || 'Active',
         data.condition || 'Good',
         data.nextInspectionDue || new Date().toISOString().split('T')[0]

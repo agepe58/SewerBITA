@@ -255,6 +255,32 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
                   </div>
                 </div>
               )}
+              {asset.type === 'grease_trap' && (
+                <div className="space-y-2.5 bg-amber-50/70 p-4 rounded-2xl border border-amber-200">
+                  <div className="font-extrabold text-amber-800 text-xs flex items-center justify-between">
+                    <span>🍳 Grease Trap (Pre-Treatment Inlet)</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-800 font-extrabold uppercase border border-amber-300">
+                      {asset.chamberCount || 3} Sekat / Chambers
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs font-medium">
+                    <div>Kapasitas Tangki: <span className="font-extrabold text-slate-900">{asset.capacityLiters} Liter</span></div>
+                    <div>Jadwal Kuras: <span className="font-extrabold text-slate-900">Setiap {asset.cleaningFrequencyDays} Hari</span></div>
+                    <div className="col-span-2 text-amber-800 font-bold flex items-center justify-between">
+                      <span>Akumulasi Lemak:</span>
+                      <span className={`px-2 py-0.5 rounded-md font-extrabold ${
+                        (asset.greaseLevelPercent || 0) > 70
+                          ? 'bg-red-500/20 text-red-700 border border-red-300'
+                          : (asset.greaseLevelPercent || 0) > 40
+                          ? 'bg-amber-500/20 text-amber-700 border border-amber-300'
+                          : 'bg-emerald-500/20 text-emerald-700'
+                      }`}>
+                        {asset.greaseLevelPercent || 15}% {(asset.greaseLevelPercent || 0) > 70 ? '🚨 Perlu Dikuras' : ''}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Coordinates */}
               {'coordinates' in asset && asset.coordinates && (

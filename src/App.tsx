@@ -23,7 +23,7 @@ import { ManholeScheduleModal } from './components/inspections/ManholeScheduleMo
 import { QrCodeModal } from './components/qr/QrCodeModal';
 import { QrScannerModal } from './components/qr/QrScannerModal';
 
-import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset, WtpAsset, WaterAccessoryAsset } from './types/asset';
+import { ManholeAsset, PumpStationAsset, PipeAsset, SewerAsset, WtpAsset, WaterAccessoryAsset, GreaseTrapAsset } from './types/asset';
 import { InspectionRecord } from './types/inspection';
 import { UserProfile, UserRole, isTabAllowed } from './types/rbac';
 import { NetworkGraphEngine } from './services/graphEngine';
@@ -157,6 +157,17 @@ export const App: React.FC = () => {
     return [];
   });
 
+  const [greaseTraps, setGreaseTraps] = useState<GreaseTrapAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_grease_traps');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load greaseTraps', e); }
+    }
+    return [];
+  });
+
   const [inspections, setInspections] = useState<InspectionRecord[]>(() => {
     const saved = localStorage.getItem('sewerbita_inspections');
     if (saved) {
@@ -204,14 +215,16 @@ export const App: React.FC = () => {
       const p = assetData.pipes || [];
       const w = assetData.wtps || [];
       const acc = assetData.waterAccessories || [];
+      const gt = assetData.greaseTraps || [];
       setManholes(m);
       setPumpStations(ps);
       setPipes(p);
       setWtps(w);
       setWaterAccessories(acc);
+      setGreaseTraps(gt);
 
       // Dynamically derive unique areas present in database assets
-      const realDbAreas = Array.from(new Set([...m, ...ps, ...p, ...w, ...acc].map((a: any) => a.area).filter(Boolean)));
+      const realDbAreas = Array.from(new Set([...m, ...ps, ...p, ...w, ...acc, ...gt].map((a: any) => a.area).filter(Boolean)));
       setAreas(prev => Array.from(new Set([...prev, ...realDbAreas])));
     }
   }, []);
@@ -354,6 +367,16 @@ export const App: React.FC = () => {
       id: `acc-${Date.now()}`
     };
     await apiClient.createAsset('water_accessory', createdAcc);
+    await reloadAssetsList();
+    setIsAddAssetModalOpen(false);
+  };
+
+  const handleAddGreaseTrap = async (newGt: Omit<GreaseTrapAsset, 'id'>) => {
+    const createdGt: GreaseTrapAsset = {
+      ...newGt,
+      id: `gt-${Date.now()}`
+    };
+    await apiClient.createAsset('grease_trap', createdGt);
     await reloadAssetsList();
     setIsAddAssetModalOpen(false);
   };
@@ -553,6 +576,7 @@ export const App: React.FC = () => {
                         pipes={pipes}
                         wtps={wtps}
                         waterAccessories={waterAccessories}
+                        greaseTraps={greaseTraps}
                         inspections={inspections}
                         activeTraceResult={activeTraceResult}
                         onTraceDownstream={handleTraceDownstreamFromMap}
@@ -710,6 +734,7 @@ export const App: React.FC = () => {
         onAddPumpStation={handleAddPumpStation}
         onAddWtp={handleAddWtp}
         onAddWaterAccessory={handleAddWaterAccessory}
+        onAddGreaseTrap={handleAddGreaseTrap}
         existingManholes={manholes}
         existingPumpStations={pumpStations}
         areas={areas}

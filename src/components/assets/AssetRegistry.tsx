@@ -342,6 +342,8 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
                           <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-400 font-extrabold border border-cyan-500/30">🏭 WTP Air Bersih</span>
                         ) : asset.type === 'water_accessory' ? (
                           <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-400 font-extrabold uppercase border border-indigo-500/30">🚰 {((asset as any).accessoryType || 'Accessory').replace('_', ' ')}</span>
+                        ) : asset.type === 'grease_trap' ? (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30">🍳 Grease Trap</span>
                         ) : asset.type === 'pipe' ? (
                           (asset as any).pipeCategory === 'transmission' ? (
                             <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30">⚡ Transmisi (Force Main)</span>

@@ -1,4 +1,4 @@
-import { ManholeAsset, PumpStationAsset, PipeAsset, WtpAsset, WaterAccessoryAsset } from '../types/asset';
+import { ManholeAsset, PumpStationAsset, PipeAsset, WtpAsset, WaterAccessoryAsset, GreaseTrapAsset } from '../types/asset';
 import { InspectionRecord } from '../types/inspection';
 import { UserProfile } from '../types/rbac';
 import { authService } from './authService';
@@ -35,7 +35,7 @@ export const apiClient = {
   },
 
   // Fetch All Assets
-  getAssets: async (): Promise<{ manholes: ManholeAsset[]; pumpStations: PumpStationAsset[]; pipes: PipeAsset[]; wtps: WtpAsset[]; waterAccessories: WaterAccessoryAsset[] } | null> => {
+  getAssets: async (): Promise<{ manholes: ManholeAsset[]; pumpStations: PumpStationAsset[]; pipes: PipeAsset[]; wtps: WtpAsset[]; waterAccessories: WaterAccessoryAsset[]; greaseTraps: GreaseTrapAsset[] } | null> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets`);
       if (!res.ok) return null;
@@ -96,10 +96,14 @@ export const apiClient = {
       });
 
       const wtps: WtpAsset[] = (raw.wtps || []).map((w: any) => {
+        const lat = Number(w.coordinates?.lat ?? w.latitude ?? -6.444);
+        const lng = Number(w.coordinates?.lng ?? w.longitude ?? 107.452);
         return {
           ...w,
           type: 'wtp' as const,
-          coordinates: { lat: Number(w.latitude ?? -6.444), lng: Number(w.longitude ?? 107.452) },
+          coordinates: { lat, lng },
+          latitude: lat,
+          longitude: lng,
           productionCapacityLps: Number(w.productionCapacityLps ?? 500),
           rawWaterSource: w.rawWaterSource || 'Sungai Citarum',
           waterQualityStatus: w.waterQualityStatus || 'Safe - Permenkes 2023',
@@ -124,7 +128,26 @@ export const apiClient = {
         };
       });
 
-      return { manholes, pumpStations, pipes, wtps, waterAccessories };
+      const greaseTraps: GreaseTrapAsset[] = (raw.greaseTraps || []).map((gt: any) => {
+        const lat = Number(gt.coordinates?.lat ?? gt.latitude ?? -6.444);
+        const lng = Number(gt.coordinates?.lng ?? gt.longitude ?? 107.452);
+        return {
+          ...gt,
+          type: 'grease_trap' as const,
+          coordinates: { lat, lng },
+          latitude: lat,
+          longitude: lng,
+          capacityLiters: Number(gt.capacityLiters ?? 500),
+          chamberCount: Number(gt.chamberCount ?? 3),
+          cleaningFrequencyDays: Number(gt.cleaningFrequencyDays ?? 30),
+          greaseLevelPercent: Number(gt.greaseLevelPercent ?? 20),
+          status: gt.status || 'Active',
+          condition: gt.condition || 'Good',
+          photos: Array.isArray(gt.photos) ? gt.photos : []
+        };
+      });
+
+      return { manholes, pumpStations, pipes, wtps, waterAccessories, greaseTraps };
     } catch (e) {
       console.warn('Backend API unavailable, using fallback storage:', e);
       return null;
@@ -132,7 +155,7 @@ export const apiClient = {
   },
 
   // Create Asset
-  createAsset: async (type: 'manhole' | 'pumpStation' | 'pipe' | 'wtp' | 'water_accessory', data: any) => {
+  createAsset: async (type: 'manhole' | 'pumpStation' | 'pipe' | 'wtp' | 'water_accessory' | 'grease_trap', data: any) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets`, {
         method: 'POST',

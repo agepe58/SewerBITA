@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset, WtpAsset, WaterAccessoryAsset } from '../../types/asset';
+import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset, WtpAsset, WaterAccessoryAsset, GreaseTrapAsset } from '../../types/asset';
 import { NetworkTraceResult } from '../../types/topology';
 import { MapFilters } from './MapFilters';
 import { AssetDrawer } from './AssetDrawer';
@@ -13,6 +13,7 @@ interface NetworkMapProps {
   pipes: PipeAsset[];
   wtps?: WtpAsset[];
   waterAccessories?: WaterAccessoryAsset[];
+  greaseTraps?: GreaseTrapAsset[];
   inspections: InspectionRecord[];
   activeTraceResult: NetworkTraceResult | null;
   onTraceDownstream: (assetId: string) => void;
@@ -103,6 +104,19 @@ const createWaterAccessoryIcon = (accessoryType: string, isHighlighted: boolean)
   });
 };
 
+const createGreaseTrapIcon = (isHighlighted: boolean) => {
+  return L.divIcon({
+    className: 'custom-grease-trap-icon',
+    html: `
+      <div class="relative flex items-center justify-center w-7 h-7 bg-amber-600 text-white rounded-lg border-2 border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-amber-400' : ''}">
+        <span class="text-xs font-bold">🍳</span>
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  });
+};
+
 // Component to handle pan to selected asset
 const MapController: React.FC<{ centerCoords: [number, number] | null }> = ({ centerCoords }) => {
   const map = useMap();
@@ -144,6 +158,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   pipes,
   wtps = [],
   waterAccessories = [],
+  greaseTraps = [],
   inspections,
   activeTraceResult,
   onTraceDownstream,
@@ -160,6 +175,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   const [showPumpStations, setShowPumpStations] = useState(true);
   const [showWtps, setShowWtps] = useState(true);
   const [showWaterAccessories, setShowWaterAccessories] = useState(true);
+  const [showGreaseTraps, setShowGreaseTraps] = useState(true);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   // Basemap Switcher State (Default: Esri Satellite / CARTO Voyager)
@@ -295,7 +311,13 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
     return areaMatch && condMatch;
   });
 
-  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes, ...wtps, ...waterAccessories];
+  const filteredGreaseTraps = greaseTraps.filter(gt => {
+    const areaMatch = selectedArea === 'All Areas' || gt.area === selectedArea;
+    const condMatch = selectedCondition === 'All Conditions' || gt.condition === selectedCondition;
+    return areaMatch && condMatch;
+  });
+
+  const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes, ...wtps, ...waterAccessories, ...greaseTraps];
   const selectedAsset = allAssets.find(a => a.id === selectedAssetId) || null;
 
   // Active Topology Trace Path Check
@@ -606,6 +628,45 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
                     className="mt-2 text-[10px] bg-cyan-600 text-white font-bold px-2.5 py-1 rounded-full w-full hover:bg-cyan-700 transition"
                   >
                     Buka Detail Aksesoris
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {/* Render Grease Trap Markers */}
+        {showGreaseTraps && filteredGreaseTraps.map((gt, idx) => {
+          const coords = getDisambiguatedCoords(gt, idx);
+          if (!coords) return null;
+          const inTrace = isAssetInTrace(gt.id);
+          const icon = createGreaseTrapIcon(inTrace);
+
+          return (
+            <Marker
+              key={gt.id}
+              position={coords}
+              icon={icon}
+              eventHandlers={{
+                click: () => handleSelectAsset(gt)
+              }}
+            >
+              <Popup>
+                <div className="text-xs space-y-1">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className="font-bold text-amber-700 font-mono">{gt.assetCode}</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-800 border border-amber-300 uppercase">
+                      🍳 Grease Trap
+                    </span>
+                  </div>
+                  <div className="font-extrabold text-slate-900">{gt.name}</div>
+                  <div className="text-slate-600">Kapasitas: <span className="font-bold text-slate-900">{gt.capacityLiters} Liter</span> | Sekat: <span className="font-bold text-slate-900">{gt.chamberCount} Chambers</span></div>
+                  <div className="text-amber-800 font-bold">Akumulasi Lemak: {gt.greaseLevelPercent || 15}%</div>
+                  <button
+                    onClick={() => handleSelectAsset(gt)}
+                    className="mt-2 text-[10px] bg-amber-600 text-white font-bold px-2.5 py-1 rounded-full w-full hover:bg-amber-700 transition"
+                  >
+                    Buka Detail Grease Trap
                   </button>
                 </div>
               </Popup>
