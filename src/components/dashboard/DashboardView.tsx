@@ -66,7 +66,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Recent assets/inspections
   const recentInspections = [...inspections].slice(0, 6);
 
-  const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800/90' : 'bg-white border-slate-200';
+  const cardBg = isDarkMode 
+    ? 'bg-[#111827] border-slate-800/90 shadow-md shadow-black/30 hover:border-slate-700/80 transition-all duration-200' 
+    : 'bg-white border-slate-200/90 shadow-sm hover:border-slate-300 transition-all duration-200';
 
   const formatDate = (dateStr: string) => {
     try {
@@ -81,14 +83,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   return (
-    <div className={`px-8 pt-8 pb-10 space-y-8 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`px-8 pt-8 pb-12 space-y-8 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       
-      {/* 1. TOP METRIC STAT CARDS (4 Columns matching Screenshot layout) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      {/* 1. TOP METRIC STAT CARDS (4 Columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Card 1: Total Aset Jaringan */}
         <div
           onClick={() => onNavigate('assets')}
-          className={`p-5 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
+          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
         >
           <div className="w-12 h-12 rounded-2xl bg-blue-950/60 border border-blue-500/30 flex items-center justify-center shrink-0">
             <Boxes className="w-5 h-5 text-blue-400" />
@@ -102,7 +104,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 2: Aset Aktif / Normal */}
         <div
           onClick={() => onNavigate('assets')}
-          className={`p-5 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
+          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
         >
           <div className="w-12 h-12 rounded-2xl bg-sky-950/60 border border-sky-500/30 flex items-center justify-center shrink-0">
             <CheckCircle className="w-5 h-5 text-sky-400" />
@@ -116,7 +118,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 3: Kondisi Kritis / Anomali */}
         <div
           onClick={() => onNavigate('assets')}
-          className={`p-5 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
+          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
         >
           <div className="w-12 h-12 rounded-2xl bg-rose-950/60 border border-rose-500/30 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5 text-rose-400" />
@@ -130,7 +132,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 4: Inspeksi Terselesaikan */}
         <div
           onClick={() => onNavigate('inspections')}
-          className={`p-5 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
+          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
         >
           <div className="w-12 h-12 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center shrink-0">
             <ClipboardCheck className="w-5 h-5 text-cyan-400" />
@@ -143,7 +145,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 2. MIDDLE ROW: TREN 7 HARI & DISTRIBUSI KONDISI ASET */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Left: Tren 7 Hari Terakhir (Curved Area Chart) */}
         <div className={`p-6 rounded-2xl border lg:col-span-2 shadow-sm ${cardBg}`}>
           <div className="text-sm font-extrabold tracking-tight mb-4">Tren Pemantauan & Inspeksi 7 Hari Terakhir</div>
@@ -254,7 +256,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 3. LOWER ROW: DISTRIBUSI TIPE ASET & PENGINGAT JATUH TEMPO (3 Columns) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
         
         {/* Col 1: Distribusi Tipe Aset (Bar Chart) */}
         <div className={`p-6 rounded-2xl border shadow-sm ${cardBg}`}>
@@ -311,7 +313,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             ) : (
               overdueAssets.slice(0, 3).map(a => (
-                <div key={a.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3">
+                <div key={a.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3 mb-2.5">
                   <div className="min-w-0">
                     <div className="text-xs font-extrabold truncate text-white">{a.name}</div>
                     <div className="text-[10px] text-slate-400 mt-0.5 truncate">
@@ -338,7 +340,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             ) : (
               upcomingDueAssets.slice(0, 3).map(a => (
-                <div key={a.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3">
+                <div key={a.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3 mb-2.5">
                   <div className="min-w-0">
                     <div className="text-xs font-extrabold truncate text-white">{a.name}</div>
                     <div className="text-[10px] text-slate-400 mt-0.5 truncate">
@@ -356,7 +358,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 4. BOTTOM ROW: RIWAYAT INSPEKSI TERBARU & STATUS STASIUN POMPA (3 Columns) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
         {/* Col 1: Riwayat Inspeksi Terbaru */}
         <div className={`p-6 rounded-2xl border shadow-sm ${cardBg}`}>
@@ -371,14 +373,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {recentInspections.length === 0 ? (
               <div className="text-xs text-slate-500 py-6 text-center font-medium">
                 Belum ada catatan inspeksi.
               </div>
             ) : (
               recentInspections.slice(0, 5).map(insp => (
-                <div key={insp.id} className="p-2.5 rounded-xl bg-slate-900/40 border border-slate-800/80 flex items-center justify-between gap-3">
+                <div key={insp.id} className="p-2.5 rounded-xl bg-slate-900/40 border border-slate-800/80 flex items-center justify-between gap-3 mb-2">
                   <div className="min-w-0">
                     <div className="text-xs font-extrabold truncate text-white">{insp.assetCode} - {insp.inspectorName}</div>
                     <div className="text-[10px] text-slate-400 truncate mt-0.5">
@@ -409,7 +411,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 const active = ps.activePumps || 0;
                 const percent = Math.round((active / Math.max(1, total)) * 100);
                 return (
-                  <div key={ps.id} className="space-y-1.5">
+                  <div key={ps.id} className="space-y-1.5 pb-2 border-b border-slate-800/60 last:border-0">
                     <div className="flex items-center justify-between text-xs font-bold">
                       <span className="text-white truncate">{ps.name}</span>
                       <span className="text-sky-400 text-[11px] shrink-0">{active}/{total} Pompa Aktif</span>
