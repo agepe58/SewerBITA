@@ -268,6 +268,32 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       style={{ padding: '16px 16px 32px 16px' }}
     >
       
+      {/* Workspace Header Bar Card */}
+      <div className="bg-white dark:bg-[#111827] p-6 sm:p-7 rounded-xl border border-slate-300 dark:border-slate-700/90 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ marginBottom: '14px' }}>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#2563EB]">
+              <Database className="w-5 h-5" />
+            </div>
+            <span>Backup & Pemulihan Sistem</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold mt-1">
+            Manajemen arsip database PostgreSQL, sinkronisasi Synology WebDAV/NAS, serta disaster recovery.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleExecuteBackup('FULL')}
+            disabled={isBackupRunning}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold transition shadow-lg shadow-blue-600/30 cursor-pointer disabled:opacity-50"
+          >
+            <Play className="w-3.5 h-3.5 fill-white" />
+            <span>Full Backup Now</span>
+          </button>
+        </div>
+      </div>
+
       {/* 1. TOP METRIC STAT CARDS (4 Cards matching Screenshot) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" style={{ marginBottom: '14px' }}>
         {/* Card 1: Full Backup Terakhir */}
@@ -316,7 +342,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       </div>
 
       {/* 2. MANUAL BACKUP EXECUTION BAR (matching Screenshot) */}
-      <div className={`p-5 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${cardBg}`}>
+      <div className={`p-5 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${cardBg}`} style={{ marginBottom: '14px' }}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
             <Zap className="w-5 h-5 text-blue-400" />
@@ -356,7 +382,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
             : backupExecutionAlert.type === 'warning'
             ? 'bg-amber-950/40 border-amber-500/40 text-amber-300'
             : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
-        }`}>
+        }`} style={{ marginBottom: '14px' }}>
           <div className="flex items-center gap-2.5">
             {backupExecutionAlert.type === 'success' ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -375,7 +401,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       )}
 
       {/* 3. SUB-NAVIGATION TABS */}
-      <div className={`p-1.5 rounded-2xl border flex items-center gap-2 max-w-2xl shadow-xs ${cardBg}`}>
+      <div className={`p-1.5 rounded-2xl border flex items-center gap-2 max-w-2xl shadow-xs ${cardBg}`} style={{ marginBottom: '14px' }}>
         <button
           onClick={() => setActiveSubTab('synology')}
           className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
