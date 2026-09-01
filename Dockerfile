@@ -18,9 +18,10 @@ RUN npm run build
 FROM node:20-alpine AS production-stage
 WORKDIR /app
 
-# Copy server package descriptors and install clean dependencies
+# Copy package descriptors and install production dependencies
+COPY package.json package-lock.json ./
 COPY server/package.json ./server/package.json
-RUN npm install --prefix server --omit=dev
+RUN npm ci --omit=dev || npm install --omit=dev
 
 # Copy built frontend assets to /app/dist
 COPY --from=build-stage /app/dist /app/dist
@@ -35,7 +36,7 @@ ENV PORT=3000
 # Expose ports for Coolify / Traefik Reverse Proxy
 EXPOSE 3000 80 3005
 
-# Healthcheck targeting /health and /api/health
+# Healthcheck targeting /health
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
 
