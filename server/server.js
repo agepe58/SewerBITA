@@ -163,6 +163,7 @@ const initDb = async () => {
           latitude DOUBLE PRECISION NOT NULL,
           longitude DOUBLE PRECISION NOT NULL,
           accessory_type VARCHAR(50) NOT NULL DEFAULT 'air_valve',
+          system_category VARCHAR(50) DEFAULT 'clean_water',
           pipe_id VARCHAR(100),
           diameter_mm INT NOT NULL DEFAULT 150,
           pressure_bar DOUBLE PRECISION DEFAULT 6.0,
@@ -174,6 +175,7 @@ const initDb = async () => {
           geom GEOMETRY(Point, 4326),
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS system_category VARCHAR(50) DEFAULT 'clean_water';
     `);
 
     // 6. Inspection Records Table
@@ -296,7 +298,7 @@ app.get('/api/assets', async (req, res) => {
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue" FROM pump_station_assets ORDER BY created_at DESC;'),
       pool.query('SELECT id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue" FROM pipe_assets ORDER BY created_at DESC;'),
       pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue" FROM wtp_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue" FROM water_accessory_assets ORDER BY created_at DESC;')
+      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue" FROM water_accessory_assets ORDER BY created_at DESC;')
     ]);
 
     res.json({
@@ -499,8 +501,8 @@ app.post('/api/assets', async (req, res) => {
     if (type === 'water_accessory') {
       const q = `
         INSERT INTO water_accessory_assets 
-        (id, asset_code, name, area, latitude, longitude, accessory_type, pipe_id, diameter_mm, pressure_bar, elevation_meters, operating_status, status, condition, next_inspection_due)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        (id, asset_code, name, area, latitude, longitude, accessory_type, system_category, pipe_id, diameter_mm, pressure_bar, elevation_meters, operating_status, status, condition, next_inspection_due)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         ON CONFLICT (id) DO UPDATE SET
           asset_code = EXCLUDED.asset_code,
           name = EXCLUDED.name,
@@ -508,6 +510,7 @@ app.post('/api/assets', async (req, res) => {
           latitude = EXCLUDED.latitude,
           longitude = EXCLUDED.longitude,
           accessory_type = EXCLUDED.accessory_type,
+          system_category = EXCLUDED.system_category,
           pipe_id = EXCLUDED.pipe_id,
           diameter_mm = EXCLUDED.diameter_mm,
           pressure_bar = EXCLUDED.pressure_bar,
@@ -516,7 +519,7 @@ app.post('/api/assets', async (req, res) => {
           status = EXCLUDED.status,
           condition = EXCLUDED.condition,
           next_inspection_due = EXCLUDED.next_inspection_due
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue";
+        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
       const values = [
         data.id || `acc-${Date.now()}`,
@@ -526,6 +529,7 @@ app.post('/api/assets', async (req, res) => {
         Number(data.latitude ?? data.coordinates?.lat) || -6.444,
         Number(data.longitude ?? data.coordinates?.lng) || 107.452,
         data.accessoryType || 'air_valve',
+        data.systemCategory || 'clean_water',
         data.pipeId || '',
         Number(data.diameterMm) || 150,
         Number(data.pressureBar) || 6.0,

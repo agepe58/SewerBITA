@@ -232,10 +232,21 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
               {asset.type === 'water_accessory' && (
                 <div className="space-y-2.5 bg-indigo-50/60 p-4 rounded-2xl border border-indigo-200">
                   <div className="font-extrabold text-indigo-700 text-xs flex items-center justify-between">
-                    <span>Aksesoris & Valve Pipa Air Bersih</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-indigo-500/20 text-indigo-700 font-extrabold uppercase border border-indigo-300">
-                      {asset.accessoryType.replace('_', ' ')}
-                    </span>
+                    <span>Aksesoris & Valve Jaringan Pipa</span>
+                    <div className="flex items-center gap-1">
+                      {asset.systemCategory === 'sewerage' ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-700 font-extrabold border border-amber-300">
+                          ⚡ Transmisi Air Limbah
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-700 font-extrabold border border-cyan-300">
+                          🚰 Air Bersih (PAM)
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-indigo-500/20 text-indigo-700 font-extrabold uppercase border border-indigo-300">
+                        {asset.accessoryType.replace('_', ' ')}
+                      </span>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs font-medium">
                     <div>Diameter Aksesoris: <span className="font-extrabold text-slate-900">{asset.diameterMm} mm</span></div>

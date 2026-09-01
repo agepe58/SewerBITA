@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, MapPin, Boxes, GitBranch, Zap, Layers } from 'lucide-react';
-import { ManholeAsset, PipeAsset, PumpStationAsset, AssetType, SewerAsset, WtpAsset, WaterAccessoryAsset, WaterAccessoryType } from '../../types/asset';
+import { ManholeAsset, PipeAsset, PumpStationAsset, AssetType, SewerAsset, WtpAsset, WaterAccessoryAsset, WaterAccessoryType, SystemCategory } from '../../types/asset';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -69,6 +69,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [accCode, setAccCode] = useState('ACC-' + Math.floor(100 + Math.random() * 900));
   const [accName, setAccName] = useState('');
   const [accessoryType, setAccessoryType] = useState<WaterAccessoryType>('air_valve');
+  const [accSystemCategory, setAccSystemCategory] = useState<SystemCategory>('sewerage');
   const [accDiameter, setAccDiameter] = useState(150);
   const [accPressure, setAccPressure] = useState(6.0);
   const [operatingStatus, setOperatingStatus] = useState<'Normal Open' | 'Normal Closed' | 'Active' | 'Under Maintenance'>('Normal Open');
@@ -269,7 +270,7 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
           name: accName || `Aksesoris Pipa ${accCode}`,
           type: 'water_accessory',
           area,
-          systemCategory: 'clean_water',
+          systemCategory: accSystemCategory,
           status: 'Active',
           condition: 'Good',
           installationYear: 2026,
@@ -974,6 +975,35 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
 
           {assetType === 'water_accessory' && (
             <>
+              {/* System Category Selector */}
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-2">
+                <label className="text-xs text-slate-500 font-extrabold uppercase tracking-wider">Peruntukan Sistem Jaringan Pipa</label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setAccSystemCategory('sewerage')}
+                    className={`p-2.5 rounded-xl border text-xs font-extrabold transition flex items-center justify-center gap-1.5 ${
+                      accSystemCategory === 'sewerage'
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>⚡ Transmisi Air Limbah</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAccSystemCategory('clean_water')}
+                    className={`p-2.5 rounded-xl border text-xs font-extrabold transition flex items-center justify-center gap-1.5 ${
+                      accSystemCategory === 'clean_water'
+                        ? 'bg-cyan-600 text-white border-cyan-600 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🚰 Distribusi Air Bersih (PAM)</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-600 font-bold">Kode Aksesoris (ID)</label>

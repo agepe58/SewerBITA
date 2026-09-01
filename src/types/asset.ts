@@ -84,6 +84,7 @@ export interface WaterAccessoryAsset extends BaseAsset {
   type: 'water_accessory';
   coordinates: LocationCoordinates;
   accessoryType: WaterAccessoryType;
+  systemCategory?: SystemCategory; // 'sewerage' (Air Limbah) vs 'clean_water' (Air Bersih)
   pipeId?: string;
   diameterMm: number;
   pressureBar?: number;
