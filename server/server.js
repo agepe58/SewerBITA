@@ -964,7 +964,10 @@ const generateSqlDump = async () => {
       const res = await pool.query(`SELECT * FROM ${table};`);
       sqlDump += `-- Table: ${table} (${res.rows.length} records)\n`;
       if (res.rows.length > 0) {
-        const columns = Object.keys(res.rows[0]);
+        const rawColumns = Object.keys(res.rows[0]);
+        // Exclude auto-computed PostGIS geometry column 'geom'
+        const columns = rawColumns.filter(c => c !== 'geom');
+
         for (const row of res.rows) {
           const values = columns.map(col => {
             const val = row[col];
@@ -974,7 +977,14 @@ const generateSqlDump = async () => {
             if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
             return `'${String(val).replace(/'/g, "''")}'`;
           });
-          sqlDump += `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.join(', ')}) ON CONFLICT (id) DO UPDATE SET ${columns.filter(c => c !== 'id').map(c => `${c} = EXCLUDED.${c}`).join(', ')};\n`;
+
+          const updateCols = columns.filter(c => c !== 'id');
+          let onConflictClause = 'ON CONFLICT (id) DO NOTHING';
+          if (updateCols.length > 0) {
+            onConflictClause = `ON CONFLICT (id) DO UPDATE SET ${updateCols.map(c => `${c} = EXCLUDED.${c}`).join(', ')}`;
+          }
+
+          sqlDump += `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.join(', ')}) ${onConflictClause};\n`;
         }
       }
       sqlDump += `\n`;
@@ -1193,7 +1203,16 @@ app.post('/api/backup/restore', async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN;');
-      await client.query(sqlText);
+
+      const statements = sqlText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && !line.startsWith('--'));
+
+      for (const stmt of statements) {
+        await client.query(stmt);
+      }
+
       await client.query('COMMIT;');
       res.json({ success: true, message: `Database SewerBITA berhasil dipulihkan dari '${safeFilename}'.` });
     } catch (dbErr) {

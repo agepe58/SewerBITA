@@ -787,7 +787,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                     <td className="py-3.5 px-4 text-center whitespace-nowrap">
                       <button
                         onClick={() => {
-                          window.open(`/api/backup/download/${encodeURIComponent(item.namaBerkas)}`, '_blank');
+                          window.open(apiClient.getBackupDownloadUrl(item.namaBerkas), '_blank');
                         }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
                         title="Unduh Berkas Backup dari Server"

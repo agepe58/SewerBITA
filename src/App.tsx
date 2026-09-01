@@ -626,9 +626,12 @@ export const App: React.FC = () => {
                 {activeTab === 'backup' && (
                   <BackupRestoreView
                     currentUserRole={currentUser.role}
-                    onRestoreDataToSystem={(record) => {
-                      alert(`Data sistem berhasil dipulihkan dari arsip snapshot '${record.filename}'.`);
+                    onRestoreDataToSystem={async () => {
+                      await reloadAssetsList();
+                      await reloadInspectionsList();
+                      await reloadUsersList();
                     }}
+                    isDarkMode={isDarkMode}
                   />
                 )}
 

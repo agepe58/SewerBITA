@@ -355,5 +355,9 @@ export const apiClient = {
     } catch (e: any) {
       return { ok: false, data: { error: e.message || 'Gagal memulihkan backup database.' } };
     }
+  },
+
+  getBackupDownloadUrl: (filename: string) => {
+    return `${API_BASE_URL}/api/backup/download/${encodeURIComponent(filename)}`;
   }
 };
