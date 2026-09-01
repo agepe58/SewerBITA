@@ -67,8 +67,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const recentInspections = [...inspections].slice(0, 6);
 
   const cardBg = isDarkMode 
-    ? 'bg-[#111827] border-slate-800/90 shadow-md shadow-black/30 hover:border-slate-700/80 transition-all duration-200' 
-    : 'bg-white border-slate-200/90 shadow-sm hover:border-slate-300 transition-all duration-200';
+    ? 'bg-[#111827] border border-slate-700/90 shadow-xl shadow-black/40 hover:border-blue-500/60 transition-all duration-200' 
+    : 'bg-white border border-slate-300 shadow-md hover:border-blue-400 transition-all duration-200';
 
   const formatDate = (dateStr: string) => {
     try {
@@ -83,17 +83,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   return (
-    <div className={`px-8 pt-8 pb-12 space-y-8 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`px-8 pt-10 pb-20 space-y-16 font-sans min-h-full ${isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       
       {/* 1. TOP METRIC STAT CARDS (4 Columns) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
         {/* Card 1: Total Aset Jaringan */}
         <div
           onClick={() => onNavigate('assets')}
-          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
+          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-md cursor-pointer ${cardBg}`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-blue-950/60 border border-blue-500/30 flex items-center justify-center shrink-0">
-            <Boxes className="w-5 h-5 text-blue-400" />
+          <div className="w-12 h-12 rounded-2xl bg-blue-950/80 border border-blue-500/40 flex items-center justify-center shrink-0 shadow-inner">
+            <Boxes className="w-6 h-6 text-blue-400" />
           </div>
           <div>
             <div className="text-2xl font-black tracking-tight">{totalAssets}</div>
@@ -104,10 +104,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 2: Aset Aktif / Normal */}
         <div
           onClick={() => onNavigate('assets')}
-          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
+          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-md cursor-pointer ${cardBg}`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-sky-950/60 border border-sky-500/30 flex items-center justify-center shrink-0">
-            <CheckCircle className="w-5 h-5 text-sky-400" />
+          <div className="w-12 h-12 rounded-2xl bg-sky-950/80 border border-sky-500/40 flex items-center justify-center shrink-0 shadow-inner">
+            <CheckCircle className="w-6 h-6 text-sky-400" />
           </div>
           <div>
             <div className="text-2xl font-black tracking-tight">{totalActive}</div>
@@ -118,10 +118,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 3: Kondisi Kritis / Anomali */}
         <div
           onClick={() => onNavigate('assets')}
-          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
+          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-md cursor-pointer ${cardBg}`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-rose-950/60 border border-rose-500/30 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-5 h-5 text-rose-400" />
+          <div className="w-12 h-12 rounded-2xl bg-rose-950/80 border border-rose-500/40 flex items-center justify-center shrink-0 shadow-inner">
+            <AlertTriangle className="w-6 h-6 text-rose-400" />
           </div>
           <div>
             <div className="text-2xl font-black tracking-tight text-rose-400">{totalCriticalOrWarning}</div>
@@ -132,10 +132,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 4: Inspeksi Terselesaikan */}
         <div
           onClick={() => onNavigate('inspections')}
-          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-sm cursor-pointer hover:border-slate-700 ${cardBg}`}
+          className={`p-6 rounded-2xl border flex items-center gap-4 transition-all shadow-md cursor-pointer ${cardBg}`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center shrink-0">
-            <ClipboardCheck className="w-5 h-5 text-cyan-400" />
+          <div className="w-12 h-12 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-inner">
+            <ClipboardCheck className="w-6 h-6 text-cyan-400" />
           </div>
           <div>
             <div className="text-2xl font-black tracking-tight">{totalInspections}</div>
@@ -145,16 +145,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 2. MIDDLE ROW: TREN 7 HARI & DISTRIBUSI KONDISI ASET */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
         {/* Left: Tren 7 Hari Terakhir (Curved Area Chart) */}
-        <div className={`p-6 rounded-2xl border lg:col-span-2 shadow-sm ${cardBg}`}>
-          <div className="text-sm font-extrabold tracking-tight mb-4">Tren Pemantauan & Inspeksi 7 Hari Terakhir</div>
+        <div className={`p-6 rounded-2xl border lg:col-span-2 shadow-md ${cardBg}`}>
+          <div className="text-sm font-extrabold tracking-tight pb-3 mb-4 border-b border-slate-800/80 flex items-center justify-between">
+            <span>Tren Pemantauan & Inspeksi 7 Hari Terakhir</span>
+            <span className="text-xs font-semibold text-blue-400">7 Hari</span>
+          </div>
           
           <div className="h-52 w-full flex flex-col justify-end pt-2">
             <svg viewBox="0 0 600 160" className="w-full h-40 overflow-visible">
               <defs>
                 <linearGradient id="sewerTrendGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.3" />
+                  <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.35" />
                   <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
@@ -204,8 +207,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Right: Prioritas / Distribusi Kondisi Aset (Donut Chart) */}
-        <div className={`p-6 rounded-2xl border flex flex-col justify-between shadow-sm ${cardBg}`}>
-          <div className="text-sm font-extrabold tracking-tight">Kondisi Aset Jaringan</div>
+        <div className={`p-6 rounded-2xl border flex flex-col justify-between shadow-md ${cardBg}`}>
+          <div className="text-sm font-extrabold tracking-tight pb-3 mb-2 border-b border-slate-800/80">Kondisi Aset Jaringan</div>
           
           <div className="flex items-center justify-center my-auto py-4">
             <div className="relative w-36 h-36 flex items-center justify-center">
@@ -234,7 +237,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-xs font-semibold pt-2">
+          <div className="grid grid-cols-2 gap-2 text-xs font-semibold pt-2 border-t border-slate-800/60">
             <div className="flex items-center gap-1.5 text-emerald-400">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
               <span>Good ({goodCount})</span>
@@ -256,11 +259,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 3. LOWER ROW: DISTRIBUSI TIPE ASET & PENGINGAT JATUH TEMPO (3 Columns) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
         
         {/* Col 1: Distribusi Tipe Aset (Bar Chart) */}
-        <div className={`p-6 rounded-2xl border shadow-sm ${cardBg}`}>
-          <div className="text-sm font-extrabold tracking-tight mb-4">Distribusi Tipe Aset</div>
+        <div className={`p-6 rounded-2xl border shadow-md ${cardBg}`}>
+          <div className="text-sm font-extrabold tracking-tight pb-3 mb-4 border-b border-slate-800/80">Distribusi Tipe Aset</div>
           
           <div className="h-44 flex items-end justify-around px-2 pt-4 border-b border-slate-800">
             {/* Bar 1: Manhole */}
@@ -296,9 +299,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Col 2: Pengingat: Melewati Batas Waktu */}
-        <div className={`p-6 rounded-2xl border shadow-sm ${cardBg}`}>
-          <div className="text-sm font-extrabold tracking-tight mb-4 flex items-center justify-between">
-            <span>Pengingat: Inspeksi Melewati Batas Waktu</span>
+        <div className={`p-6 rounded-2xl border shadow-md ${cardBg}`}>
+          <div className="text-sm font-extrabold tracking-tight pb-3 mb-4 border-b border-slate-800/80 flex items-center justify-between">
+            <span>Pengingat: Melewati Batas Waktu</span>
             {overdueAssets.length > 0 && (
               <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-black">
                 {overdueAssets.length}
@@ -330,8 +333,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Col 3: Pengingat: Segera Jatuh Tempo */}
-        <div className={`p-6 rounded-2xl border shadow-sm ${cardBg}`}>
-          <div className="text-sm font-extrabold tracking-tight mb-4">Pengingat: Segera Jatuh Tempo</div>
+        <div className={`p-6 rounded-2xl border shadow-md ${cardBg}`}>
+          <div className="text-sm font-extrabold tracking-tight pb-3 mb-4 border-b border-slate-800/80">Pengingat: Segera Jatuh Tempo</div>
 
           <div className="space-y-3">
             {upcomingDueAssets.length === 0 ? (
@@ -361,8 +364,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
         {/* Col 1: Riwayat Inspeksi Terbaru */}
-        <div className={`p-6 rounded-2xl border shadow-sm ${cardBg}`}>
-          <div className="flex items-center justify-between mb-4">
+        <div className={`p-6 rounded-2xl border shadow-md ${cardBg}`}>
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800/80">
             <span className="text-sm font-extrabold tracking-tight">Inspeksi Lapangan Terbaru</span>
             <button
               onClick={() => onNavigate('inspections')}
@@ -397,8 +400,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Col 2: Stasiun Pompa Operasional */}
-        <div className={`p-6 rounded-2xl border shadow-sm ${cardBg}`}>
-          <div className="text-sm font-extrabold tracking-tight mb-4">Status Stasiun Pompa</div>
+        <div className={`p-6 rounded-2xl border shadow-md ${cardBg}`}>
+          <div className="text-sm font-extrabold tracking-tight pb-3 mb-4 border-b border-slate-800/80">Status Stasiun Pompa</div>
 
           <div className="space-y-4">
             {pumpStations.length === 0 ? (
@@ -433,8 +436,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Col 3: Aktivitas Sistem Terbaru */}
-        <div className={`p-6 rounded-2xl border shadow-sm ${cardBg}`}>
-          <div className="text-sm font-extrabold tracking-tight mb-4">Aktivitas Sistem Terbaru</div>
+        <div className={`p-6 rounded-2xl border shadow-md ${cardBg}`}>
+          <div className="text-sm font-extrabold tracking-tight pb-3 mb-4 border-b border-slate-800/80">Aktivitas Sistem Terbaru</div>
           <div className="text-xs text-slate-500 py-10 text-center font-medium">
             Sistem beroperasi normal (PostGIS database online).
           </div>
