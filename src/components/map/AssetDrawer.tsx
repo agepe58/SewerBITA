@@ -257,27 +257,20 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
               )}
               {asset.type === 'grease_trap' && (
                 <div className="space-y-2.5 bg-amber-50/70 p-4 rounded-2xl border border-amber-200">
-                  <div className="font-extrabold text-amber-800 text-xs flex items-center justify-between">
+                  <div className="font-extrabold text-amber-900 text-xs flex items-center justify-between">
                     <span>🍳 Grease Trap (Pre-Treatment Inlet)</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-800 font-extrabold uppercase border border-amber-300">
-                      {asset.chamberCount || 3} Sekat / Chambers
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-900 font-black uppercase border border-amber-300">
+                      🏢 Pemilik Gedung (Mandiri)
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs font-medium">
                     <div>Kapasitas Tangki: <span className="font-extrabold text-slate-900">{asset.capacityLiters} Liter</span></div>
-                    <div>Jadwal Kuras: <span className="font-extrabold text-slate-900">Setiap {asset.cleaningFrequencyDays} Hari</span></div>
-                    <div className="col-span-2 text-amber-800 font-bold flex items-center justify-between">
-                      <span>Akumulasi Lemak:</span>
-                      <span className={`px-2 py-0.5 rounded-md font-extrabold ${
-                        (asset.greaseLevelPercent || 0) > 70
-                          ? 'bg-red-500/20 text-red-700 border border-red-300'
-                          : (asset.greaseLevelPercent || 0) > 40
-                          ? 'bg-amber-500/20 text-amber-700 border border-amber-300'
-                          : 'bg-emerald-500/20 text-emerald-700'
-                      }`}>
-                        {asset.greaseLevelPercent || 15}% {(asset.greaseLevelPercent || 0) > 70 ? '🚨 Perlu Dikuras' : ''}
-                      </span>
-                    </div>
+                    <div>Jumlah Sekat: <span className="font-extrabold text-slate-900">{asset.chamberCount || 3} Sekat</span></div>
+                    <div>Jadwal Kuras Pemilik: <span className="font-extrabold text-slate-900">Setiap {asset.cleaningFrequencyDays} Hari</span></div>
+                    <div>Tingkat Lemak: <span className="font-extrabold text-slate-900">{asset.greaseLevelPercent || 15}%</span></div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-amber-100/60 border border-amber-200 text-[11px] text-amber-900 font-medium">
+                    ℹ️ <span className="font-bold">Catatan Pengelolaan:</span> Inspeksi, perawatan, dan pengurasan dilakukan secara mandiri oleh pemilik gedung / pengelola kawasan komersial.
                   </div>
                 </div>
               )}
@@ -285,8 +278,10 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
               {/* Coordinates */}
               {'coordinates' in asset && asset.coordinates && (
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
-                  <div className="text-xs text-slate-500 font-bold">Koordinat Geografis (GIS)</div>
-                  <div className="font-mono text-slate-900 font-extrabold text-xs">Lat: {asset.coordinates.lat}, Lng: {asset.coordinates.lng}</div>
+                  <div className="text-xs font-bold text-slate-900">Koordinat Lokasi GIS</div>
+                  <div className="font-mono text-xs text-[#2563EB] font-bold">
+                    {asset.coordinates.lat.toFixed(6)}, {asset.coordinates.lng.toFixed(6)}
+                  </div>
                   {asset.coordinates.elevation && (
                     <div className="text-xs text-slate-600 font-medium">Elevasi Tanah: {asset.coordinates.elevation} mdpl</div>
                   )}
@@ -351,7 +346,12 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
 
           {activeTab === 'inspections' && (
             <div className="space-y-3 text-xs">
-              {assetInspections.length === 0 ? (
+              {asset.type === 'grease_trap' ? (
+                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-center space-y-1">
+                  <div className="font-extrabold text-amber-900 text-xs">🏢 Dikelola Swasta / Pemilik Gedung</div>
+                  <div className="text-amber-800 text-[11px] font-medium">Aset perangkap lemak ini dirawat dan diinspeksi secara mandiri oleh pemilik gedung.</div>
+                </div>
+              ) : assetInspections.length === 0 ? (
                 <div className="text-center py-6 text-slate-500 font-medium">Belum ada catatan inspeksi untuk aset ini.</div>
               ) : (
                 assetInspections.map(insp => (
@@ -387,13 +387,19 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
 
       {/* Drawer Action Bar */}
       <div className="p-4.5 border-t border-slate-100 bg-white flex items-center gap-2.5">
-        <button
-          onClick={() => onOpenNewInspection(asset.id)}
-          className="flex-1 flex items-center justify-center gap-2 bg-[#2563EB] text-white font-extrabold text-sm py-3 rounded-full hover:bg-[#1D4ED8] transition shadow-xs"
-        >
-          <ClipboardCheck className="w-4.5 h-4.5" />
-          <span>Buat Inspeksi</span>
-        </button>
+        {asset.type === 'grease_trap' ? (
+          <div className="flex-1 text-center py-2.5 px-3 bg-amber-50 text-amber-900 rounded-full font-extrabold text-xs border border-amber-200">
+            🏢 Dikelola Mandiri oleh Pemilik Gedung
+          </div>
+        ) : (
+          <button
+            onClick={() => onOpenNewInspection(asset.id)}
+            className="flex-1 flex items-center justify-center gap-2 bg-[#2563EB] text-white font-extrabold text-sm py-3 rounded-full hover:bg-[#1D4ED8] transition shadow-xs"
+          >
+            <ClipboardCheck className="w-4.5 h-4.5" />
+            <span>Buat Inspeksi</span>
+          </button>
+        )}
 
         <button
           onClick={() => onOpenQrModal(asset.id)}

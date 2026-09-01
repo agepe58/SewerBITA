@@ -206,12 +206,18 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
 
             <div>
               <label className="text-xs text-slate-600 font-bold uppercase tracking-wider">Jatuh Tempo Inspeksi</label>
-              <input
-                type="date"
-                value={nextInspectionDue}
-                onChange={e => setNextInspectionDue(e.target.value)}
-                className="w-full bg-slate-50 font-bold text-slate-900 border border-slate-200 rounded-xl p-3 mt-1 focus:bg-white focus:outline-none focus:border-[#2563EB]"
-              />
+              {asset.type === 'grease_trap' ? (
+                <div className="bg-amber-50 text-amber-900 border border-amber-200 rounded-xl p-2.5 mt-1 font-bold text-xs">
+                  🏢 Pemilik Gedung (Mandiri)
+                </div>
+              ) : (
+                <input
+                  type="date"
+                  value={nextInspectionDue}
+                  onChange={e => setNextInspectionDue(e.target.value)}
+                  className="w-full bg-slate-50 font-bold text-slate-900 border border-slate-200 rounded-xl p-3 mt-1 focus:bg-white focus:outline-none focus:border-[#2563EB]"
+                />
+              )}
             </div>
           </div>
 

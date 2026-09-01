@@ -88,14 +88,20 @@ export const NewInspectionModal: React.FC<NewInspectionModalProps> = ({
             <select
               value={selectedAssetId}
               onChange={e => setSelectedAssetId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1.5 focus:outline-none focus:border-[#2563EB] font-bold text-sm"
+              required
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-bold text-sm mt-1 focus:outline-none focus:border-[#2563EB]"
             >
-              {allAssets.map(a => (
-                <option key={a.id} value={a.id}>
-                  {a.assetCode} — {a.name} ({a.area})
-                </option>
-              ))}
+              {allAssets
+                .filter(a => a.type !== 'grease_trap')
+                .map(a => (
+                  <option key={a.id} value={a.id}>
+                    {a.assetCode} — {a.name} ({a.type.toUpperCase()})
+                  </option>
+                ))}
             </select>
+            <div className="text-[11px] text-amber-700 mt-1 font-medium">
+              ℹ️ Aset Grease Trap tidak masuk jadwal inspeksi internal karena dirawat & diinspeksi mandiri oleh pemilik gedung.
+            </div>
           </div>
 
           {/* Rating Condition */}
