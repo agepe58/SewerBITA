@@ -104,7 +104,69 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 7. Automated Trigger for Geom Point Auto-Population
+-- 7. Work Orders Table
+CREATE TABLE IF NOT EXISTS work_orders (
+    id VARCHAR(100) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL DEFAULT 'Mekanik',
+    location VARCHAR(255) NOT NULL DEFAULT 'WWTP',
+    priority VARCHAR(50) NOT NULL DEFAULT 'Sedang',
+    status VARCHAR(50) NOT NULL DEFAULT 'Baru',
+    pic_user_id VARCHAR(100),
+    pic_name VARCHAR(255),
+    due_date TIMESTAMP WITH TIME ZONE,
+    description TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. Maintenance Projects Table
+CREATE TABLE IF NOT EXISTS maintenance_projects (
+    id VARCHAR(100) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'Direncanakan',
+    total_tasks INT NOT NULL DEFAULT 0,
+    completed_tasks INT NOT NULL DEFAULT 0,
+    target_date DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Daily Reports Table
+CREATE TABLE IF NOT EXISTS daily_reports (
+    id VARCHAR(100) PRIMARY KEY,
+    report_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    technician_name VARCHAR(255) NOT NULL,
+    work_summary TEXT NOT NULL,
+    work_order_id VARCHAR(100),
+    status VARCHAR(50) NOT NULL DEFAULT 'Submitted',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. Activity Logs Table
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id VARCHAR(100) PRIMARY KEY,
+    actor_name VARCHAR(255) NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    entity VARCHAR(100) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. Backup History Table
+CREATE TABLE IF NOT EXISTS backup_history (
+    id VARCHAR(100) PRIMARY KEY,
+    execution_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    backup_type VARCHAR(50) NOT NULL DEFAULT 'FULL',
+    destination VARCHAR(100) NOT NULL DEFAULT 'Synology NAS',
+    filename VARCHAR(255) NOT NULL,
+    file_size VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'Sukses',
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. Automated Trigger for Geom Point Auto-Population
 CREATE OR REPLACE FUNCTION update_asset_geom()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -124,5 +186,6 @@ CREATE TRIGGER trigger_pump_station_geom
 BEFORE INSERT OR UPDATE ON pump_station_assets
 FOR EACH ROW EXECUTE FUNCTION update_asset_geom();
 
--- 8. Triggers & Indexes Complete
+-- 13. DDL Schema Initialization Complete
+
 
