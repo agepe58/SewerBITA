@@ -346,8 +346,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       {/* 1. TOP METRIC STAT CARDS (4 Cards matching Screenshot) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" style={{ marginBottom: '14px' }}>
         {/* Card 1: Full Backup Terakhir */}
-        <div className={`p-5 rounded-xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
-          <div className="w-12 h-12 rounded-xl bg-blue-950/60 border border-blue-500/30 flex items-center justify-center shrink-0">
+        <div className={`p-5 rounded-lg border flex items-center gap-4 shadow-sm ${cardBg}`}>
+          <div className="w-12 h-12 rounded-lg bg-blue-950/60 border border-blue-500/30 flex items-center justify-center shrink-0">
             <Database className="w-5 h-5 text-blue-400" />
           </div>
           <div className="min-w-0">
@@ -357,8 +357,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
 
         {/* Card 2: Incremental Terakhir */}
-        <div className={`p-5 rounded-xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
-          <div className="w-12 h-12 rounded-xl bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center shrink-0">
+        <div className={`p-5 rounded-lg border flex items-center gap-4 shadow-sm ${cardBg}`}>
+          <div className="w-12 h-12 rounded-lg bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center shrink-0">
             <RotateCcw className="w-5 h-5 text-indigo-400" />
           </div>
           <div className="min-w-0">
@@ -368,8 +368,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
 
         {/* Card 3: Destinasi Aktif */}
-        <div className={`p-5 rounded-xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
-          <div className="w-12 h-12 rounded-xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center shrink-0">
+        <div className={`p-5 rounded-lg border flex items-center gap-4 shadow-sm ${cardBg}`}>
+          <div className="w-12 h-12 rounded-lg bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center shrink-0">
             <Server className="w-5 h-5 text-emerald-400" />
           </div>
           <div className="min-w-0">
@@ -379,8 +379,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
 
         {/* Card 4: Total Storage */}
-        <div className={`p-5 rounded-xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
-          <div className="w-12 h-12 rounded-xl bg-amber-950/60 border border-amber-500/30 flex items-center justify-center shrink-0">
+        <div className={`p-5 rounded-lg border flex items-center gap-4 shadow-sm ${cardBg}`}>
+          <div className="w-12 h-12 rounded-lg bg-amber-950/60 border border-amber-500/30 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-5 h-5 text-amber-400" />
           </div>
           <div className="min-w-0">
@@ -391,9 +391,9 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       </div>
 
       {/* 2. MANUAL BACKUP EXECUTION BAR (matching Screenshot) */}
-      <div className={`p-5 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${cardBg}`} style={{ marginBottom: '14px' }}>
+      <div className={`p-5 rounded-lg border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${cardBg}`} style={{ marginBottom: '14px' }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
             <Zap className="w-5 h-5 text-blue-400" />
           </div>
           <div>
@@ -406,7 +406,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           <button
             onClick={() => handleExecuteBackup('FULL')}
             disabled={isBackupRunning}
-            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold transition shadow-lg shadow-blue-600/30 cursor-pointer disabled:opacity-50"
+            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold transition shadow-lg shadow-blue-600/30 cursor-pointer disabled:opacity-50"
           >
             <Play className="w-3.5 h-3.5 fill-white" />
             <span>Full Backup</span>
@@ -415,7 +415,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           <button
             onClick={() => handleExecuteBackup('INCREMENTAL')}
             disabled={isBackupRunning}
-            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer disabled:opacity-50"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Incremental</span>
@@ -425,7 +425,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       {/* Execution Result Alert Banner */}
       {backupExecutionAlert && (
-        <div className={`p-4 rounded-xl border text-xs font-semibold flex items-center justify-between gap-3 animate-in fade-in ${
+        <div className={`p-4 rounded-lg border text-xs font-semibold flex items-center justify-between gap-3 animate-in fade-in ${
           backupExecutionAlert.type === 'success'
             ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
             : backupExecutionAlert.type === 'warning'
@@ -450,10 +450,10 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       )}
 
       {/* 3. SUB-NAVIGATION TABS */}
-      <div className={`p-1.5 rounded-xl border flex items-center gap-2 max-w-2xl shadow-xs ${cardBg}`} style={{ marginBottom: '14px' }}>
+      <div className={`p-1.5 rounded-lg border flex items-center gap-2 max-w-2xl shadow-xs ${cardBg}`} style={{ marginBottom: '14px' }}>
         <button
           onClick={() => setActiveSubTab('synology')}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
             activeSubTab === 'synology'
               ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -465,7 +465,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
         <button
           onClick={() => setActiveSubTab('jadwal')}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
             activeSubTab === 'jadwal'
               ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -477,7 +477,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
         <button
           onClick={() => setActiveSubTab('restore')}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
             activeSubTab === 'restore'
               ? 'bg-emerald-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -490,7 +490,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       {/* 4. TAB CONTENT: SYNOLOGY NAS CONFIGURATION */}
       {activeSubTab === 'synology' && (
-        <div className={`p-6 rounded-xl border space-y-6 shadow-sm ${cardBg}`}>
+        <div className={`p-6 rounded-lg border space-y-6 shadow-sm ${cardBg}`}>
           {/* Header */}
           <div>
             <h3 className="text-base font-extrabold text-white">Destinasi Penyimpanan Backup</h3>
@@ -503,7 +503,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
             <select
               value={mainStorageDestination}
               onChange={(e) => setMainStorageDestination(e.target.value as any)}
-              className={`w-full px-4 py-2.5 rounded-xl text-xs font-bold border transition outline-none cursor-pointer ${inputBg}`}
+              className={`w-full px-4 py-2.5 rounded-lg text-xs font-bold border transition outline-none cursor-pointer ${inputBg}`}
             >
               <option value="Synology NAS">🟢 Synology NAS (WebDAV / Direct Share)</option>
               <option value="Google Drive">🔵 Google Drive Cloud Backup</option>
@@ -512,10 +512,10 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           </div>
 
           {/* Card: Pengaturan Synology NAS */}
-          <div className="p-5 rounded-xl bg-slate-900/50 border border-slate-800/90 space-y-5">
+          <div className="p-5 rounded-lg bg-slate-900/50 border border-slate-800/90 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
                   <Server className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div>
@@ -527,7 +527,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               <button
                 onClick={handleTestNas}
                 disabled={isTestingNas}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer shadow-2xs self-start sm:self-auto"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer shadow-2xs self-start sm:self-auto"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isTestingNas ? 'animate-spin text-blue-400' : 'text-slate-400'}`} />
                 <span>{isTestingNas ? 'Menguji Koneksi...' : 'Uji Akses Synology NAS'}</span>
@@ -536,7 +536,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
             {/* Test Alert */}
             {nasTestAlert && (
-              <div className={`p-3.5 rounded-xl border text-xs font-semibold flex items-center gap-2.5 animate-in fade-in ${
+              <div className={`p-3.5 rounded-lg border text-xs font-semibold flex items-center gap-2.5 animate-in fade-in ${
                 nasTestAlert.type === 'success'
                   ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
                   : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
@@ -558,7 +558,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                 <select
                   value={nasProtocol}
                   onChange={(e) => setNasProtocol(e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border transition outline-none cursor-pointer ${inputBg}`}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border transition outline-none cursor-pointer ${inputBg}`}
                 >
                   <option value="Synology WebDAV">Synology WebDAV</option>
                   <option value="SMB / CIFS Share">SMB / CIFS Share</option>
@@ -575,7 +575,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   value={nasIp}
                   onChange={(e) => setNasIp(e.target.value)}
                   placeholder="e.g. 103.165.253.150 atau nas.kbi.web.id"
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-semibold border transition outline-none ${inputBg}`}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-semibold border transition outline-none ${inputBg}`}
                 />
               </div>
 
@@ -587,7 +587,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   value={nasPort}
                   onChange={(e) => setNasPort(e.target.value)}
                   placeholder="5005"
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-semibold border transition outline-none ${inputBg}`}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-semibold border transition outline-none ${inputBg}`}
                 />
               </div>
 
@@ -599,7 +599,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   value={nasUser}
                   onChange={(e) => setNasUser(e.target.value)}
                   placeholder="Maia"
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border transition outline-none ${inputBg}`}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border transition outline-none ${inputBg}`}
                 />
               </div>
 
@@ -610,13 +610,13 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   type="password"
                   value={nasPassword}
                   onChange={(e) => setNasPassword(e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-semibold border transition outline-none ${inputBg}`}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-semibold border transition outline-none ${inputBg}`}
                 />
               </div>
             </div>
 
             {/* Toggle SSL */}
-            <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-4">
+            <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <div className="text-xs font-extrabold text-white flex items-center gap-2">
                   <Lock className="w-3.5 h-3.5 text-blue-400" />
@@ -643,7 +643,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                 value={targetFolder}
                 onChange={(e) => setTargetFolder(e.target.value)}
                 placeholder="/Maia/MTC/mms_backup"
-                className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-semibold border transition outline-none ${inputBg}`}
+                className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-semibold border transition outline-none ${inputBg}`}
               />
               <p className="text-[11px] text-slate-400">Lokasi folder pada Synology DSM tempat menyimpan berkas &apos;.sql.gz&apos; backup terkompresi.</p>
             </div>
@@ -659,7 +659,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                 value={apkUrl}
                 onChange={(e) => setApkUrl(e.target.value)}
                 placeholder="https://nas.kbi.web.id:5001/fbsharing/xyz123 atau /downloads/bita-mms-v1.2.0-release.apk"
-                className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-semibold border border-emerald-500/40 ${inputBg}`}
+                className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-semibold border border-emerald-500/40 ${inputBg}`}
               />
               <p className="text-[11px] text-slate-400">
                 Masukkan URL Share Link dari <strong className="text-slate-300">Synology File Station</strong> (Klik kanan berkas .apk di NAS $\to$ Share $\to$ Salin Tautan) atau URL server lokal. Tautan ini digunakan oleh seluruh peran pengguna di halaman App Android.
@@ -667,7 +667,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
             </div>
 
             {/* Panduan Pengaturan WebDAV Callout Box */}
-            <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 space-y-2">
+            <div className="p-4 rounded-lg bg-emerald-950/20 border border-emerald-500/30 space-y-2">
               <div className="text-xs font-extrabold text-emerald-400 flex items-center gap-2">
                 <Info className="w-4 h-4" />
                 <span>Panduan Pengaturan WebDAV di Synology DiskStation DSM:</span>
@@ -683,7 +683,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
             <div className="flex justify-end pt-2">
               <button
                 onClick={handleSaveSettings}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
               >
                 <Check className="w-4 h-4" />
                 <span>Simpan Pengaturan</span>
@@ -695,13 +695,13 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       {/* 4. TAB CONTENT: PENGATURAN JADWAL OTOMATIS */}
       {activeSubTab === 'jadwal' && (
-        <div className={`p-6 rounded-xl border space-y-6 shadow-sm ${cardBg}`}>
+        <div className={`p-6 rounded-lg border space-y-6 shadow-sm ${cardBg}`}>
           <div>
             <h3 className="text-base font-extrabold text-white">Pengaturan Jadwal Backup Otomatis</h3>
             <p className="text-xs text-slate-400 font-medium">Atur penjadwalan berkala untuk database dan aset tanpa intervensi manual.</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs font-bold text-white">Aktifkan Backup Otomatis</div>
@@ -721,7 +721,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                 <select
                   value={scheduleCron}
                   onChange={(e) => setScheduleCron(e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border ${inputBg}`}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border ${inputBg}`}
                 >
                   <option value="Setiap Hari (23:00 WIB)">Setiap Hari (23:00 WIB)</option>
                   <option value="Setiap 12 Jam (00:00 & 12:00)">Setiap 12 Jam (00:00 & 12:00)</option>
@@ -735,7 +735,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   type="number"
                   value={retentionDays}
                   onChange={(e) => setRetentionDays(Number(e.target.value))}
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border ${inputBg}`}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border ${inputBg}`}
                 />
               </div>
             </div>
@@ -745,13 +745,13 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       {/* 4. TAB CONTENT: PEMULIHAN DATA (RESTORE) */}
       {activeSubTab === 'restore' && (
-        <div className={`p-6 rounded-xl border space-y-6 shadow-sm ${cardBg}`}>
+        <div className={`p-6 rounded-lg border space-y-6 shadow-sm ${cardBg}`}>
           <div>
             <h3 className="text-base font-extrabold text-white">Pemulihan Data & Disaster Recovery</h3>
             <p className="text-xs text-slate-400 font-medium">Pulihkan skema dan snapshot data PostgreSQL dari arsip Synology NAS.</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-3">
+          <div className="p-4 rounded-lg bg-amber-950/20 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
             <span>
               Perhatian: Proses restore akan menimpa data yang sedang berjalan dengan snapshot arsip terpilih. Pastikan Anda telah melakukan backup terkini sebelum melanjutkan.
@@ -762,7 +762,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
             <div className="text-xs font-bold text-white">Pilih Berkas Snapshot untuk Dipulihkan:</div>
             <div className="space-y-2">
               {backupHistory.map(bk => (
-                <div key={bk.id} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3">
+                <div key={bk.id} className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3">
                   <div>
                     <div className="text-xs font-extrabold text-white">{bk.namaBerkas}</div>
                     <div className="text-[10px] text-slate-400 mt-0.5">{bk.waktuExec} • {bk.ukuran} • Destinasi: {bk.destinasi}</div>
@@ -770,7 +770,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
                   <button
                     onClick={() => handleRestore(bk)}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md cursor-pointer"
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md cursor-pointer"
                   >
                     Pulihkan Sekarang
                   </button>
@@ -782,7 +782,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       )}
 
       {/* 5. RIWAYAT EKSEKUSI BACKUP TABLE (matching Screenshot) */}
-      <div className={`p-6 rounded-xl border space-y-4 shadow-sm ${cardBg}`}>
+      <div className={`p-6 rounded-lg border space-y-4 shadow-sm ${cardBg}`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-extrabold text-white">Riwayat Eksekusi Backup</h3>
@@ -791,7 +791,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
           <button
             onClick={() => reloadHistoryFromApi()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
             <span>Segarkan</span>
@@ -799,7 +799,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+        <div className="overflow-x-auto rounded-lg border border-slate-800/80">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-800/90 bg-slate-900/40 text-slate-400 text-[11px]">

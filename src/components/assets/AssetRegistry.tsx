@@ -179,7 +179,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
       </div>
 
       {/* 2. FILTER & SEARCH TOOLBAR */}
-      <div className={`p-4 rounded-xl border space-y-4 shadow-xs ${cardBg}`} style={{ marginBottom: '14px' }}>
+      <div className={`p-4 rounded-lg border space-y-4 shadow-xs ${cardBg}`} style={{ marginBottom: '14px' }}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Search Input */}
           <div className="relative lg:col-span-1">
@@ -189,7 +189,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari kode atau nama aset..."
-              className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-semibold border transition outline-none ${
+              className={`w-full pl-9 pr-3 py-2 rounded-lg text-xs font-semibold border transition outline-none ${
                 isDarkMode
                   ? 'bg-slate-900/90 border-slate-800 text-white focus:border-blue-500'
                   : 'bg-slate-100 border-slate-200 text-slate-900 focus:border-blue-500'
@@ -251,7 +251,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
         <div className="flex items-center gap-2 pt-1">
           <button
             onClick={() => setActiveTabFilter('all')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeTabFilter === 'all'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
@@ -261,7 +261,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
           </button>
           <button
             onClick={() => setActiveTabFilter('manhole')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeTabFilter === 'manhole'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
@@ -271,7 +271,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
           </button>
           <button
             onClick={() => setActiveTabFilter('pump_station')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeTabFilter === 'pump_station'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
@@ -281,7 +281,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
           </button>
           <button
             onClick={() => setActiveTabFilter('pipe')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               activeTabFilter === 'pipe'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
@@ -293,7 +293,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
       </div>
 
       {/* 3. DATA TABLE */}
-      <div className={`rounded-xl border overflow-hidden shadow-sm ${cardBg}`}>
+      <div className={`rounded-lg border overflow-hidden shadow-sm ${cardBg}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>

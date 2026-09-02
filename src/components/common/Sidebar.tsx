@@ -123,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Kota Bukit Indah
             </div>
             <div className="text-[9px] text-blue-400 font-semibold truncate leading-tight">
-              SewerBITA Asset System
+              BITA GIS System
             </div>
           </div>
         </div>

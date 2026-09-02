@@ -76,7 +76,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="space-y-4 max-w-3xl mx-auto text-center flex flex-col items-center">
           <h1 className={`text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.18] text-center ${isDarkMode ? 'text-white' : 'text-slate-900'
             }`}>
-            Sistem Monitoring & Asset Management{' '}
+            BITA GIS — System Monitoring & Asset Management{' '}
             <span className="bg-gradient-to-r from-[#2563EB] via-[#0284C7] to-[#059669] dark:from-[#60A5FA] dark:via-[#3B82F6] dark:to-[#34D399] bg-clip-text text-transparent">
               Jaringan Air Bersih dan Air Limbah
             </span>

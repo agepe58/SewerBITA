@@ -16,7 +16,7 @@ export const AppAndroidView: React.FC<AppAndroidViewProps> = ({ isDarkMode = tru
             <Smartphone className="w-7 h-7" />
           </div>
           <div>
-            <h2 className="text-xl font-extrabold">SewerBITA Mobile App (Android)</h2>
+            <h2 className="text-xl font-extrabold">BITA GIS Mobile App (Android)</h2>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">
               Aplikasi pendamping lapangan untuk teknisi pemeliharaan jaringan pipa & stasiun pompa
             </p>
