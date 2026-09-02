@@ -411,5 +411,31 @@ export const apiClient = {
 
   getBackupDownloadUrl: (filename: string) => {
     return `${API_BASE_URL}/api/backup/download/${encodeURIComponent(filename)}`;
+  },
+
+  getBackupConfig: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/backup/config`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn('Failed to fetch backup config:', e);
+      return null;
+    }
+  },
+
+  saveBackupConfig: async (configData: any) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/backup/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configData)
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn('Failed to save backup config:', e);
+      return null;
+    }
   }
 };

@@ -241,6 +241,26 @@ const initDb = async () => {
       );
     `);
 
+    // 8.1 System Backup & Synology NAS Configuration Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_backup_config (
+          id VARCHAR(50) PRIMARY KEY DEFAULT 'main_config',
+          nas_protocol VARCHAR(100) DEFAULT 'Synology WebDAV',
+          nas_ip VARCHAR(100) DEFAULT '103.165.253.150',
+          nas_port VARCHAR(50) DEFAULT '5005',
+          nas_user VARCHAR(100) DEFAULT 'Maia',
+          nas_password VARCHAR(255) DEFAULT '••••••••',
+          use_ssl BOOLEAN DEFAULT FALSE,
+          target_folder VARCHAR(255) DEFAULT '/sewer_bita',
+          apk_url TEXT DEFAULT '',
+          main_storage_destination VARCHAR(100) DEFAULT 'Synology NAS',
+          auto_backup_enabled BOOLEAN DEFAULT TRUE,
+          schedule_cron VARCHAR(100) DEFAULT 'Setiap Hari (23:00 WIB)',
+          retention_days INT DEFAULT 30,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // 12. Purge Any Legacy Demo Admin User
     await pool.query("DELETE FROM user_profiles WHERE id = 'usr-admin-01' OR LOWER(email) = 'angga.purbaya@gmail.com';");
 
@@ -1435,6 +1455,84 @@ app.get('/api/backup/history', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Fetch backup history error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3.1 Get Permanent Backup Configuration Endpoint
+app.get('/api/backup/config', async (req, res) => {
+  try {
+    let result = await pool.query("SELECT * FROM system_backup_config WHERE id = 'main_config';");
+    if (result.rows.length === 0) {
+      await pool.query(`
+        INSERT INTO system_backup_config (id, nas_protocol, nas_ip, nas_port, nas_user, nas_password, use_ssl, target_folder, apk_url, main_storage_destination, auto_backup_enabled, schedule_cron, retention_days)
+        VALUES ('main_config', 'Synology WebDAV', '103.165.253.150', '5005', 'Maia', '••••••••', false, '/sewer_bita', '', 'Synology NAS', true, 'Setiap Hari (23:00 WIB)', 30);
+      `);
+      result = await pool.query("SELECT * FROM system_backup_config WHERE id = 'main_config';");
+    }
+    const r = result.rows[0];
+    res.json({
+      nasProtocol: r.nas_protocol,
+      nasIp: r.nas_ip,
+      nasPort: r.nas_port,
+      nasUser: r.nas_user,
+      nasPassword: r.nas_password,
+      useSsl: r.use_ssl,
+      targetFolder: r.target_folder,
+      apkUrl: r.apk_url,
+      mainStorageDestination: r.main_storage_destination,
+      autoBackupEnabled: r.auto_backup_enabled,
+      scheduleCron: r.schedule_cron,
+      retentionDays: r.retention_days
+    });
+  } catch (err) {
+    console.error('Fetch backup config error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3.2 Save Permanent Backup Configuration Endpoint
+app.post('/api/backup/config', async (req, res) => {
+  const data = req.body || {};
+  try {
+    const q = `
+      INSERT INTO system_backup_config
+      (id, nas_protocol, nas_ip, nas_port, nas_user, nas_password, use_ssl, target_folder, apk_url, main_storage_destination, auto_backup_enabled, schedule_cron, retention_days, updated_at)
+      VALUES ('main_config', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        nas_protocol = EXCLUDED.nas_protocol,
+        nas_ip = EXCLUDED.nas_ip,
+        nas_port = EXCLUDED.nas_port,
+        nas_user = EXCLUDED.nas_user,
+        nas_password = EXCLUDED.nas_password,
+        use_ssl = EXCLUDED.use_ssl,
+        target_folder = EXCLUDED.target_folder,
+        apk_url = EXCLUDED.apk_url,
+        main_storage_destination = EXCLUDED.main_storage_destination,
+        auto_backup_enabled = EXCLUDED.auto_backup_enabled,
+        schedule_cron = EXCLUDED.schedule_cron,
+        retention_days = EXCLUDED.retention_days,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+    const values = [
+      data.nasProtocol || 'Synology WebDAV',
+      data.nasIp || '103.165.253.150',
+      data.nasPort || '5005',
+      data.nasUser || 'Maia',
+      data.nasPassword || '••••••••',
+      Boolean(data.useSsl),
+      data.targetFolder || '/sewer_bita',
+      data.apkUrl || '',
+      data.mainStorageDestination || 'Synology NAS',
+      Boolean(data.autoBackupEnabled),
+      data.scheduleCron || 'Setiap Hari (23:00 WIB)',
+      Number(data.retentionDays) || 30
+    ];
+    await pool.query(q, values);
+    res.json({ success: true, message: 'Konfigurasi backup & Synology NAS berhasil disimpan secara permanen di PostgreSQL!' });
+  } catch (err) {
+    console.error('Save backup config error:', err);
     res.status(500).json({ error: err.message });
   }
 });

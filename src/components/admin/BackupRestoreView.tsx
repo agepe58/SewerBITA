@@ -128,6 +128,33 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     ];
   });
 
+  const reloadConfigFromApi = useCallback(async () => {
+    const cfg = await apiClient.getBackupConfig();
+    if (cfg) {
+      if (cfg.nasProtocol) setNasProtocol(cfg.nasProtocol);
+      if (cfg.nasIp) setNasIp(cfg.nasIp);
+      if (cfg.nasPort) setNasPort(cfg.nasPort);
+      if (cfg.nasUser) setNasUser(cfg.nasUser);
+      if (cfg.nasPassword) setNasPassword(cfg.nasPassword);
+      if (typeof cfg.useSsl === 'boolean') setUseSsl(cfg.useSsl);
+      if (cfg.targetFolder) setTargetFolder(cfg.targetFolder);
+      if (cfg.apkUrl) setApkUrl(cfg.apkUrl);
+      if (cfg.mainStorageDestination) setMainStorageDestination(cfg.mainStorageDestination);
+      if (typeof cfg.autoBackupEnabled === 'boolean') setAutoBackupEnabled(cfg.autoBackupEnabled);
+      if (cfg.scheduleCron) setScheduleCron(cfg.scheduleCron);
+      if (cfg.retentionDays) setRetentionDays(cfg.retentionDays);
+
+      localStorage.setItem('sewerbita_nas_proto', cfg.nasProtocol || '');
+      localStorage.setItem('sewerbita_nas_ip', cfg.nasIp || '');
+      localStorage.setItem('sewerbita_nas_port', cfg.nasPort || '');
+      localStorage.setItem('sewerbita_nas_user', cfg.nasUser || '');
+      localStorage.setItem('sewerbita_nas_pass', cfg.nasPassword || '');
+      localStorage.setItem('sewerbita_nas_ssl', String(cfg.useSsl));
+      localStorage.setItem('sewerbita_nas_folder', cfg.targetFolder || '');
+      localStorage.setItem('sewerbita_nas_apk_url', cfg.apkUrl || '');
+    }
+  }, []);
+
   const reloadHistoryFromApi = useCallback(async () => {
     const serverHistory = await apiClient.getBackupHistory();
     if (serverHistory && Array.isArray(serverHistory) && serverHistory.length > 0) {
@@ -137,8 +164,9 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
   }, []);
 
   useEffect(() => {
+    reloadConfigFromApi();
     reloadHistoryFromApi();
-  }, [reloadHistoryFromApi]);
+  }, [reloadConfigFromApi, reloadHistoryFromApi]);
 
   useEffect(() => {
     localStorage.setItem('sewerbita_backup_history', JSON.stringify(backupHistory));
@@ -176,8 +204,23 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     }
   };
 
-  // Save Settings
-  const handleSaveSettings = () => {
+  // Save Settings permanently to PostgreSQL DB and LocalStorage
+  const handleSaveSettings = async () => {
+    const payload = {
+      nasProtocol,
+      nasIp,
+      nasPort,
+      nasUser,
+      nasPassword,
+      useSsl,
+      targetFolder,
+      apkUrl,
+      mainStorageDestination,
+      autoBackupEnabled,
+      scheduleCron,
+      retentionDays
+    };
+
     localStorage.setItem('sewerbita_nas_proto', nasProtocol);
     localStorage.setItem('sewerbita_nas_ip', nasIp);
     localStorage.setItem('sewerbita_nas_port', nasPort);
@@ -186,7 +229,13 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     localStorage.setItem('sewerbita_nas_ssl', String(useSsl));
     localStorage.setItem('sewerbita_nas_folder', targetFolder);
     localStorage.setItem('sewerbita_nas_apk_url', apkUrl);
-    alert('Pengaturan Synology NAS dan Target Storage berhasil disimpan!');
+
+    const res = await apiClient.saveBackupConfig(payload);
+    if (res && res.success) {
+      alert('✅ Pengaturan Synology NAS & Jadwal Backup berhasil disimpan secara permanen di PostgreSQL Database!');
+    } else {
+      alert('Pengaturan telah disimpan di memori lokal browser.');
+    }
   };
 
   // Execute Backup via Real Backend & WebDAV Upload
