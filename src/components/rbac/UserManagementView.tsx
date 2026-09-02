@@ -189,12 +189,12 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 
             <div className="space-y-4">
               {filteredUsers.length === 0 ? (
-                <div className="p-10 text-center text-xs text-slate-400 font-semibold border border-dashed rounded-2xl bg-slate-50/50 dark:bg-slate-800/30">
+                <div className="p-10 text-center text-xs text-slate-400 font-semibold border border-dashed rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
                   Tidak ada pengguna dengan status '{statusFilter}'.
                 </div>
               ) : (
                 filteredUsers.map(usr => (
-                <div key={usr.id} className="bg-slate-50 dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-md">
+                <div key={usr.id} className="bg-slate-50 dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-md">
                   <div className="flex items-center gap-3.5 min-w-0">
                     <img src={usr.avatar} alt={usr.name} className="w-11 h-11 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800 shadow-xs shrink-0" />
                     <div className="min-w-0 space-y-0.5">

@@ -346,8 +346,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       {/* 1. TOP METRIC STAT CARDS (4 Cards matching Screenshot) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" style={{ marginBottom: '14px' }}>
         {/* Card 1: Full Backup Terakhir */}
-        <div className={`p-5 rounded-2xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
-          <div className="w-12 h-12 rounded-2xl bg-blue-950/60 border border-blue-500/30 flex items-center justify-center shrink-0">
+        <div className={`p-5 rounded-xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
+          <div className="w-12 h-12 rounded-xl bg-blue-950/60 border border-blue-500/30 flex items-center justify-center shrink-0">
             <Database className="w-5 h-5 text-blue-400" />
           </div>
           <div className="min-w-0">
@@ -357,8 +357,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
 
         {/* Card 2: Incremental Terakhir */}
-        <div className={`p-5 rounded-2xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center shrink-0">
+        <div className={`p-5 rounded-xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
+          <div className="w-12 h-12 rounded-xl bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center shrink-0">
             <RotateCcw className="w-5 h-5 text-indigo-400" />
           </div>
           <div className="min-w-0">
@@ -368,8 +368,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
 
         {/* Card 3: Destinasi Aktif */}
-        <div className={`p-5 rounded-2xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center shrink-0">
+        <div className={`p-5 rounded-xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
+          <div className="w-12 h-12 rounded-xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center shrink-0">
             <Server className="w-5 h-5 text-emerald-400" />
           </div>
           <div className="min-w-0">
@@ -379,8 +379,8 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
 
         {/* Card 4: Total Storage */}
-        <div className={`p-5 rounded-2xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
-          <div className="w-12 h-12 rounded-2xl bg-amber-950/60 border border-amber-500/30 flex items-center justify-center shrink-0">
+        <div className={`p-5 rounded-xl border flex items-center gap-4 shadow-sm ${cardBg}`}>
+          <div className="w-12 h-12 rounded-xl bg-amber-950/60 border border-amber-500/30 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-5 h-5 text-amber-400" />
           </div>
           <div className="min-w-0">
@@ -391,7 +391,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       </div>
 
       {/* 2. MANUAL BACKUP EXECUTION BAR (matching Screenshot) */}
-      <div className={`p-5 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${cardBg}`} style={{ marginBottom: '14px' }}>
+      <div className={`p-5 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${cardBg}`} style={{ marginBottom: '14px' }}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
             <Zap className="w-5 h-5 text-blue-400" />
@@ -425,7 +425,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       {/* Execution Result Alert Banner */}
       {backupExecutionAlert && (
-        <div className={`p-4 rounded-2xl border text-xs font-semibold flex items-center justify-between gap-3 animate-in fade-in ${
+        <div className={`p-4 rounded-xl border text-xs font-semibold flex items-center justify-between gap-3 animate-in fade-in ${
           backupExecutionAlert.type === 'success'
             ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
             : backupExecutionAlert.type === 'warning'
@@ -450,7 +450,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       )}
 
       {/* 3. SUB-NAVIGATION TABS */}
-      <div className={`p-1.5 rounded-2xl border flex items-center gap-2 max-w-2xl shadow-xs ${cardBg}`} style={{ marginBottom: '14px' }}>
+      <div className={`p-1.5 rounded-xl border flex items-center gap-2 max-w-2xl shadow-xs ${cardBg}`} style={{ marginBottom: '14px' }}>
         <button
           onClick={() => setActiveSubTab('synology')}
           className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
@@ -490,7 +490,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       {/* 4. TAB CONTENT: SYNOLOGY NAS CONFIGURATION */}
       {activeSubTab === 'synology' && (
-        <div className={`p-6 rounded-2xl border space-y-6 shadow-sm ${cardBg}`}>
+        <div className={`p-6 rounded-xl border space-y-6 shadow-sm ${cardBg}`}>
           {/* Header */}
           <div>
             <h3 className="text-base font-extrabold text-white">Destinasi Penyimpanan Backup</h3>
@@ -512,7 +512,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           </div>
 
           {/* Card: Pengaturan Synology NAS */}
-          <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800/90 space-y-5">
+          <div className="p-5 rounded-xl bg-slate-900/50 border border-slate-800/90 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
@@ -695,7 +695,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       {/* 4. TAB CONTENT: PENGATURAN JADWAL OTOMATIS */}
       {activeSubTab === 'jadwal' && (
-        <div className={`p-6 rounded-2xl border space-y-6 shadow-sm ${cardBg}`}>
+        <div className={`p-6 rounded-xl border space-y-6 shadow-sm ${cardBg}`}>
           <div>
             <h3 className="text-base font-extrabold text-white">Pengaturan Jadwal Backup Otomatis</h3>
             <p className="text-xs text-slate-400 font-medium">Atur penjadwalan berkala untuk database dan aset tanpa intervensi manual.</p>
@@ -745,7 +745,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
       {/* 4. TAB CONTENT: PEMULIHAN DATA (RESTORE) */}
       {activeSubTab === 'restore' && (
-        <div className={`p-6 rounded-2xl border space-y-6 shadow-sm ${cardBg}`}>
+        <div className={`p-6 rounded-xl border space-y-6 shadow-sm ${cardBg}`}>
           <div>
             <h3 className="text-base font-extrabold text-white">Pemulihan Data & Disaster Recovery</h3>
             <p className="text-xs text-slate-400 font-medium">Pulihkan skema dan snapshot data PostgreSQL dari arsip Synology NAS.</p>
@@ -782,7 +782,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       )}
 
       {/* 5. RIWAYAT EKSEKUSI BACKUP TABLE (matching Screenshot) */}
-      <div className={`p-6 rounded-2xl border space-y-4 shadow-sm ${cardBg}`}>
+      <div className={`p-6 rounded-xl border space-y-4 shadow-sm ${cardBg}`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-extrabold text-white">Riwayat Eksekusi Backup</h3>

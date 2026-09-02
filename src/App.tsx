@@ -190,23 +190,16 @@ export const App: React.FC = () => {
     return [];
   });
 
-  const DEFAULT_AREAS = [
-    'Kawasan Industri Bukit Indah',
-    'Sektor Komersial Central',
-    'Area Residensial Utara',
-    'Zona Distribusi PAM Utama'
-  ];
-
-  // Areas state with LocalStorage persistence
+  // Areas state with LocalStorage persistence (No demo data)
   const [areas, setAreas] = useState<string[]>(() => {
     const saved = localStorage.getItem('sewerbita_areas');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) { console.error('Failed to load areas', e); }
     }
-    return DEFAULT_AREAS;
+    return [];
   });
 
   useEffect(() => { localStorage.setItem('sewerbita_areas', JSON.stringify(areas)); }, [areas]);

@@ -133,7 +133,7 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
 
       {/* SUMMARY STATS BAR */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5" style={{ marginBottom: '14px' }}>
-        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-2xl shadow-md flex items-center justify-between">
+        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-xl shadow-md flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">Total Area / Zona</span>
             <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{areas.length}</div>
@@ -143,7 +143,7 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-2xl shadow-md flex items-center justify-between">
+        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-xl shadow-md flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">Total Aset Terdaftar</span>
             <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{allAssets.length}</div>
@@ -153,7 +153,7 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-2xl shadow-md flex items-center justify-between">
+        <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-4.5 rounded-xl shadow-md flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">Rata-rata Aset / Area</span>
             <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
@@ -167,7 +167,7 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
       </div>
 
       {/* SEARCH BAR */}
-      <div className="flex items-center gap-3 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-3.5 rounded-2xl shadow-md" style={{ marginBottom: '14px' }}>
+      <div className="flex items-center gap-3 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 p-3.5 rounded-xl shadow-md" style={{ marginBottom: '14px' }}>
         <Search className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
         <input
           type="text"
@@ -184,7 +184,7 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
       </div>
 
       {/* AREA GRID / TABLE LIST */}
-      <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 rounded-2xl overflow-hidden shadow-md">
+      <div className="bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700/90 rounded-xl overflow-hidden shadow-md">
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h2 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Daftar Wilayah Operasional ({filteredAreaStats.length})
@@ -261,7 +261,7 @@ export const AreaManagementView: React.FC<AreaManagementViewProps> = ({
       {/* MODAL: TAMBAH AREA BARU */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Map className="w-5 h-5 text-[#2563EB]" />
