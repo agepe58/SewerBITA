@@ -271,6 +271,60 @@ const initDb = async () => {
       WHERE mh.id = ranked.id;
     `);
 
+    // 14. Auto-Seed Baseline Assets if Database is Empty
+    const mhCheck = await pool.query('SELECT COUNT(*) FROM manhole_assets;');
+    if (parseInt(mhCheck.rows[0].count, 10) === 0) {
+      console.log('🌱 Seeding initial baseline assets into PostgreSQL database...');
+      await pool.query(`
+        INSERT INTO manhole_assets (id, asset_code, name, area, latitude, longitude, depth_meters, diameter_mm, material, status, condition)
+        VALUES 
+          ('mh-101', 'MH-SD-01', 'Manhole Kolektor Sudirman 01', 'Kawasan Industri Bukit Indah', -6.444200, 107.452100, 3.5, 1000, 'Precast Concrete', 'Active', 'Good'),
+          ('mh-102', 'MH-SD-02', 'Manhole Kolektor Sudirman 02', 'Kawasan Industri Bukit Indah', -6.445500, 107.453800, 3.8, 1000, 'Precast Concrete', 'Active', 'Good'),
+          ('mh-103', 'MH-SD-03', 'Manhole Kolektor Sudirman 03', 'Sektor Komersial Central', -6.447000, 107.455200, 4.0, 1200, 'Precast Concrete', 'Active', 'Fair'),
+          ('mh-104', 'MH-RES-01', 'Manhole Residensial Utama 01', 'Area Residensial Utara', -6.442100, 107.449800, 2.8, 800, 'Precast Concrete', 'Active', 'Good')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+
+      await pool.query(`
+        INSERT INTO pump_station_assets (id, asset_code, name, area, latitude, longitude, flow_capacity_lps, total_pumps, active_pumps, power_source, status, condition)
+        VALUES 
+          ('ps-01', 'PS-BKI-01', 'Stasiun Pompa Utama Bukit Indah', 'Kawasan Industri Bukit Indah', -6.448500, 107.457100, 450, 4, 3, 'PLN 3-Phase + Generator Backup', 'Active', 'Good')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+
+      await pool.query(`
+        INSERT INTO pipe_assets (id, asset_code, name, area, from_asset_id, to_asset_id, length_meters, diameter_mm, material, pipe_category, status, condition)
+        VALUES 
+          ('p-101', 'P-MH-SD-01_MH-SD-02', 'Pipa Kolektor Segmen 01-02', 'Kawasan Industri Bukit Indah', 'mh-101', 'mh-102', 180, 800, 'HDPE', 'gravity', 'Active', 'Good'),
+          ('p-102', 'P-MH-SD-02_MH-SD-03', 'Pipa Kolektor Segmen 02-03', 'Sektor Komersial Central', 'mh-102', 'mh-103', 210, 800, 'HDPE', 'gravity', 'Active', 'Fair'),
+          ('p-103', 'P-TR-PS-BKI-01_WWTP', 'Pipa Transmisi Tekanan PS-BKI-01 → WWTP', 'Kawasan Industri Bukit Indah', 'ps-01', 'mh-103', 450, 400, 'HDPE PN16', 'transmission', 'Active', 'Good')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+
+      await pool.query(`
+        INSERT INTO wtp_assets (id, asset_code, name, area, latitude, longitude, production_capacity_lps, raw_water_source, water_quality_status, status, condition)
+        VALUES 
+          ('wtp-01', 'WTP-PAM-01', 'Instalasi Pengolahan Air (WTP) Bukit Indah', 'Zona Distribusi PAM Utama', -6.441000, 107.447000, 500, 'Sungai Citarum / Waduk Jatiluhur', 'Aman - Permenkes 2023', 'Active', 'Good')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+
+      await pool.query(`
+        INSERT INTO water_accessory_assets (id, asset_code, name, area, latitude, longitude, accessory_type, system_category, diameter_mm, pressure_bar, operating_status, status, condition)
+        VALUES 
+          ('acc-01', 'ACC-AV-01', 'Air Release Valve Pipa Utama Jl. Sudirman', 'Kawasan Industri Bukit Indah', -6.446200, 107.454500, 'air_valve', 'sewerage', 150, 6.0, 'Normal Open', 'Active', 'Good'),
+          ('acc-02', 'ACC-GV-01', 'Gate Valve Pengatur Segmen PAM Utama', 'Zona Distribusi PAM Utama', -6.441800, 107.448200, 'gate_valve', 'clean_water', 250, 10.0, 'Normal Open', 'Active', 'Good')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+
+      await pool.query(`
+        INSERT INTO grease_trap_assets (id, asset_code, name, area, latitude, longitude, capacity_liters, chamber_count, outlet_manhole_id, cleaning_frequency_days, grease_level_percent, status, condition)
+        VALUES 
+          ('gt-01', 'GT-REST-01', 'Grease Trap Restoran Sederhana Kluster A', 'Sektor Komersial Central', -6.446800, 107.455000, 1000, 3, 'mh-103', 30, 25, 'Active', 'Good')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+      console.log('✅ Baseline assets seeded successfully!');
+    }
+
     console.log('✅ PostgreSQL Schema & Tables (work_orders, projects, reports, assets, users) initialized for production!');
   } catch (err) {
     console.error('⚠️ DB Init Warning:', err.message);

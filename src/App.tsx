@@ -190,23 +190,35 @@ export const App: React.FC = () => {
     return [];
   });
 
+  const DEFAULT_AREAS = [
+    'Kawasan Industri Bukit Indah',
+    'Sektor Komersial Central',
+    'Area Residensial Utara',
+    'Zona Distribusi PAM Utama'
+  ];
+
   // Areas state with LocalStorage persistence
   const [areas, setAreas] = useState<string[]>(() => {
     const saved = localStorage.getItem('sewerbita_areas');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) { console.error('Failed to load areas', e); }
     }
-    return [];
+    return DEFAULT_AREAS;
   });
 
-  useEffect(() => {
-    localStorage.setItem('sewerbita_areas', JSON.stringify(areas));
-  }, [areas]);
+  useEffect(() => { localStorage.setItem('sewerbita_areas', JSON.stringify(areas)); }, [areas]);
+  useEffect(() => { localStorage.setItem('sewerbita_manholes', JSON.stringify(manholes)); }, [manholes]);
+  useEffect(() => { localStorage.setItem('sewerbita_pump_stations', JSON.stringify(pumpStations)); }, [pumpStations]);
+  useEffect(() => { localStorage.setItem('sewerbita_pipes', JSON.stringify(pipes)); }, [pipes]);
+  useEffect(() => { localStorage.setItem('sewerbita_wtps', JSON.stringify(wtps)); }, [wtps]);
+  useEffect(() => { localStorage.setItem('sewerbita_water_accessories', JSON.stringify(waterAccessories)); }, [waterAccessories]);
+  useEffect(() => { localStorage.setItem('sewerbita_grease_traps', JSON.stringify(greaseTraps)); }, [greaseTraps]);
+  useEffect(() => { localStorage.setItem('sewerbita_inspections', JSON.stringify(inspections)); }, [inspections]);
 
-  // Reload Assets from Backend PostgreSQL API
+  // Reload Assets from Backend PostgreSQL API (Smart Merge with Local Persistence)
   const reloadAssetsList = useCallback(async () => {
     const assetData = await apiClient.getAssets();
     if (assetData) {
@@ -216,16 +228,56 @@ export const App: React.FC = () => {
       const w = assetData.wtps || [];
       const acc = assetData.waterAccessories || [];
       const gt = assetData.greaseTraps || [];
-      setManholes(m);
-      setPumpStations(ps);
-      setPipes(p);
-      setWtps(w);
-      setWaterAccessories(acc);
-      setGreaseTraps(gt);
+
+      // Smart merge DB assets with local state so data is NEVER lost
+      if (m.length > 0) {
+        setManholes(prev => {
+          const map = new Map(prev.map(i => [i.id, i]));
+          m.forEach(i => map.set(i.id, i));
+          return Array.from(map.values());
+        });
+      }
+      if (ps.length > 0) {
+        setPumpStations(prev => {
+          const map = new Map(prev.map(i => [i.id, i]));
+          ps.forEach(i => map.set(i.id, i));
+          return Array.from(map.values());
+        });
+      }
+      if (p.length > 0) {
+        setPipes(prev => {
+          const map = new Map(prev.map(i => [i.id, i]));
+          p.forEach(i => map.set(i.id, i));
+          return Array.from(map.values());
+        });
+      }
+      if (w.length > 0) {
+        setWtps(prev => {
+          const map = new Map(prev.map(i => [i.id, i]));
+          w.forEach(i => map.set(i.id, i));
+          return Array.from(map.values());
+        });
+      }
+      if (acc.length > 0) {
+        setWaterAccessories(prev => {
+          const map = new Map(prev.map(i => [i.id, i]));
+          acc.forEach(i => map.set(i.id, i));
+          return Array.from(map.values());
+        });
+      }
+      if (gt.length > 0) {
+        setGreaseTraps(prev => {
+          const map = new Map(prev.map(i => [i.id, i]));
+          gt.forEach(i => map.set(i.id, i));
+          return Array.from(map.values());
+        });
+      }
 
       // Dynamically derive unique areas present in database assets
       const realDbAreas = Array.from(new Set([...m, ...ps, ...p, ...w, ...acc, ...gt].map((a: any) => a.area).filter(Boolean)));
-      setAreas(prev => Array.from(new Set([...prev, ...realDbAreas])));
+      if (realDbAreas.length > 0) {
+        setAreas(prev => Array.from(new Set([...prev, ...realDbAreas])));
+      }
     }
   }, []);
 
