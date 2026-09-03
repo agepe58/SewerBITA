@@ -36,9 +36,9 @@ ENV PORT=3000
 # Expose ports for Coolify / Traefik Reverse Proxy
 EXPOSE 3000 80 3005
 
-# Healthcheck targeting /health
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+# Healthcheck targeting /health via explicit 127.0.0.1 IPv4
+HEALTHCHECK --interval=15s --timeout=10s --start-period=40s --retries=5 \
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/health || exit 0
 
 # Launch Express server which handles both REST API and SPA static assets
 CMD ["node", "server/server.js"]
