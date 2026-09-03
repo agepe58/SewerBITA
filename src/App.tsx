@@ -408,26 +408,50 @@ export const App: React.FC = () => {
   };
 
   const handleEditManhole = async (updatedMh: ManholeAsset) => {
-    await apiClient.updateAsset(updatedMh.id, 'manhole', updatedMh);
+    const saved = await apiClient.updateAsset(updatedMh.id, 'manhole', updatedMh);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Diperbarui', `Manhole ${updatedMh.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setAssetToEdit(null);
   };
 
   const handleEditPumpStation = async (updatedPs: PumpStationAsset) => {
-    await apiClient.updateAsset(updatedPs.id, 'pumpStation', updatedPs);
+    const saved = await apiClient.updateAsset(updatedPs.id, 'pump_station', updatedPs);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Diperbarui', `Stasiun Pompa ${updatedPs.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setAssetToEdit(null);
   };
 
   const handleEditPipe = async (updatedPipe: PipeAsset) => {
-    await apiClient.updateAsset(updatedPipe.id, 'pipe', updatedPipe);
+    const saved = await apiClient.updateAsset(updatedPipe.id, 'pipe', updatedPipe);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Diperbarui', `Pipa ${updatedPipe.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setAssetToEdit(null);
   };
 
   const handleDeleteAsset = async (id: string, _type: 'manhole' | 'pumpStation' | 'pipe') => {
-    await apiClient.deleteAsset(id);
+    const res = await apiClient.deleteAsset(id);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (res) {
+      addToast('success', 'Aset Berhasil Dihapus', 'Data aset telah dihapus dari PostgreSQL server.');
+    } else {
+      addToast('error', 'Gagal Menghapus Aset', 'Terjadi kesalahan saat menghapus dari database.');
+    }
   };
 
   const handleAddInspection = async (newInsp: Omit<InspectionRecord, 'id'>) => {

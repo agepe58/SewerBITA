@@ -384,7 +384,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
 
                       {/* Jatuh Tempo */}
                       <td className="py-3.5 px-4 text-slate-300 font-medium whitespace-nowrap">
-                        {asset.nextInspectionDue || '-'}
+                        {asset.nextInspectionDue ? asset.nextInspectionDue.split('T')[0] : '-'}
                       </td>
 
                       {/* Aksi */}
