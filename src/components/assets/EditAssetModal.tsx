@@ -131,6 +131,8 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
     onClose();
   };
 
+  const availableAreas = Array.from(new Set([asset?.area, area, ...areas])).filter(Boolean) as string[];
+
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1300] flex items-center justify-center p-4">
       <div className="bg-white border border-slate-200/90 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden text-sm text-slate-900 font-sans">
@@ -198,7 +200,7 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
                 onChange={e => setArea(e.target.value)}
                 className="w-full bg-slate-50 font-bold text-slate-900 border border-slate-200 rounded-xl p-3 mt-1 focus:bg-white focus:outline-none focus:border-[#2563EB]"
               >
-                {areas.map(a => (
+                {availableAreas.map(a => (
                   <option key={a} value={a}>{a}</option>
                 ))}
               </select>
