@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Edit3, Save, MapPin, Boxes, GitBranch, Zap } from 'lucide-react';
-import { ManholeAsset, PipeAsset, PumpStationAsset, SewerAsset, AssetCondition } from '../../types/asset';
+import { ManholeAsset, PipeAsset, PumpStationAsset, SewerAsset, AssetCondition, WtpAsset, WaterAccessoryAsset, GreaseTrapAsset } from '../../types/asset';
 
 interface EditAssetModalProps {
   asset: SewerAsset | null;
@@ -8,6 +8,7 @@ interface EditAssetModalProps {
   onSaveManhole: (updated: ManholeAsset) => void;
   onSavePipe: (updated: PipeAsset) => void;
   onSavePumpStation: (updated: PumpStationAsset) => void;
+  onSaveAsset?: (updated: SewerAsset) => void;
   areas: string[];
 }
 
@@ -17,9 +18,13 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
   onSaveManhole,
   onSavePipe,
   onSavePumpStation,
+  onSaveAsset,
   areas
 }) => {
   if (!asset) return null;
+
+  const initialLat = Number((asset as any)?.coordinates?.lat ?? (asset as any)?.latitude ?? -6.444);
+  const initialLng = Number((asset as any)?.coordinates?.lng ?? (asset as any)?.longitude ?? 107.452);
 
   // Base state
   const [assetCode, setAssetCode] = useState(asset.assetCode);
@@ -32,8 +37,8 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
   const [depthMeters, setDepthMeters] = useState(asset.type === 'manhole' ? asset.depthMeters : 3.5);
   const [diameterMm, setDiameterMm] = useState(asset.type === 'manhole' || asset.type === 'pipe' ? asset.diameterMm : 1000);
   const [mhMaterial, setMhMaterial] = useState(asset.type === 'manhole' ? asset.material : 'Precast Concrete');
-  const [lat, setLat] = useState(asset.type === 'manhole' || asset.type === 'pump_station' ? asset.coordinates.lat : -6.444);
-  const [lng, setLng] = useState(asset.type === 'manhole' || asset.type === 'pump_station' ? asset.coordinates.lng : 107.452);
+  const [lat, setLat] = useState(initialLat);
+  const [lng, setLng] = useState(initialLng);
 
   // Pipe states
   const [lengthMeters, setLengthMeters] = useState(asset.type === 'pipe' ? asset.lengthMeters : 100);
@@ -51,18 +56,21 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
   // Synchronize states when target asset changes
   useEffect(() => {
     if (asset) {
-      setAssetCode(asset.assetCode);
-      setName(asset.name);
-      setArea(asset.area);
-      setCondition(asset.condition);
+      const curLat = Number((asset as any)?.coordinates?.lat ?? (asset as any)?.latitude ?? -6.444);
+      const curLng = Number((asset as any)?.coordinates?.lng ?? (asset as any)?.longitude ?? 107.452);
+
+      setAssetCode(asset.assetCode || '');
+      setName(asset.name || '');
+      setArea(asset.area || 'Utama');
+      setCondition(asset.condition || 'Good');
       setNextInspectionDue(asset.nextInspectionDue || '');
+      setLat(curLat);
+      setLng(curLng);
 
       if (asset.type === 'manhole') {
         setDepthMeters(asset.depthMeters);
         setDiameterMm(asset.diameterMm);
         setMhMaterial(asset.material);
-        setLat(asset.coordinates.lat);
-        setLng(asset.coordinates.lng);
       } else if (asset.type === 'pipe') {
         setLengthMeters(asset.lengthMeters);
         setDiameterMm(asset.diameterMm);
@@ -75,8 +83,6 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
         setPumpCount(asset.pumpCount);
         setActivePumps(asset.activePumps);
         setPowerSource(asset.powerSource);
-        setLat(asset.coordinates.lat);
-        setLng(asset.coordinates.lng);
       }
     }
   }, [asset]);
@@ -84,27 +90,31 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const safeLat = Number(lat) || initialLat;
+    const safeLng = Number(lng) || initialLng;
+
+    const baseUpdated = {
+      ...asset,
+      assetCode,
+      name,
+      area,
+      condition,
+      nextInspectionDue,
+      coordinates: { lat: safeLat, lng: safeLng },
+      latitude: safeLat,
+      longitude: safeLng
+    };
+
     if (asset.type === 'manhole') {
       onSaveManhole({
-        ...(asset as ManholeAsset),
-        assetCode,
-        name,
-        area,
-        condition,
-        nextInspectionDue,
+        ...(baseUpdated as ManholeAsset),
         depthMeters: Number(depthMeters),
         diameterMm: Number(diameterMm),
-        material: mhMaterial,
-        coordinates: { lat: Number(lat), lng: Number(lng) }
+        material: mhMaterial
       });
     } else if (asset.type === 'pipe') {
       onSavePipe({
-        ...(asset as PipeAsset),
-        assetCode,
-        name,
-        area,
-        condition,
-        nextInspectionDue,
+        ...(baseUpdated as PipeAsset),
         lengthMeters: Number(lengthMeters),
         diameterMm: Number(diameterMm),
         material: pipeMaterial,
@@ -114,18 +124,14 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
       });
     } else if (asset.type === 'pump_station') {
       onSavePumpStation({
-        ...(asset as PumpStationAsset),
-        assetCode,
-        name,
-        area,
-        condition,
-        nextInspectionDue,
+        ...(baseUpdated as PumpStationAsset),
         capacityLps: Number(capacityLps),
         pumpCount: Number(pumpCount),
         activePumps: Number(activePumps),
-        powerSource,
-        coordinates: { lat: Number(lat), lng: Number(lng) }
+        powerSource
       });
+    } else if (onSaveAsset) {
+      onSaveAsset(baseUpdated as SewerAsset);
     }
 
     onClose();
