@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset, WtpAsset, WaterAccessoryAsset, GreaseTrapAsset } from '../../types/asset';
 import { NetworkTraceResult } from '../../types/topology';
@@ -118,17 +118,7 @@ const createGreaseTrapIcon = (isHighlighted: boolean) => {
   });
 };
 
-// Component to handle map zoom events
-const MapZoomHandler: React.FC<{ onRefreshOnZoom?: () => void }> = ({ onRefreshOnZoom }) => {
-  useMapEvents({
-    zoomend: () => {
-      if (onRefreshOnZoom) {
-        onRefreshOnZoom();
-      }
-    }
-  });
-  return null;
-};
+
 
 // Component to handle pan to selected asset
 const MapController: React.FC<{ centerCoords: [number, number] | null }> = ({ centerCoords }) => {
@@ -141,11 +131,13 @@ const MapController: React.FC<{ centerCoords: [number, number] | null }> = ({ ce
   return null;
 };
 
-// Component to automatically fit bounds for all assets
+// Component to automatically fit bounds ONLY ON INITIAL MAP LOAD (Never reset user zoom/pan)
 const MapBoundsAutoFitter: React.FC<{ assets: SewerAsset[] }> = ({ assets }) => {
   const map = useMap();
+  const hasFitted = React.useRef(false);
+
   useEffect(() => {
-    if (assets && assets.length > 0) {
+    if (!hasFitted.current && assets && assets.length > 0) {
       const points: [number, number][] = assets
         .map(a => {
           const item = a as any;
@@ -159,9 +151,11 @@ const MapBoundsAutoFitter: React.FC<{ assets: SewerAsset[] }> = ({ assets }) => 
       if (points.length > 0) {
         const bounds = L.latLngBounds(points);
         map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+        hasFitted.current = true;
       }
     }
   }, [assets, map]);
+
   return null;
 };
 
@@ -400,11 +394,10 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         center={defaultCenter}
         zoom={14}
         className="w-full h-full min-h-[600px]"
-        zoomControl={false}
+        zoomControl={true}
       >
         <MapController centerCoords={panTarget} />
         <MapBoundsAutoFitter assets={allAssets} />
-        <MapZoomHandler onRefreshOnZoom={onRefreshOnZoom} />
 
         {/* Dynamic Basemap Tile Layer */}
         <TileLayer
