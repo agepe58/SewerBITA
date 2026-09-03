@@ -178,16 +178,28 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   const [showGreaseTraps, setShowGreaseTraps] = useState(true);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
-  // Basemap Switcher State (Default: Esri Satellite / CARTO Voyager)
-  type BasemapType = 'esri_satellite' | 'carto_voyager' | 'carto_dark' | 'osm_standard';
-  const [basemap, setBasemap] = useState<BasemapType>('esri_satellite');
+  // Basemap Switcher State (Default: Google Hybrid Satellite)
+  type BasemapType = 'google_hybrid' | 'google_satellite' | 'esri_satellite' | 'carto_voyager' | 'carto_dark';
+  const [basemap, setBasemap] = useState<BasemapType>('google_hybrid');
 
   const BASEMAP_TILES: Record<BasemapType, { name: string; icon: string; url: string; attribution: string }> = {
-    esri_satellite: {
-      name: 'Foto Satelit Real',
+    google_hybrid: {
+      name: 'Google Satelit Hybrid',
       icon: '🛰️',
+      url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+      attribution: '&copy; Google Maps'
+    },
+    google_satellite: {
+      name: 'Google Satelit Raw',
+      icon: '🌍',
+      url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+      attribution: '&copy; Google Maps'
+    },
+    esri_satellite: {
+      name: 'ArcGIS Satellite',
+      icon: '📡',
       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      attribution: '&copy; Esri, Maxar, Earthstar Geographics &mdash; ArcGIS World Imagery'
+      attribution: '&copy; Esri, Maxar &mdash; ArcGIS World Imagery'
     },
     carto_voyager: {
       name: 'CARTO Light GIS',
@@ -200,12 +212,6 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       icon: '🌙',
       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
       attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
-    },
-    osm_standard: {
-      name: 'OpenStreetMap',
-      icon: '🏙️',
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }
   };
 
@@ -240,9 +246,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
     setSelectedAssetId(asset ? asset.id : null);
   };
 
-  // Duplicate Coordinate Disambiguation Tracker
-  const dupMap = new Map<string, number>();
-
+  // Pure Precise GIS Coordinate Extractor (No Artificial Offsets)
   const getDisambiguatedCoords = (asset: any, idx: number): [number, number] => {
     const raw = getRawCoords(asset);
     if (!raw) {
@@ -254,20 +258,6 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         Number((107.452 + Math.cos(angle) * radius).toFixed(6))
       ];
     }
-
-    const key = `${raw[0].toFixed(4)}_${raw[1].toFixed(4)}`;
-    const count = dupMap.get(key) || 0;
-    dupMap.set(key, count + 1);
-
-    if (count > 0) {
-      const angle = count * 1.57; // 90 deg steps
-      const radius = 0.0008 * count; // ~80 meters per duplicate
-      return [
-        Number((raw[0] + Math.sin(angle) * radius).toFixed(6)),
-        Number((raw[1] + Math.cos(angle) * radius).toFixed(6))
-      ];
-    }
-
     return raw;
   };
 
@@ -350,21 +340,31 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       {/* Floating Quick Basemap Switcher Pill (Top Right) */}
       <div className="absolute top-4 right-4 z-[1000] bg-white/95 backdrop-blur-md border border-slate-200/90 p-1.5 rounded-xl shadow-lg flex items-center gap-1 text-xs font-extrabold">
         <button
+          onClick={() => setBasemap('google_hybrid')}
+          className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
+            basemap === 'google_hybrid' ? 'bg-[#2563EB] text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'
+          }`}
+          title="Foto Satelit Real Google Maps Hybrid"
+        >
+          <span>🛰️</span>
+          <span>Google Satelit</span>
+        </button>
+        <button
           onClick={() => setBasemap('esri_satellite')}
           className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
             basemap === 'esri_satellite' ? 'bg-[#2563EB] text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'
           }`}
-          title="Foto Satelit Real World Imagery"
+          title="ArcGIS World Imagery Satellite"
         >
-          <span>🛰️</span>
-          <span>Foto Satelit</span>
+          <span>📡</span>
+          <span>ArcGIS</span>
         </button>
         <button
           onClick={() => setBasemap('carto_voyager')}
           className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
             basemap === 'carto_voyager' ? 'bg-[#2563EB] text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'
           }`}
-          title="CARTO Voyager Clean GIS View"
+          title="CARTO Light GIS View"
         >
           <span>🗺️</span>
           <span>Clean GIS</span>
