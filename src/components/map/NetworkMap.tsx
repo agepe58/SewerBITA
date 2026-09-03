@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { SewerAsset, ManholeAsset, PumpStationAsset, PipeAsset, WtpAsset, WaterAccessoryAsset, GreaseTrapAsset } from '../../types/asset';
 import { NetworkTraceResult } from '../../types/topology';
@@ -22,9 +22,10 @@ interface NetworkMapProps {
   onOpenQrModal: (assetId: string) => void;
   onOpenNewInspection: (assetId: string) => void;
   selectedAssetIdFromParent?: string | null;
+  onRefreshOnZoom?: () => void;
 }
 
-// Custom Leaflet DivIcons for Light Minimal Theme
+// Custom Leaflet DivIcons Standardized to Manhole Size (24px x 24px)
 const createManholeIcon = (condition: string, isHighlighted: boolean) => {
   let color = '#16A34A'; // Good
   if (condition === 'Fair') color = '#0284C7';
@@ -53,12 +54,12 @@ const createPumpStationIcon = (isHighlighted: boolean) => {
   return L.divIcon({
     className: 'custom-ps-icon',
     html: `
-      <div class="relative flex items-center justify-center w-9 h-9 bg-[#2563EB] text-white rounded-xl border-2 border-white shadow-lg ${isHighlighted ? 'scale-125' : ''}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <div class="relative flex items-center justify-center w-6 h-6 bg-[#2563EB] text-white rounded-lg border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-blue-400' : ''}">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       </div>
     `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18]
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
   });
 };
 
@@ -66,12 +67,12 @@ const createWtpIcon = (isHighlighted: boolean) => {
   return L.divIcon({
     className: 'custom-wtp-icon',
     html: `
-      <div class="relative flex items-center justify-center w-10 h-10 bg-[#0284C7] text-white rounded-2xl border-2 border-white shadow-xl ${isHighlighted ? 'scale-125' : ''}">
-        <span class="text-base">🏭</span>
+      <div class="relative flex items-center justify-center w-6 h-6 bg-[#0284C7] text-white rounded-lg border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-sky-400' : ''}">
+        <span class="text-[10px]">🏭</span>
       </div>
     `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
   });
 };
 
@@ -95,12 +96,12 @@ const createWaterAccessoryIcon = (accessoryType: string, isHighlighted: boolean)
   return L.divIcon({
     className: 'custom-accessory-icon',
     html: `
-      <div class="relative flex items-center justify-center w-7 h-7 ${bg} text-white rounded-lg border-2 border-white shadow-md ${isHighlighted ? 'scale-125' : ''}">
-        <span class="text-xs font-bold">${symbol}</span>
+      <div class="relative flex items-center justify-center w-6 h-6 ${bg} text-white rounded-lg border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-white' : ''}">
+        <span class="text-[10px] font-bold">${symbol}</span>
       </div>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14]
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
   });
 };
 
@@ -108,13 +109,25 @@ const createGreaseTrapIcon = (isHighlighted: boolean) => {
   return L.divIcon({
     className: 'custom-grease-trap-icon',
     html: `
-      <div class="relative flex items-center justify-center w-7 h-7 bg-amber-600 text-white rounded-lg border-2 border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-amber-400' : ''}">
-        <span class="text-xs font-bold">🍳</span>
+      <div class="relative flex items-center justify-center w-6 h-6 bg-amber-600 text-white rounded-lg border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-amber-400' : ''}">
+        <span class="text-[10px] font-bold">🍳</span>
       </div>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14]
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
   });
+};
+
+// Component to handle map zoom events
+const MapZoomHandler: React.FC<{ onRefreshOnZoom?: () => void }> = ({ onRefreshOnZoom }) => {
+  useMapEvents({
+    zoomend: () => {
+      if (onRefreshOnZoom) {
+        onRefreshOnZoom();
+      }
+    }
+  });
+  return null;
 };
 
 // Component to handle pan to selected asset
@@ -166,7 +179,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   onClearTrace,
   onOpenQrModal,
   onOpenNewInspection,
-  selectedAssetIdFromParent
+  selectedAssetIdFromParent,
+  onRefreshOnZoom
 }) => {
   const [selectedArea, setSelectedArea] = useState('All Areas');
   const [selectedCondition, setSelectedCondition] = useState('All Conditions');
@@ -390,6 +404,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       >
         <MapController centerCoords={panTarget} />
         <MapBoundsAutoFitter assets={allAssets} />
+        <MapZoomHandler onRefreshOnZoom={onRefreshOnZoom} />
 
         {/* Dynamic Basemap Tile Layer */}
         <TileLayer

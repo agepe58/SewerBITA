@@ -216,12 +216,15 @@ export const App: React.FC = () => {
   }, [reloadAssetsList, reloadAreasList, reloadInspectionsList, reloadUsersList]);
 
   // Smart Live Polling Efficiency (10 seconds + Window Visibility Listener)
+  // Note: Polling is PAUSED when user is on 'map' tab to allow peaceful observation without flickering
   useEffect(() => {
     let interval: any = null;
+    const isMapTab = (activeTab as string) === 'map';
+
     const startPolling = () => {
-      if (!interval) {
+      if (!interval && !isMapTab) {
         interval = setInterval(() => {
-          if (document.visibilityState === 'visible') {
+          if (document.visibilityState === 'visible' && (activeTab as string) !== 'map') {
             reloadAssetsList();
             reloadAreasList();
             reloadInspectionsList();
@@ -232,7 +235,7 @@ export const App: React.FC = () => {
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && (activeTab as string) !== 'map') {
         reloadAssetsList();
         reloadAreasList();
         reloadInspectionsList();
@@ -244,14 +247,21 @@ export const App: React.FC = () => {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    startPolling();
+    if (isMapTab) {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    } else {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      startPolling();
+    }
 
     return () => {
       if (interval) clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [reloadAssetsList, reloadAreasList, reloadInspectionsList, reloadUsersList]);
+  }, [activeTab, reloadAssetsList, reloadAreasList, reloadInspectionsList, reloadUsersList]);
 
   // Active User & Role Session Initialization
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
@@ -619,6 +629,7 @@ export const App: React.FC = () => {
                             setIsNewInspectionModalOpen(true);
                           }}
                           selectedAssetIdFromParent={selectedAssetIdForMap}
+                          onRefreshOnZoom={reloadAssetsList}
                         />
                       </div>
                     </div>
