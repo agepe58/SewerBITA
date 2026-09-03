@@ -686,6 +686,42 @@ app.put('/api/assets/:id', async (req, res) => {
       return res.json(result.rows[0]);
     }
 
+    if (type === 'wtp') {
+      const q = `
+        UPDATE wtp_assets SET
+          asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
+          production_capacity_lps = $6, raw_water_source = $7, water_quality_status = $8, reservoir_capacity_m3 = $9, status = $10, condition = $11, next_inspection_due = $12
+        WHERE id = $13 RETURNING *;
+      `;
+      const values = [data.assetCode, data.name, data.area, data.latitude, data.longitude, data.productionCapacityLps, data.rawWaterSource, data.waterQualityStatus, data.reservoirCapacityM3, data.status, data.condition, data.nextInspectionDue, id];
+      const result = await pool.query(q, values);
+      return res.json(result.rows[0]);
+    }
+
+    if (type === 'water_accessory') {
+      const q = `
+        UPDATE water_accessory_assets SET
+          asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
+          accessory_type = $6, system_category = $7, pipe_id = $8, diameter_mm = $9, pressure_bar = $10, elevation_meters = $11, operating_status = $12, status = $13, condition = $14, next_inspection_due = $15
+        WHERE id = $16 RETURNING *;
+      `;
+      const values = [data.assetCode, data.name, data.area, data.latitude, data.longitude, data.accessoryType, data.systemCategory, data.pipeId, data.diameterMm, data.pressureBar, data.elevationMeters, data.operatingStatus, data.status, data.condition, data.nextInspectionDue, id];
+      const result = await pool.query(q, values);
+      return res.json(result.rows[0]);
+    }
+
+    if (type === 'grease_trap') {
+      const q = `
+        UPDATE grease_trap_assets SET
+          asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
+          capacity_liters = $6, chamber_count = $7, outlet_manhole_id = $8, cleaning_frequency_days = $9, grease_level_percent = $10, status = $11, condition = $12, next_inspection_due = $13
+        WHERE id = $14 RETURNING *;
+      `;
+      const values = [data.assetCode, data.name, data.area, data.latitude, data.longitude, data.capacityLiters, data.chamberCount, data.outletManholeId, data.cleaningFrequencyDays, data.greaseLevelPercent, data.status, data.condition, data.nextInspectionDue, id];
+      const result = await pool.query(q, values);
+      return res.json(result.rows[0]);
+    }
+
     res.status(400).json({ error: 'Invalid asset type' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -707,6 +743,9 @@ app.delete('/api/assets/:id', async (req, res) => {
     await pool.query('DELETE FROM pipe_assets WHERE from_asset_id = $1 OR to_asset_id = $1 OR id = $1;', [id]);
     await pool.query('DELETE FROM manhole_assets WHERE id = $1;', [id]);
     await pool.query('DELETE FROM pump_station_assets WHERE id = $1;', [id]);
+    await pool.query('DELETE FROM wtp_assets WHERE id = $1;', [id]);
+    await pool.query('DELETE FROM water_accessory_assets WHERE id = $1;', [id]);
+    await pool.query('DELETE FROM grease_trap_assets WHERE id = $1;', [id]);
     res.json({ message: 'Asset deleted successfully', id });
   } catch (err) {
     res.status(500).json({ error: err.message });

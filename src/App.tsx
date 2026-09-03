@@ -101,72 +101,14 @@ export const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  // Master Data States with LocalStorage Persistence
-  const [manholes, setManholes] = useState<ManholeAsset[]>(() => {
-    const saved = localStorage.getItem('sewerbita_manholes');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load manholes', e); }
-    }
-    return [];
-  });
-
-  const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>(() => {
-    const saved = localStorage.getItem('sewerbita_pump_stations');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load pumpStations', e); }
-    }
-    return [];
-  });
-
-  const [pipes, setPipes] = useState<PipeAsset[]>(() => {
-    const saved = localStorage.getItem('sewerbita_pipes');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load pipes', e); }
-    }
-    return [];
-  });
-
-  const [wtps, setWtps] = useState<WtpAsset[]>(() => {
-    const saved = localStorage.getItem('sewerbita_wtps');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load wtps', e); }
-    }
-    return [];
-  });
-
-  const [waterAccessories, setWaterAccessories] = useState<WaterAccessoryAsset[]>(() => {
-    const saved = localStorage.getItem('sewerbita_water_accessories');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load waterAccessories', e); }
-    }
-    return [];
-  });
-
-  const [greaseTraps, setGreaseTraps] = useState<GreaseTrapAsset[]>(() => {
-    const saved = localStorage.getItem('sewerbita_grease_traps');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load greaseTraps', e); }
-    }
-    return [];
-  });
+  // Master Data States (Full Production Mode - PostgreSQL Server is Single Source of Truth)
+  const [manholes, setManholes] = useState<ManholeAsset[]>([]);
+  const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>([]);
+  const [pipes, setPipes] = useState<PipeAsset[]>([]);
+  const [wtps, setWtps] = useState<WtpAsset[]>([]);
+  const [waterAccessories, setWaterAccessories] = useState<WaterAccessoryAsset[]>([]);
+  const [greaseTraps, setGreaseTraps] = useState<GreaseTrapAsset[]>([]);
+  const [areas, setAreas] = useState<string[]>([]);
 
   const [inspections, setInspections] = useState<InspectionRecord[]>(() => {
     const saved = localStorage.getItem('sewerbita_inspections');
@@ -190,28 +132,9 @@ export const App: React.FC = () => {
     return [];
   });
 
-  // Areas state with LocalStorage persistence (No demo data)
-  const [areas, setAreas] = useState<string[]>(() => {
-    const saved = localStorage.getItem('sewerbita_areas');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) { console.error('Failed to load areas', e); }
-    }
-    return [];
-  });
-
-  useEffect(() => { localStorage.setItem('sewerbita_areas', JSON.stringify(areas)); }, [areas]);
-  useEffect(() => { localStorage.setItem('sewerbita_manholes', JSON.stringify(manholes)); }, [manholes]);
-  useEffect(() => { localStorage.setItem('sewerbita_pump_stations', JSON.stringify(pumpStations)); }, [pumpStations]);
-  useEffect(() => { localStorage.setItem('sewerbita_pipes', JSON.stringify(pipes)); }, [pipes]);
-  useEffect(() => { localStorage.setItem('sewerbita_wtps', JSON.stringify(wtps)); }, [wtps]);
-  useEffect(() => { localStorage.setItem('sewerbita_water_accessories', JSON.stringify(waterAccessories)); }, [waterAccessories]);
-  useEffect(() => { localStorage.setItem('sewerbita_grease_traps', JSON.stringify(greaseTraps)); }, [greaseTraps]);
   useEffect(() => { localStorage.setItem('sewerbita_inspections', JSON.stringify(inspections)); }, [inspections]);
 
-  // Reload Assets from Backend PostgreSQL API (Smart Merge with Local Persistence)
+  // Reload Assets Directly from Backend PostgreSQL Database Server (Full Production Mode)
   const reloadAssetsList = useCallback(async () => {
     const assetData = await apiClient.getAssets();
     if (assetData) {
@@ -222,43 +145,17 @@ export const App: React.FC = () => {
       const acc = assetData.waterAccessories || [];
       const gt = assetData.greaseTraps || [];
 
-      // Unconditional Smart Merge with Local Memory & PostgreSQL
-      setManholes(prev => {
-        const map = new Map(prev.map(i => [i.id, i]));
-        m.forEach(i => map.set(i.id, i));
-        return Array.from(map.values());
-      });
-      setPumpStations(prev => {
-        const map = new Map(prev.map(i => [i.id, i]));
-        ps.forEach(i => map.set(i.id, i));
-        return Array.from(map.values());
-      });
-      setPipes(prev => {
-        const map = new Map(prev.map(i => [i.id, i]));
-        p.forEach(i => map.set(i.id, i));
-        return Array.from(map.values());
-      });
-      setWtps(prev => {
-        const map = new Map(prev.map(i => [i.id, i]));
-        w.forEach(i => map.set(i.id, i));
-        return Array.from(map.values());
-      });
-      setWaterAccessories(prev => {
-        const map = new Map(prev.map(i => [i.id, i]));
-        acc.forEach(i => map.set(i.id, i));
-        return Array.from(map.values());
-      });
-      setGreaseTraps(prev => {
-        const map = new Map(prev.map(i => [i.id, i]));
-        gt.forEach(i => map.set(i.id, i));
-        return Array.from(map.values());
-      });
+      // Direct assignment from PostgreSQL DB (Ensures 100% consistency across all browsers)
+      setManholes(m);
+      setPumpStations(ps);
+      setPipes(p);
+      setWtps(w);
+      setWaterAccessories(acc);
+      setGreaseTraps(gt);
 
-      // Dynamically derive unique areas present in database assets & custom created areas
+      // Dynamically derive unique areas present in PostgreSQL database assets
       const realDbAreas = Array.from(new Set([...m, ...ps, ...p, ...w, ...acc, ...gt].map((a: any) => a.area).filter(Boolean)));
-      if (realDbAreas.length > 0) {
-        setAreas(prev => Array.from(new Set([...prev, ...realDbAreas])));
-      }
+      setAreas(realDbAreas);
     }
   }, []);
 
