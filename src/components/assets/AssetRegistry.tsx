@@ -345,10 +345,12 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
                         ) : asset.type === 'grease_trap' ? (
                           <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30">🍳 Grease Trap</span>
                         ) : asset.type === 'pipe' ? (
-                          (asset as any).pipeCategory === 'transmission' ? (
-                            <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-extrabold border border-amber-500/30">⚡ Transmisi (Force Main)</span>
+                          (asset as any).pipeCategory === 'clean_water_distribution' || (asset as any).systemCategory === 'clean_water' ? (
+                            <span className="px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-400 font-extrabold border border-sky-500/30">🚰 Pipa Air Bersih</span>
+                          ) : (asset as any).pipeCategory === 'transmission' ? (
+                            <span className="px-2 py-0.5 rounded-md bg-amber-900/40 text-amber-300 font-extrabold border border-amber-600/40">⚡ Transmisi Sewer</span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-400 font-extrabold">💧 Pipa Gravitasi</span>
+                            <span className="px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-400 font-extrabold border border-amber-800/60">🟤 Pipa Sewer</span>
                           )
                         ) : (
                           <span className="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 font-extrabold">Manhole</span>

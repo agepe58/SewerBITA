@@ -468,12 +468,20 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           }
           positions.push(toCoords);
 
-          let strokeColor = isTransmission ? '#F59E0B' : '#0284C7'; // Amber/Orange for Force Main Transmission, Cyan for Gravity
-          if (pipe.condition === 'Warning') strokeColor = '#CA8A04';
+          // PIPE COLOR DISTINCTION: Brown for Sewer & Blue for Clean Water (PAM)
+          const isCleanWater = pipe.systemCategory === 'clean_water' || pipe.pipeCategory === 'clean_water_distribution';
+          let strokeColor = '#8B4513'; // Default Coklat Pipa Sewer (Sewerage)
+          if (isCleanWater) {
+            strokeColor = '#0284C7'; // Biru Cerah Pipa Air Bersih (PAM)
+          } else if (isTransmission) {
+            strokeColor = '#8D4004'; // Coklat Tua Pipa Transmisi Tekanan (Force Main WWTP)
+          }
+
+          if (pipe.condition === 'Warning') strokeColor = '#D97706';
           if (pipe.condition === 'Critical') strokeColor = '#DC2626';
 
           if (activeTraceResult) {
-            strokeColor = inTrace ? '#2563EB' : '#94A3B8'; // Highlight trace, dim rest
+            strokeColor = inTrace ? '#2563EB' : '#94A3B8'; // Highlight trace in blue, dim rest
           }
 
           const weight = inTrace ? 7 : (isTransmission ? 6 : 4);

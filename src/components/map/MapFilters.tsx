@@ -170,6 +170,34 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
           </label>
         </div>
       </div>
+
+      {/* Pipe Color Legend */}
+      <div className="space-y-1.5 pt-2 border-t border-slate-100">
+        <label className="text-xs text-slate-500 font-bold uppercase tracking-wider">Legenda Warna Pipa</label>
+        <div className="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 text-xs font-bold">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-1.5 rounded-full bg-[#8B4513]"></span>
+              <span className="text-slate-800">Pipa Sewer (Air Limbah)</span>
+            </span>
+            <span className="text-[10px] text-amber-900 font-extrabold font-mono">Coklat</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-1.5 rounded-full bg-[#0284C7]"></span>
+              <span className="text-slate-800">Pipa Air Bersih (PAM)</span>
+            </span>
+            <span className="text-[10px] text-sky-700 font-extrabold font-mono">Biru</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-1.5 rounded-full bg-[#8D4004]"></span>
+              <span className="text-slate-800">Pipa Transmisi Tekanan</span>
+            </span>
+            <span className="text-[10px] text-amber-950 font-extrabold font-mono">Coklat Tua</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
