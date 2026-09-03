@@ -423,13 +423,15 @@ app.get('/api/assets', async (req, res) => {
 // --------------------------------------------------------------------
 app.get('/api/areas', async (req, res) => {
   try {
-    let customAreas = [];
-    try {
-      const areasRes = await pool.query('SELECT name FROM system_areas ORDER BY name ASC;');
-      customAreas = areasRes.rows.map(r => r.name);
-    } catch (e) {
-      console.warn('system_areas query notice:', e.message);
-    }
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_areas (
+          id VARCHAR(100) PRIMARY KEY,
+          name VARCHAR(255) UNIQUE NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    const areasRes = await pool.query('SELECT name FROM system_areas ORDER BY name ASC;');
+    const customAreas = areasRes.rows.map(r => r.name);
 
     let assetAreas = [];
     try {
@@ -464,6 +466,13 @@ app.get('/api/areas', async (req, res) => {
 const ensureAreaExists = async (areaName) => {
   if (areaName && typeof areaName === 'string' && areaName.trim()) {
     try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS system_areas (
+            id VARCHAR(100) PRIMARY KEY,
+            name VARCHAR(255) UNIQUE NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
       await pool.query(
         'INSERT INTO system_areas (id, name) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING;',
         [`area-${Date.now()}`, areaName.trim()]

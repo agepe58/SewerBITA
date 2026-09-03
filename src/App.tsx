@@ -476,6 +476,7 @@ export const App: React.FC = () => {
   const handleAddArea = async (newArea: string) => {
     const cleanName = newArea.trim();
     if (!cleanName) return;
+    setAreas(prev => Array.from(new Set([...prev, cleanName])));
     const saved = await apiClient.createArea(cleanName);
     await reloadAreasList();
     if (saved) {
