@@ -25,26 +25,33 @@ export class NetworkGraphEngine {
 
     manholes.forEach(mh => {
       this.assetsMap.set(mh.id, mh);
+      if (mh.assetCode) this.assetsMap.set(mh.assetCode, mh);
       this.manholesMap.set(mh.id, mh);
     });
 
     pumpStations.forEach(ps => {
       this.assetsMap.set(ps.id, ps);
+      if (ps.assetCode) this.assetsMap.set(ps.assetCode, ps);
       this.pumpStationsMap.set(ps.id, ps);
     });
 
     pipes.forEach(pipe => {
       this.assetsMap.set(pipe.id, pipe);
+      if (pipe.assetCode) this.assetsMap.set(pipe.assetCode, pipe);
 
-      if (!this.outgoingEdges.has(pipe.fromAssetId)) {
-        this.outgoingEdges.set(pipe.fromAssetId, []);
+      if (pipe.fromAssetId) {
+        if (!this.outgoingEdges.has(pipe.fromAssetId)) {
+          this.outgoingEdges.set(pipe.fromAssetId, []);
+        }
+        this.outgoingEdges.get(pipe.fromAssetId)!.push(pipe);
       }
-      this.outgoingEdges.get(pipe.fromAssetId)!.push(pipe);
 
-      if (!this.incomingEdges.has(pipe.toAssetId)) {
-        this.incomingEdges.set(pipe.toAssetId, []);
+      if (pipe.toAssetId) {
+        if (!this.incomingEdges.has(pipe.toAssetId)) {
+          this.incomingEdges.set(pipe.toAssetId, []);
+        }
+        this.incomingEdges.get(pipe.toAssetId)!.push(pipe);
       }
-      this.incomingEdges.get(pipe.toAssetId)!.push(pipe);
     });
   }
 

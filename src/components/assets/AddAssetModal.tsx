@@ -17,6 +17,9 @@ interface AddAssetModalProps {
   onAddGreaseTrap?: (greaseTrap: Omit<GreaseTrapAsset, 'id'>) => void;
   existingManholes: ManholeAsset[];
   existingPumpStations?: PumpStationAsset[];
+  existingWtps?: WtpAsset[];
+  existingWaterAccessories?: WaterAccessoryAsset[];
+  existingGreaseTraps?: GreaseTrapAsset[];
   areas: string[];
   onAddArea: (newAreaName: string) => void;
 }
@@ -32,6 +35,9 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   onAddGreaseTrap,
   existingManholes,
   existingPumpStations = [],
+  existingWtps = [],
+  existingWaterAccessories = [],
+  existingGreaseTraps = [],
   areas,
   onAddArea
 }) => {
@@ -178,17 +184,25 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [destinationWwtpName, setDestinationWwtpName] = useState<string>('WWTP Bukit Indah Central');
   const [waypoints, setWaypoints] = useState<{ lat: number; lng: number }[]>([]);
 
+  const allAvailableNodes = React.useMemo(() => [
+    ...existingManholes.map(m => ({ id: m.id, code: m.assetCode, name: m.name, label: `📍 ${m.assetCode} — ${m.name} (Manhole)` })),
+    ...(existingPumpStations || []).map(p => ({ id: p.id, code: p.assetCode, name: p.name, label: `⚡ ${p.assetCode} — ${p.name} (Stasiun Pompa)` })),
+    ...(existingWtps || []).map(w => ({ id: w.id, code: w.assetCode, name: w.name, label: `🏭 ${w.assetCode} — ${w.name} (WTP / WWTP IPAL)` })),
+    ...(existingWaterAccessories || []).map(a => ({ id: a.id, code: a.assetCode, name: a.name, label: `🚰 ${a.assetCode} — ${a.name} (Aksesori Air)` })),
+    ...(existingGreaseTraps || []).map(g => ({ id: g.id, code: g.assetCode, name: g.name, label: `🍳 ${g.assetCode} — ${g.name} (Grease Trap)` }))
+  ], [existingManholes, existingPumpStations, existingWtps, existingWaterAccessories, existingGreaseTraps]);
+
   // Geospatial distance calculation from Node 1 to Node 2 coordinates + waypoints
   const calculatedPipeLength = React.useMemo(() => {
-    const allNodes = [...existingManholes, ...(existingPumpStations || [])];
-    const startNode = allNodes.find(n => n.id === fromAssetId);
-    const endNode = allNodes.find(n => n.id === toAssetId);
+    const allNodes: any[] = [...existingManholes, ...(existingPumpStations || []), ...(existingWtps || []), ...(existingWaterAccessories || []), ...(existingGreaseTraps || [])];
+    const startNode = allNodes.find(n => n.id === fromAssetId || n.assetCode === fromAssetId);
+    const endNode = allNodes.find(n => n.id === toAssetId || n.assetCode === toAssetId);
     
-    const startCoords = startNode ? ((startNode as any).coordinates || { lat: (startNode as any).latitude, lng: (startNode as any).longitude }) : null;
-    const endCoords = endNode ? ((endNode as any).coordinates || { lat: (endNode as any).latitude, lng: (endNode as any).longitude }) : null;
+    const startCoords = startNode ? (startNode.coordinates || { lat: Number(startNode.latitude), lng: Number(startNode.longitude) }) : null;
+    const endCoords = endNode ? (endNode.coordinates || { lat: Number(endNode.latitude), lng: Number(endNode.longitude) }) : null;
     
     return calculatePipeRouteDistance(startCoords, endCoords, waypoints);
-  }, [fromAssetId, toAssetId, waypoints, existingManholes, existingPumpStations]);
+  }, [fromAssetId, toAssetId, waypoints, existingManholes, existingPumpStations, existingWtps, existingWaterAccessories, existingGreaseTraps]);
 
   // Auto-update pipeLength when nodes or waypoints change
   React.useEffect(() => {
@@ -858,65 +872,43 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 </div>
               </div>
 
-              {pipeCategory === 'gravity' ? (
+              <div>
+                <label className="text-xs text-slate-600 font-bold">Node Asal (Titik Pangkal Pipa)</label>
+                <select
+                  value={fromAssetId}
+                  onChange={e => setFromAssetId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
+                >
+                  {allAvailableNodes.map(node => (
+                    <option key={node.id} value={node.id}>{node.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-600 font-bold">Node Tujuan (Titik Muara Pipa)</label>
+                <select
+                  value={toAssetId}
+                  onChange={e => setToAssetId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
+                >
+                  {allAvailableNodes.map(node => (
+                    <option key={node.id} value={node.id}>{node.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {pipeCategory === 'transmission' && (
                 <>
                   <div>
-                    <label className="text-xs text-slate-600 font-bold">Node Asal (From Manhole)</label>
-                    <select
-                      value={fromAssetId}
-                      onChange={e => setFromAssetId(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
-                    >
-                      {existingManholes.map(mh => (
-                        <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-slate-600 font-bold">Node Tujuan (To Manhole)</label>
-                    <select
-                      value={toAssetId}
-                      onChange={e => setToAssetId(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-[#0284C7] font-bold text-sm"
-                    >
-                      {existingManholes.map(mh => (
-                        <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Transmission Pipe Form Fields */}
-                  <div>
-                    <label className="text-xs text-amber-700 dark:text-amber-400 font-extrabold">Stasiun Pompa Pengirim (Force Main Origin)</label>
-                    <select
-                      value={fromAssetId}
-                      onChange={e => setFromAssetId(e.target.value)}
-                      className="w-full bg-amber-50/50 border border-amber-300 rounded-xl p-3 text-slate-900 mt-1 focus:outline-none focus:border-amber-500 font-bold text-sm"
-                    >
-                      {existingPumpStations.length > 0 ? (
-                        existingPumpStations.map(ps => (
-                          <option key={ps.id} value={ps.id}>⚡ {ps.assetCode} — {ps.name} ({ps.capacityLps} L/s)</option>
-                        ))
-                      ) : (
-                        existingManholes.map(mh => (
-                          <option key={mh.id} value={mh.id}>{mh.assetCode} — {mh.name}</option>
-                        ))
-                      )}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-slate-600 font-bold">Nama Tujuan IPAL / WWTP</label>
+                    <label className="text-xs text-amber-800 font-bold">Nama Target IPAL / WWTP Pengolah</label>
                     <input
                       type="text"
                       value={destinationWwtpName}
                       onChange={e => setDestinationWwtpName(e.target.value)}
                       placeholder="mis. WWTP Bukit Indah Central Main Plant"
                       required
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-amber-500"
+                      className="w-full bg-amber-50/50 border border-amber-300 rounded-xl p-3 text-slate-900 mt-1 font-semibold text-sm focus:outline-none focus:border-amber-500"
                     />
                   </div>
 

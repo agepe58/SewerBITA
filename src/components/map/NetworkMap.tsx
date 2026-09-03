@@ -295,13 +295,14 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
     return raw;
   };
 
-  // Combined asset node coordinates mapping for polyline connections
+  // Combined asset node coordinates mapping for polyline connections (Manholes, Pump Stations, WTPs, Accessories, Grease Traps)
   const nodeCoordsMap = new Map<string, [number, number]>();
-  manholes.forEach((m, idx) => {
-    nodeCoordsMap.set(m.id, getDisambiguatedCoords(m, idx));
-  });
-  pumpStations.forEach((p, idx) => {
-    nodeCoordsMap.set(p.id, getDisambiguatedCoords(p, idx));
+  const allNodeAssets = [...manholes, ...pumpStations, ...(wtps || []), ...(waterAccessories || []), ...(greaseTraps || [])];
+  
+  allNodeAssets.forEach((asset, idx) => {
+    const coords = getDisambiguatedCoords(asset, idx);
+    if (asset.id) nodeCoordsMap.set(asset.id, coords);
+    if (asset.assetCode) nodeCoordsMap.set(asset.assetCode, coords);
   });
 
   // Filters logic

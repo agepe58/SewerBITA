@@ -792,6 +792,9 @@ export const App: React.FC = () => {
         onAddGreaseTrap={handleAddGreaseTrap}
         existingManholes={manholes}
         existingPumpStations={pumpStations}
+        existingWtps={wtps}
+        existingWaterAccessories={waterAccessories}
+        existingGreaseTraps={greaseTraps}
         areas={areas}
         onAddArea={handleAddArea}
       />

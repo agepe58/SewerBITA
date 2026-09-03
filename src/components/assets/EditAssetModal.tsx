@@ -45,10 +45,21 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
 
   // Pipe states
   const [lengthMeters, setLengthMeters] = useState(asset.type === 'pipe' ? asset.lengthMeters : 100);
+  const [fromAssetId, setFromAssetId] = useState(asset.type === 'pipe' ? asset.fromAssetId || '' : '');
+  const [toAssetId, setToAssetId] = useState(asset.type === 'pipe' ? asset.toAssetId || '' : '');
   const [pipeMaterial, setPipeMaterial] = useState(asset.type === 'pipe' ? asset.material : 'PVC');
   const [pipeCategory, setPipeCategory] = useState<'gravity' | 'transmission' | 'clean_water_distribution'>(asset.type === 'pipe' ? asset.pipeCategory || 'gravity' : 'gravity');
   const [pressureBar, setPressureBar] = useState<number>(asset.type === 'pipe' ? asset.pressureBar || 6.0 : 6.0);
   const [destinationWwtpName, setDestinationWwtpName] = useState<string>(asset.type === 'pipe' ? asset.destinationWwtpName || 'WWTP Bukit Indah Central' : 'WWTP Bukit Indah Central');
+
+  const allAvailableNodes = useMemo(() => {
+    return (allAssets || []).map(a => ({
+      id: a.id,
+      code: a.assetCode,
+      name: a.name,
+      label: `${a.type === 'manhole' ? '📍' : a.type === 'pump_station' ? '⚡' : a.type === 'wtp' ? '🏭' : a.type === 'water_accessory' ? '🚰' : '🍳'} ${a.assetCode} — ${a.name}`
+    }));
+  }, [allAssets]);
 
   // Geospatial Haversine calculation between Node A and Node B
   const calculatedPipeLength = useMemo(() => {
@@ -131,6 +142,8 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
     } else if (asset.type === 'pipe') {
       onSavePipe({
         ...(baseUpdated as PipeAsset),
+        fromAssetId: fromAssetId || (asset as PipeAsset).fromAssetId,
+        toAssetId: toAssetId || (asset as PipeAsset).toAssetId,
         lengthMeters: Number(lengthMeters),
         diameterMm: Number(diameterMm),
         material: pipeMaterial,
@@ -311,6 +324,34 @@ export const EditAssetModal: React.FC<EditAssetModalProps> = ({
                 <span className={`px-2 py-0.5 rounded-full text-[10px] ${pipeCategory === 'transmission' ? 'bg-amber-100 text-amber-800 font-extrabold border border-amber-300' : 'bg-sky-100 text-sky-800 font-bold'}`}>
                   {pipeCategory === 'transmission' ? '⚡ Transmisi (Force Main)' : '💧 Gravitasi'}
                 </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Node Asal (Titik Pangkal)</label>
+                  <select
+                    value={fromAssetId}
+                    onChange={e => setFromAssetId(e.target.value)}
+                    className="w-full bg-slate-50 font-bold text-slate-900 border border-slate-200 rounded-xl p-2.5 mt-1 text-xs"
+                  >
+                    {allAvailableNodes.map(node => (
+                      <option key={node.id} value={node.id}>{node.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-600 font-bold">Node Tujuan (Titik Muara)</label>
+                  <select
+                    value={toAssetId}
+                    onChange={e => setToAssetId(e.target.value)}
+                    className="w-full bg-slate-50 font-bold text-slate-900 border border-slate-200 rounded-xl p-2.5 mt-1 text-xs"
+                  >
+                    {allAvailableNodes.map(node => (
+                      <option key={node.id} value={node.id}>{node.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
