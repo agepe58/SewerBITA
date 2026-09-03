@@ -27,9 +27,9 @@ interface NetworkMapProps {
 
 // Custom Leaflet DivIcons Standardized with Vibrant Magenta Highlighting for Map Redirection
 const createManholeIcon = (condition: string, isHighlighted: boolean) => {
-  let color = '#16A34A'; // Good
-  if (condition === 'Fair') color = '#0284C7';
-  if (condition === 'Warning') color = '#CA8A04';
+  let color = '#8B4513'; // Coklat Sewer untuk Manhole Standard / Good
+  if (condition === 'Fair') color = '#A0522D';
+  if (condition === 'Warning') color = '#D97706';
   if (condition === 'Critical') color = '#DC2626';
 
   const finalColor = isHighlighted ? '#EC4899' : color;

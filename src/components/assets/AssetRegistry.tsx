@@ -353,7 +353,7 @@ export const AssetRegistry: React.FC<AssetRegistryProps> = ({
                             <span className="px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-400 font-extrabold border border-amber-800/60">🟤 Pipa Sewer</span>
                           )
                         ) : (
-                          <span className="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 font-extrabold">Manhole</span>
+                          <span className="px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-400 font-extrabold border border-amber-800/60">📍 Manhole</span>
                         )}
                       </td>
 

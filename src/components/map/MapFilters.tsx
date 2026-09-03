@@ -140,12 +140,15 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
         <label className="text-xs text-slate-500 font-bold uppercase tracking-wider">Layer Aset</label>
         <div className="space-y-1.5">
           <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-slate-50 font-bold text-slate-800">
-            <span>Manhole Markers</span>
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#8B4513] border border-amber-900 inline-block"></span>
+              <span>Manhole Markers (Coklat)</span>
+            </span>
             <input
               type="checkbox"
               checked={showManholes}
               onChange={(e) => onToggleManholes(e.target.checked)}
-              className="accent-[#2563EB] w-4.5 h-4.5 cursor-pointer"
+              className="accent-[#8B4513] w-4.5 h-4.5 cursor-pointer"
             />
           </label>
 
