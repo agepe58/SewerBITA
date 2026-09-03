@@ -400,6 +400,19 @@ app.get('/api/areas', async (req, res) => {
   }
 });
 
+const ensureAreaExists = async (areaName) => {
+  if (areaName && typeof areaName === 'string' && areaName.trim()) {
+    try {
+      await pool.query(
+        'INSERT INTO system_areas (id, name) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING;',
+        [`area-${Date.now()}`, areaName.trim()]
+      );
+    } catch (e) {
+      console.warn('Failed to auto-insert system_area:', e);
+    }
+  }
+};
+
 app.post('/api/areas', async (req, res) => {
   const { name } = req.body;
   if (!name || !name.trim()) {
@@ -407,14 +420,8 @@ app.post('/api/areas', async (req, res) => {
   }
   const cleanName = name.trim();
   try {
-    const q = `
-      INSERT INTO system_areas (id, name)
-      VALUES ($1, $2)
-      ON CONFLICT (name) DO NOTHING
-      RETURNING id, name;
-    `;
-    const result = await pool.query(q, [`area-${Date.now()}`, cleanName]);
-    res.status(201).json(result.rows[0] || { name: cleanName });
+    await ensureAreaExists(cleanName);
+    res.status(201).json({ id: `area-${Date.now()}`, name: cleanName });
   } catch (err) {
     console.error('Error creating area:', err);
     res.status(500).json({ error: err.message });
@@ -438,6 +445,9 @@ app.delete('/api/areas/:name', async (req, res) => {
 app.post('/api/assets', async (req, res) => {
   const { type, data } = req.body;
   try {
+    if (data && data.area) {
+      await ensureAreaExists(data.area);
+    }
     if (type === 'manhole') {
       const q = `
         INSERT INTO manhole_assets 

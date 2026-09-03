@@ -108,7 +108,17 @@ export const App: React.FC = () => {
   const [wtps, setWtps] = useState<WtpAsset[]>([]);
   const [waterAccessories, setWaterAccessories] = useState<WaterAccessoryAsset[]>([]);
   const [greaseTraps, setGreaseTraps] = useState<GreaseTrapAsset[]>([]);
-  const [areas, setAreas] = useState<string[]>([]);
+  // Areas state with LocalStorage persistence + Server Sync
+  const [areas, setAreas] = useState<string[]>(() => {
+    const saved = localStorage.getItem('sewerbita_areas');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load areas', e); }
+    }
+    return [];
+  });
 
   const [inspections, setInspections] = useState<InspectionRecord[]>(() => {
     const saved = localStorage.getItem('sewerbita_inspections');
@@ -132,6 +142,7 @@ export const App: React.FC = () => {
     return [];
   });
 
+  useEffect(() => { localStorage.setItem('sewerbita_areas', JSON.stringify(areas)); }, [areas]);
   useEffect(() => { localStorage.setItem('sewerbita_inspections', JSON.stringify(inspections)); }, [inspections]);
 
   // Reload Assets Directly from Backend PostgreSQL Database Server (Smart Live Merge)
