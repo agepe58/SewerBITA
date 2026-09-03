@@ -134,7 +134,7 @@ export const App: React.FC = () => {
 
   useEffect(() => { localStorage.setItem('sewerbita_inspections', JSON.stringify(inspections)); }, [inspections]);
 
-  // Reload Assets Directly from Backend PostgreSQL Database Server (Full Production Mode)
+  // Reload Assets Directly from Backend PostgreSQL Database Server (Smart Live Merge)
   const reloadAssetsList = useCallback(async () => {
     const assetData = await apiClient.getAssets();
     if (assetData) {
@@ -145,17 +145,42 @@ export const App: React.FC = () => {
       const acc = assetData.waterAccessories || [];
       const gt = assetData.greaseTraps || [];
 
-      // Direct assignment from PostgreSQL DB (Ensures 100% consistency across all browsers)
-      setManholes(m);
-      setPumpStations(ps);
-      setPipes(p);
-      setWtps(w);
-      setWaterAccessories(acc);
-      setGreaseTraps(gt);
+      setManholes(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        m.forEach((i: any) => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setPumpStations(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        ps.forEach((i: any) => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setPipes(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        p.forEach((i: any) => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setWtps(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        w.forEach((i: any) => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setWaterAccessories(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        acc.forEach((i: any) => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setGreaseTraps(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        gt.forEach((i: any) => map.set(i.id, i));
+        return Array.from(map.values());
+      });
 
-      // Dynamically derive unique areas present in PostgreSQL database assets
+      // Dynamically derive unique areas present in database assets & custom created areas
       const realDbAreas = Array.from(new Set([...m, ...ps, ...p, ...w, ...acc, ...gt].map((a: any) => a.area).filter(Boolean)));
-      setAreas(realDbAreas);
+      if (realDbAreas.length > 0) {
+        setAreas(prev => Array.from(new Set([...prev, ...realDbAreas])));
+      }
     }
   }, []);
 
@@ -250,12 +275,16 @@ export const App: React.FC = () => {
     setActiveTraceResult(res);
   };
 
-  // Asset Handlers
+  // Asset Handlers (Immediate Local Display + PostgreSQL Persistence)
   const handleAddManhole = async (newMh: Omit<ManholeAsset, 'id'>) => {
     const createdMh: ManholeAsset = {
       ...newMh,
       id: `mh-${Date.now()}`
     };
+    setManholes(prev => [createdMh, ...prev]);
+    if (createdMh.area) {
+      setAreas(prev => Array.from(new Set([...prev, createdMh.area])));
+    }
     await apiClient.createAsset('manhole', createdMh);
     await reloadAssetsList();
     setIsAddAssetModalOpen(false);
@@ -266,6 +295,10 @@ export const App: React.FC = () => {
       ...newPs,
       id: `ps-${Date.now()}`
     };
+    setPumpStations(prev => [createdPs, ...prev]);
+    if (createdPs.area) {
+      setAreas(prev => Array.from(new Set([...prev, createdPs.area])));
+    }
     await apiClient.createAsset('pumpStation', createdPs);
     await reloadAssetsList();
     setIsAddAssetModalOpen(false);
@@ -276,6 +309,10 @@ export const App: React.FC = () => {
       ...newPipe,
       id: `p-${Date.now()}`
     };
+    setPipes(prev => [createdPipe, ...prev]);
+    if (createdPipe.area) {
+      setAreas(prev => Array.from(new Set([...prev, createdPipe.area])));
+    }
     await apiClient.createAsset('pipe', createdPipe);
     await reloadAssetsList();
     setIsAddAssetModalOpen(false);
@@ -286,6 +323,10 @@ export const App: React.FC = () => {
       ...newWtp,
       id: `wtp-${Date.now()}`
     };
+    setWtps(prev => [createdWtp, ...prev]);
+    if (createdWtp.area) {
+      setAreas(prev => Array.from(new Set([...prev, createdWtp.area])));
+    }
     await apiClient.createAsset('wtp', createdWtp);
     await reloadAssetsList();
     setIsAddAssetModalOpen(false);
@@ -296,6 +337,10 @@ export const App: React.FC = () => {
       ...newAcc,
       id: `acc-${Date.now()}`
     };
+    setWaterAccessories(prev => [createdAcc, ...prev]);
+    if (createdAcc.area) {
+      setAreas(prev => Array.from(new Set([...prev, createdAcc.area])));
+    }
     await apiClient.createAsset('water_accessory', createdAcc);
     await reloadAssetsList();
     setIsAddAssetModalOpen(false);
@@ -306,6 +351,10 @@ export const App: React.FC = () => {
       ...newGt,
       id: `gt-${Date.now()}`
     };
+    setGreaseTraps(prev => [createdGt, ...prev]);
+    if (createdGt.area) {
+      setAreas(prev => Array.from(new Set([...prev, createdGt.area])));
+    }
     await apiClient.createAsset('grease_trap', createdGt);
     await reloadAssetsList();
     setIsAddAssetModalOpen(false);
