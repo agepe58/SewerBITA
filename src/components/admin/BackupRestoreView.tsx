@@ -696,41 +696,89 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       {/* 4. TAB CONTENT: PENGATURAN JADWAL OTOMATIS */}
       {activeSubTab === 'jadwal' && (
         <div className={`p-6 rounded-lg border space-y-6 shadow-sm ${cardBg}`}>
-          <div>
-            <h3 className="text-base font-extrabold text-white">Pengaturan Jadwal Backup Otomatis</h3>
-            <p className="text-xs text-slate-400 font-medium">Atur penjadwalan berkala untuk database dan aset tanpa intervensi manual.</p>
-          </div>
-
-          <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-bold text-white">Aktifkan Backup Otomatis</div>
-                <div className="text-[11px] text-slate-400">Jalankan background worker sesuai jadwal cron</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={autoBackupEnabled}
-                onChange={(e) => setAutoBackupEnabled(e.target.checked)}
-                className="w-4 h-4 rounded text-blue-600 cursor-pointer"
-              />
+          {/* Section 1: Jadwal Full Backup */}
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-extrabold text-white">Jadwal Full Backup</h3>
+              <p className="text-xs text-slate-400 font-medium">Mengompresi seluruh basis data PostgreSQL dan seluruh file lampiran foto di folder upload.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-300">Frekuensi Penjadwalan</label>
+            <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="full-auto"
+                  checked={autoBackupEnabled}
+                  onChange={(e) => setAutoBackupEnabled(e.target.checked)}
+                  className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+                />
+                <label htmlFor="full-auto" className="cursor-pointer">
+                  <div className="text-xs font-bold text-white">Aktifkan Full Backup Otomatis</div>
+                  <div className="text-[11px] text-slate-400">Jalankan secara otomatis sesuai jadwal</div>
+                </label>
+              </div>
+
+              <div className="w-full md:w-72 space-y-1">
+                <label className="text-[11px] font-bold text-slate-400">Frekuensi Execution Cron</label>
                 <select
                   value={scheduleCron}
                   onChange={(e) => setScheduleCron(e.target.value)}
                   className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border ${inputBg}`}
                 >
-                  <option value="Setiap Hari (23:00 WIB)">Setiap Hari (23:00 WIB)</option>
+                  <option value="Setiap Hari Minggu (Mingguan - 00:00)">Setiap Hari Minggu (Mingguan - 00:00)</option>
+                  <option value="Setiap Hari (Harian - 00:00)">Setiap Hari (Harian - 00:00)</option>
                   <option value="Setiap 12 Jam (00:00 & 12:00)">Setiap 12 Jam (00:00 & 12:00)</option>
-                  <option value="Setiap Minggu (Minggu, 01:00 WIB)">Setiap Minggu (Minggu, 01:00 WIB)</option>
                 </select>
               </div>
+            </div>
+          </div>
 
+          {/* Section 2: Jadwal Incremental Backup */}
+          <div className="space-y-3 pt-2 border-t border-slate-800/80">
+            <div>
+              <h3 className="text-sm font-extrabold text-white">Jadwal Incremental Backup</h3>
+              <p className="text-xs text-slate-400 font-medium">Hanya mengompresi baris data dan berkas foto baru yang diubah/dibuat sejak backup terakhir.</p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="inc-auto"
+                  checked={autoBackupEnabled}
+                  onChange={(e) => setAutoBackupEnabled(e.target.checked)}
+                  className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+                />
+                <label htmlFor="inc-auto" className="cursor-pointer">
+                  <div className="text-xs font-bold text-white">Aktifkan Incremental Backup Otomatis</div>
+                  <div className="text-[11px] text-slate-400">Hemat ruang penyimpanan dan waktu pemrosesan</div>
+                </label>
+              </div>
+
+              <div className="w-full md:w-72 space-y-1">
+                <label className="text-[11px] font-bold text-slate-400">Frekuensi Execution Cron</label>
+                <select
+                  value="Setiap Hari (Harian - 00:00)"
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border ${inputBg}`}
+                >
+                  <option value="Setiap Hari (Harian - 00:00)">Setiap Hari (Harian - 00:00)</option>
+                  <option value="Setiap 6 Jam">Setiap 6 Jam</option>
+                  <option value="Setiap 12 Jam">Setiap 12 Jam</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Kebijakan Pembersihan & Retensi (Retention Policy) */}
+          <div className="space-y-3 pt-2 border-t border-slate-800/80">
+            <div>
+              <h3 className="text-sm font-extrabold text-white">Kebijakan Pembersihan & Retensi (Retention Policy)</h3>
+              <p className="text-xs text-slate-400 font-medium">Otomatis menghapus file backup lama untuk menjaga sisa kapasitas storage.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-300">Masa Retensi Arsip (Hari)</label>
+                <label className="text-xs font-bold text-slate-300">Maksimal Umur Simpan (Hari)</label>
                 <input
                   type="number"
                   value={retentionDays}
@@ -738,7 +786,27 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                   className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border ${inputBg}`}
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300">Maksimal Jumlah Berkas Backup</label>
+                <input
+                  type="number"
+                  defaultValue={20}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border ${inputBg}`}
+                />
+              </div>
             </div>
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={handleSaveSettings}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-600/30 cursor-pointer"
+            >
+              <Check className="w-4 h-4" />
+              <span>Simpan Pengaturan Jadwal</span>
+            </button>
           </div>
         </div>
       )}
@@ -747,35 +815,63 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
       {activeSubTab === 'restore' && (
         <div className={`p-6 rounded-lg border space-y-6 shadow-sm ${cardBg}`}>
           <div>
-            <h3 className="text-base font-extrabold text-white">Pemulihan Data & Disaster Recovery</h3>
-            <p className="text-xs text-slate-400 font-medium">Pulihkan skema dan snapshot data PostgreSQL dari arsip Synology NAS.</p>
+            <h3 className="text-base font-extrabold text-white">Pemulihan Data System (Restore Backup)</h3>
+            <p className="text-xs text-slate-400 font-medium">
+              Unggah berkas cadangan format JSON (*.json atau *.mbk) untuk memulihkan seluruh data Pekerjaan, Proyek, Pengguna, Laporan Harian, dan Log Aktivitas ke dalam sistem basis data.
+            </p>
           </div>
 
-          <div className="p-4 rounded-lg bg-amber-950/20 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
-            <span>
-              Perhatian: Proses restore akan menimpa data yang sedang berjalan dengan snapshot arsip terpilih. Pastikan Anda telah melakukan backup terkini sebelum melanjutkan.
-            </span>
+          {/* Large Dropzone Box */}
+          <div className="p-10 rounded-xl border-2 border-dashed border-emerald-500/40 bg-emerald-950/10 flex flex-col items-center justify-center text-center space-y-3">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
+              <HardDriveDownload className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <div className="text-sm font-extrabold text-white">Pilih atau Seret Berkas Backup JSON</div>
+              <div className="text-xs text-slate-400">Format yang didukung: Berkas *.json atau *.mbk hasil dari fitur ekspor/backup BITA MMS</div>
+            </div>
+
+            <label className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-lg shadow-emerald-600/30 cursor-pointer">
+              <span>📁 Pilih Berkas Backup (.json)</span>
+              <input
+                type="file"
+                accept=".json,.mbk,.sql"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    alert(`Berkas backup '${file.name}' berhasil dimuat. Klik pulihkan untuk memproses data ke PostgreSQL.`);
+                  }
+                }}
+              />
+            </label>
           </div>
 
-          <div className="space-y-3">
-            <div className="text-xs font-bold text-white">Pilih Berkas Snapshot untuk Dipulihkan:</div>
-            <div className="space-y-2">
-              {backupHistory.map(bk => (
-                <div key={bk.id} className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-xs font-extrabold text-white">{bk.namaBerkas}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{bk.waktuExec} • {bk.ukuran} • Destinasi: {bk.destinasi}</div>
-                  </div>
+          {/* Bottom Grid: 2 Methods */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Method 1 */}
+            <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-2">
+              <div className="text-xs font-extrabold text-white flex items-center gap-2">
+                <Database className="w-4 h-4 text-blue-400" />
+                <span>Metode 1: Pemulihan dari Riwayat NAS</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Unduh berkas backup dari tabel Riwayat Eksekusi Backup di bawah ini (atau buka folder Synology NAS <span className="font-mono text-slate-300">/volume1/Backups/BITA_MMS</span>), lalu unggah berkasnya menggunakan form di atas.
+              </p>
+            </div>
 
-                  <button
-                    onClick={() => handleRestore(bk)}
-                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md cursor-pointer"
-                  >
-                    Pulihkan Sekarang
-                  </button>
-                </div>
-              ))}
+            {/* Method 2 */}
+            <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-2">
+              <div className="text-xs font-extrabold text-white flex items-center gap-2">
+                <Server className="w-4 h-4 text-emerald-400" />
+                <span>Metode 2: Restore PostgreSQL Container</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Untuk pemulihan tingkat infrastruktur PostgreSQL server/Docker, jalankan perintah terminal:
+              </p>
+              <div className="p-2 rounded bg-black/80 font-mono text-[10px] text-emerald-400 border border-slate-800 select-all overflow-x-auto">
+                docker exec -i postgres_db psql -U postgres sewerbita &lt; backup.sql
+              </div>
             </div>
           </div>
         </div>
@@ -863,15 +959,24 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
 
                     {/* AKSI */}
                     <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                      <button
-                        onClick={() => {
-                          window.open(apiClient.getBackupDownloadUrl(item.namaBerkas), '_blank');
-                        }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
-                        title="Unduh Berkas Backup dari Server"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => handleRestore(item)}
+                          className="px-2.5 py-1 rounded bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold transition cursor-pointer flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Pulihkan</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            window.open(apiClient.getBackupDownloadUrl(item.namaBerkas), '_blank');
+                          }}
+                          className="p-1.5 rounded-lg text-blue-400 hover:bg-blue-500/10 transition cursor-pointer"
+                          title="Unduh Berkas Backup dari Server"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
