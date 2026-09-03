@@ -178,10 +178,14 @@ export const apiClient = {
         headers: getAuthHeaders(),
         body: JSON.stringify({ type, data })
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API updateAsset failed with HTTP:', res.status, errorText);
+        return null;
+      }
       return await res.json();
     } catch (e) {
-      console.warn('API updateAsset failed:', e);
+      console.error('API updateAsset failed with exception:', e);
       return null;
     }
   },
