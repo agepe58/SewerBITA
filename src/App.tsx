@@ -184,6 +184,14 @@ export const App: React.FC = () => {
     }
   }, []);
 
+  // Reload Areas Directly from Backend PostgreSQL API
+  const reloadAreasList = useCallback(async () => {
+    const serverAreas = await apiClient.getAreas();
+    if (serverAreas && Array.isArray(serverAreas)) {
+      setAreas(prev => Array.from(new Set([...prev, ...serverAreas])));
+    }
+  }, []);
+
   // Reload Inspections from Backend API
   const reloadInspectionsList = useCallback(async () => {
     const inspectionData = await apiClient.getInspections();
@@ -212,21 +220,23 @@ export const App: React.FC = () => {
   useEffect(() => {
     const loadRealDatabaseData = async () => {
       await reloadAssetsList();
+      await reloadAreasList();
       await reloadInspectionsList();
       await reloadUsersList();
     };
     loadRealDatabaseData();
-  }, [reloadAssetsList, reloadInspectionsList, reloadUsersList]);
+  }, [reloadAssetsList, reloadAreasList, reloadInspectionsList, reloadUsersList]);
 
   // Realtime Polling (Every 3 seconds Live Sync for ALL connected devices PC & Mobile)
   useEffect(() => {
     const interval = setInterval(() => {
       reloadAssetsList();
+      reloadAreasList();
       reloadInspectionsList();
       reloadUsersList();
     }, 3000);
     return () => clearInterval(interval);
-  }, [reloadAssetsList, reloadInspectionsList, reloadUsersList]);
+  }, [reloadAssetsList, reloadAreasList, reloadInspectionsList, reloadUsersList]);
 
   // Active User & Role Session Initialization
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
@@ -436,10 +446,12 @@ export const App: React.FC = () => {
     authService.saveSession(updated);
   };
 
-  const handleAddArea = (newArea: string) => {
-    if (!areas.includes(newArea)) {
-      setAreas(prev => [...prev, newArea]);
-    }
+  const handleAddArea = async (newArea: string) => {
+    const cleanName = newArea.trim();
+    if (!cleanName) return;
+    setAreas(prev => Array.from(new Set([...prev, cleanName])));
+    await apiClient.createArea(cleanName);
+    await reloadAreasList();
   };
 
   const handleEditArea = (oldArea: string, newArea: string) => {
@@ -449,8 +461,10 @@ export const App: React.FC = () => {
     setPipes(prev => prev.map(p => p.area === oldArea ? { ...p, area: newArea } : p));
   };
 
-  const handleDeleteArea = (areaToDelete: string) => {
+  const handleDeleteArea = async (areaToDelete: string) => {
     setAreas(prev => prev.filter(a => a !== areaToDelete));
+    await apiClient.deleteArea(areaToDelete);
+    await reloadAreasList();
   };
 
   const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes, ...wtps, ...waterAccessories];

@@ -201,6 +201,47 @@ export const apiClient = {
     }
   },
 
+  // System Areas API
+  getAreas: async (): Promise<string[] | null> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/areas`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn('API getAreas failed:', e);
+      return null;
+    }
+  },
+
+  createArea: async (name: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/areas`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name })
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn('API createArea failed:', e);
+      return null;
+    }
+  },
+
+  deleteArea: async (name: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/areas/${encodeURIComponent(name)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn('API deleteArea failed:', e);
+      return null;
+    }
+  },
+
   // Schedule Periodic Manhole Inspection
   scheduleManholeInspection: async (payload: { targetType: 'single' | 'area' | 'all'; targetId?: string; area?: string; nextInspectionDue: string }) => {
     try {

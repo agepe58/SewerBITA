@@ -261,6 +261,15 @@ const initDb = async () => {
       );
     `);
 
+    // 8.2 Persistent Custom Areas Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_areas (
+          id VARCHAR(100) PRIMARY KEY,
+          name VARCHAR(255) UNIQUE NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // 12. Purge Any Legacy Demo Admin User
     await pool.query("DELETE FROM user_profiles WHERE id = 'usr-admin-01' OR LOWER(email) = 'angga.purbaya@gmail.com';");
 
@@ -354,6 +363,71 @@ app.get('/api/assets', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching assets:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --------------------------------------------------------------------
+// 2.5 SYSTEM AREAS ENDPOINTS (PERSISTENT CUSTOM AREAS)
+// --------------------------------------------------------------------
+app.get('/api/areas', async (req, res) => {
+  try {
+    const areasRes = await pool.query('SELECT name FROM system_areas ORDER BY name ASC;');
+    const customAreas = areasRes.rows.map(r => r.name);
+
+    const assetsAreasRes = await pool.query(`
+      SELECT DISTINCT area FROM (
+        SELECT area FROM manhole_assets
+        UNION ALL
+        SELECT area FROM pump_station_assets
+        UNION ALL
+        SELECT area FROM pipe_assets
+        UNION ALL
+        SELECT area FROM wtp_assets
+        UNION ALL
+        SELECT area FROM water_accessory_assets
+        UNION ALL
+        SELECT area FROM grease_trap_assets
+      ) combined WHERE area IS NOT NULL AND area != '';
+    `);
+    const assetAreas = assetsAreasRes.rows.map(r => r.area);
+
+    const mergedAreas = Array.from(new Set([...customAreas, ...assetAreas]));
+    res.json(mergedAreas);
+  } catch (err) {
+    console.error('Error fetching areas:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/areas', async (req, res) => {
+  const { name } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Nama area wajib diisi.' });
+  }
+  const cleanName = name.trim();
+  try {
+    const q = `
+      INSERT INTO system_areas (id, name)
+      VALUES ($1, $2)
+      ON CONFLICT (name) DO NOTHING
+      RETURNING id, name;
+    `;
+    const result = await pool.query(q, [`area-${Date.now()}`, cleanName]);
+    res.status(201).json(result.rows[0] || { name: cleanName });
+  } catch (err) {
+    console.error('Error creating area:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/areas/:name', async (req, res) => {
+  const { name } = req.params;
+  try {
+    await pool.query('DELETE FROM system_areas WHERE LOWER(name) = LOWER($1);', [name]);
+    res.json({ message: 'Area deleted successfully', name });
+  } catch (err) {
+    console.error('Error deleting area:', err);
     res.status(500).json({ error: err.message });
   }
 });
