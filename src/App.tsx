@@ -222,51 +222,39 @@ export const App: React.FC = () => {
       const acc = assetData.waterAccessories || [];
       const gt = assetData.greaseTraps || [];
 
-      // Smart merge DB assets with local state so data is NEVER lost
-      if (m.length > 0) {
-        setManholes(prev => {
-          const map = new Map(prev.map(i => [i.id, i]));
-          m.forEach(i => map.set(i.id, i));
-          return Array.from(map.values());
-        });
-      }
-      if (ps.length > 0) {
-        setPumpStations(prev => {
-          const map = new Map(prev.map(i => [i.id, i]));
-          ps.forEach(i => map.set(i.id, i));
-          return Array.from(map.values());
-        });
-      }
-      if (p.length > 0) {
-        setPipes(prev => {
-          const map = new Map(prev.map(i => [i.id, i]));
-          p.forEach(i => map.set(i.id, i));
-          return Array.from(map.values());
-        });
-      }
-      if (w.length > 0) {
-        setWtps(prev => {
-          const map = new Map(prev.map(i => [i.id, i]));
-          w.forEach(i => map.set(i.id, i));
-          return Array.from(map.values());
-        });
-      }
-      if (acc.length > 0) {
-        setWaterAccessories(prev => {
-          const map = new Map(prev.map(i => [i.id, i]));
-          acc.forEach(i => map.set(i.id, i));
-          return Array.from(map.values());
-        });
-      }
-      if (gt.length > 0) {
-        setGreaseTraps(prev => {
-          const map = new Map(prev.map(i => [i.id, i]));
-          gt.forEach(i => map.set(i.id, i));
-          return Array.from(map.values());
-        });
-      }
+      // Unconditional Smart Merge with Local Memory & PostgreSQL
+      setManholes(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        m.forEach(i => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setPumpStations(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        ps.forEach(i => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setPipes(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        p.forEach(i => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setWtps(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        w.forEach(i => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setWaterAccessories(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        acc.forEach(i => map.set(i.id, i));
+        return Array.from(map.values());
+      });
+      setGreaseTraps(prev => {
+        const map = new Map(prev.map(i => [i.id, i]));
+        gt.forEach(i => map.set(i.id, i));
+        return Array.from(map.values());
+      });
 
-      // Dynamically derive unique areas present in database assets
+      // Dynamically derive unique areas present in database assets & custom created areas
       const realDbAreas = Array.from(new Set([...m, ...ps, ...p, ...w, ...acc, ...gt].map((a: any) => a.area).filter(Boolean)));
       if (realDbAreas.length > 0) {
         setAreas(prev => Array.from(new Set([...prev, ...realDbAreas])));
