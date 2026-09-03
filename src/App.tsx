@@ -316,13 +316,13 @@ export const App: React.FC = () => {
       ...newMh,
       id: `mh-${Date.now()}`
     };
-    const saved = await apiClient.createAsset('manhole', createdMh);
+    const res = await apiClient.createAsset('manhole', createdMh);
     await reloadAssetsList();
     await reloadAreasList();
-    if (saved) {
+    if (res && !res.error) {
       addToast('success', 'Aset Berhasil Disimpan', `Manhole ${createdMh.name} tersimpan di PostgreSQL server.`);
     } else {
-      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+      addToast('error', 'Gagal Menyimpan Aset', res?.error || 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
     }
     setIsAddAssetModalOpen(false);
   };
@@ -332,13 +332,13 @@ export const App: React.FC = () => {
       ...newPs,
       id: `ps-${Date.now()}`
     };
-    const saved = await apiClient.createAsset('pump_station', createdPs);
+    const res = await apiClient.createAsset('pump_station', createdPs);
     await reloadAssetsList();
     await reloadAreasList();
-    if (saved) {
+    if (res && !res.error) {
       addToast('success', 'Aset Berhasil Disimpan', `Stasiun Pompa ${createdPs.name} tersimpan di PostgreSQL server.`);
     } else {
-      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+      addToast('error', 'Gagal Menyimpan Aset', res?.error || 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
     }
     setIsAddAssetModalOpen(false);
   };
@@ -348,13 +348,13 @@ export const App: React.FC = () => {
       ...newPipe,
       id: `p-${Date.now()}`
     };
-    const saved = await apiClient.createAsset('pipe', createdPipe);
+    const res = await apiClient.createAsset('pipe', createdPipe);
     await reloadAssetsList();
     await reloadAreasList();
-    if (saved) {
+    if (res && !res.error) {
       addToast('success', 'Aset Berhasil Disimpan', `Pipa ${createdPipe.name} tersimpan di PostgreSQL server.`);
     } else {
-      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+      addToast('error', 'Gagal Menyimpan Aset', res?.error || 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
     }
     setIsAddAssetModalOpen(false);
   };
@@ -364,13 +364,13 @@ export const App: React.FC = () => {
       ...newWtp,
       id: `wtp-${Date.now()}`
     };
-    const saved = await apiClient.createAsset('wtp', createdWtp);
+    const res = await apiClient.createAsset('wtp', createdWtp);
     await reloadAssetsList();
     await reloadAreasList();
-    if (saved) {
+    if (res && !res.error) {
       addToast('success', 'Aset Berhasil Disimpan', `WTP ${createdWtp.name} tersimpan di PostgreSQL server.`);
     } else {
-      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+      addToast('error', 'Gagal Menyimpan Aset', res?.error || 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
     }
     setIsAddAssetModalOpen(false);
   };
@@ -380,13 +380,13 @@ export const App: React.FC = () => {
       ...newAcc,
       id: `acc-${Date.now()}`
     };
-    const saved = await apiClient.createAsset('water_accessory', createdAcc);
+    const res = await apiClient.createAsset('water_accessory', createdAcc);
     await reloadAssetsList();
     await reloadAreasList();
-    if (saved) {
+    if (res && !res.error) {
       addToast('success', 'Aset Berhasil Disimpan', `Aksesori ${createdAcc.name} tersimpan di PostgreSQL server.`);
     } else {
-      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+      addToast('error', 'Gagal Menyimpan Aset', res?.error || 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
     }
     setIsAddAssetModalOpen(false);
   };
@@ -396,25 +396,25 @@ export const App: React.FC = () => {
       ...newGt,
       id: `gt-${Date.now()}`
     };
-    const saved = await apiClient.createAsset('grease_trap', createdGt);
+    const res = await apiClient.createAsset('grease_trap', createdGt);
     await reloadAssetsList();
     await reloadAreasList();
-    if (saved) {
+    if (res && !res.error) {
       addToast('success', 'Aset Berhasil Disimpan', `Grease Trap ${createdGt.name} tersimpan di PostgreSQL server.`);
     } else {
-      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+      addToast('error', 'Gagal Menyimpan Aset', res?.error || 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
     }
     setIsAddAssetModalOpen(false);
   };
 
   const handleEditGenericAsset = async (updatedAsset: SewerAsset) => {
-    const saved = await apiClient.updateAsset(updatedAsset.id, updatedAsset.type as any, updatedAsset);
+    const res = await apiClient.updateAsset(updatedAsset.id, updatedAsset.type as any, updatedAsset);
     await reloadAssetsList();
     await reloadAreasList();
-    if (saved) {
+    if (res && !res.error && (res.id || res.assetCode || res.type)) {
       addToast('success', 'Aset Berhasil Diperbarui', `Aset ${updatedAsset.name} tersimpan di PostgreSQL server.`);
     } else {
-      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+      addToast('error', 'Gagal Menyimpan Aset', res?.error || 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
     }
     setAssetToEdit(null);
   };

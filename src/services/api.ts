@@ -162,11 +162,15 @@ export const apiClient = {
         headers: getAuthHeaders(),
         body: JSON.stringify({ type, data })
       });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.warn('API createAsset failed:', e);
-      return null;
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        console.error('API createAsset failed with HTTP:', res.status, json);
+        return { error: json?.error || `HTTP ${res.status}` };
+      }
+      return json;
+    } catch (e: any) {
+      console.error('API createAsset failed:', e);
+      return { error: e?.message || 'Koneksi server terputus.' };
     }
   },
 
@@ -178,15 +182,15 @@ export const apiClient = {
         headers: getAuthHeaders(),
         body: JSON.stringify({ type, data })
       });
+      const json = await res.json().catch(() => null);
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error('API updateAsset failed with HTTP:', res.status, errorText);
-        return null;
+        console.error('API updateAsset failed with HTTP:', res.status, json);
+        return { error: json?.error || `HTTP ${res.status}` };
       }
-      return await res.json();
-    } catch (e) {
+      return json;
+    } catch (e: any) {
       console.error('API updateAsset failed with exception:', e);
-      return null;
+      return { error: e?.message || 'Koneksi server terputus.' };
     }
   },
 
