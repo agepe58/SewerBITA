@@ -25,23 +25,24 @@ interface NetworkMapProps {
   onRefreshOnZoom?: () => void;
 }
 
-// Custom Leaflet DivIcons Standardized to Exact 22px x 22px Sizing Across All Assets
+// Custom Leaflet DivIcons Standardized with Vibrant Magenta Highlighting for Map Redirection
 const createManholeIcon = (condition: string, isHighlighted: boolean) => {
   let color = '#16A34A'; // Good
   if (condition === 'Fair') color = '#0284C7';
   if (condition === 'Warning') color = '#CA8A04';
   if (condition === 'Critical') color = '#DC2626';
 
-  const pulseClass = condition === 'Critical' || isHighlighted ? 'animate-ping' : '';
-  const borderStyle = isHighlighted ? 'border-2 border-[#2563EB] scale-125' : 'border border-white';
+  const finalColor = isHighlighted ? '#EC4899' : color;
+  const pulseClass = isHighlighted ? 'animate-ping duration-300' : (condition === 'Critical' ? 'animate-ping' : '');
+  const containerClass = isHighlighted ? 'scale-150 ring-4 ring-pink-400/90 shadow-2xl animate-bounce z-[9999]' : '';
 
   return L.divIcon({
     className: 'custom-mh-icon',
     html: `
-      <div class="relative flex items-center justify-center w-[22px] h-[22px]">
-        ${isHighlighted || condition === 'Critical' ? `<span class="absolute inline-flex h-full w-full rounded-full opacity-75 ${pulseClass}" style="background-color: ${color}"></span>` : ''}
-        <div class="relative w-[22px] h-[22px] rounded-full flex items-center justify-center ${borderStyle} shadow-md" style="background-color: ${color}">
-          <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+      <div class="relative flex items-center justify-center w-[22px] h-[22px] ${containerClass}">
+        <span class="absolute inline-flex h-full w-full rounded-full opacity-75 ${pulseClass}" style="background-color: ${finalColor}"></span>
+        <div class="relative w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 border-white shadow-lg" style="background-color: ${finalColor}">
+          <span class="w-2 h-2 rounded-full bg-white"></span>
         </div>
       </div>
     `,
@@ -51,11 +52,17 @@ const createManholeIcon = (condition: string, isHighlighted: boolean) => {
 };
 
 const createPumpStationIcon = (isHighlighted: boolean) => {
+  const finalBg = isHighlighted ? 'bg-[#EC4899] ring-4 ring-pink-400/90 scale-150 animate-bounce shadow-2xl z-[9999]' : 'bg-[#2563EB]';
+  const pulseClass = isHighlighted ? 'animate-ping duration-300' : '';
+
   return L.divIcon({
     className: 'custom-ps-icon',
     html: `
-      <div class="relative flex items-center justify-center w-[22px] h-[22px] bg-[#2563EB] text-white rounded-md border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-blue-400' : ''}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <div class="relative flex items-center justify-center w-[22px] h-[22px]">
+        ${isHighlighted ? `<span class="absolute inline-flex h-full w-full rounded-md bg-[#EC4899] opacity-75 ${pulseClass}"></span>` : ''}
+        <div class="relative flex items-center justify-center w-[22px] h-[22px] ${finalBg} text-white rounded-md border-2 border-white shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
       </div>
     `,
     iconSize: [22, 22],
@@ -64,11 +71,17 @@ const createPumpStationIcon = (isHighlighted: boolean) => {
 };
 
 const createWtpIcon = (isHighlighted: boolean) => {
+  const finalBg = isHighlighted ? 'bg-[#EC4899] ring-4 ring-pink-400/90 scale-150 animate-bounce shadow-2xl z-[9999]' : 'bg-[#0284C7]';
+  const pulseClass = isHighlighted ? 'animate-ping duration-300' : '';
+
   return L.divIcon({
     className: 'custom-wtp-icon',
     html: `
-      <div class="relative flex items-center justify-center w-[22px] h-[22px] bg-[#0284C7] text-white rounded-md border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-sky-400' : ''}">
-        <span class="text-[10px]">🏭</span>
+      <div class="relative flex items-center justify-center w-[22px] h-[22px]">
+        ${isHighlighted ? `<span class="absolute inline-flex h-full w-full rounded-md bg-[#EC4899] opacity-75 ${pulseClass}"></span>` : ''}
+        <div class="relative flex items-center justify-center w-[22px] h-[22px] ${finalBg} text-white rounded-md border-2 border-white shadow-md">
+          <span class="text-[10px]">🏭</span>
+        </div>
       </div>
     `,
     iconSize: [22, 22],
@@ -77,13 +90,16 @@ const createWtpIcon = (isHighlighted: boolean) => {
 };
 
 const createWaterAccessoryIcon = (accessoryType: string, isHighlighted: boolean) => {
-  const bg = accessoryType === 'air_valve'
+  const defaultBg = accessoryType === 'air_valve'
     ? 'bg-cyan-500'
     : accessoryType === 'dresser_joint'
     ? 'bg-emerald-500'
     : accessoryType === 'gate_valve'
     ? 'bg-indigo-600'
     : 'bg-sky-500';
+
+  const finalBg = isHighlighted ? 'bg-[#EC4899] ring-4 ring-pink-400/90 scale-150 animate-bounce shadow-2xl z-[9999]' : defaultBg;
+  const pulseClass = isHighlighted ? 'animate-ping duration-300' : '';
 
   const symbol = accessoryType === 'air_valve'
     ? '💨'
@@ -96,8 +112,11 @@ const createWaterAccessoryIcon = (accessoryType: string, isHighlighted: boolean)
   return L.divIcon({
     className: 'custom-accessory-icon',
     html: `
-      <div class="relative flex items-center justify-center w-[22px] h-[22px] ${bg} text-white rounded-md border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-white' : ''}">
-        <span class="text-[10px] font-bold">${symbol}</span>
+      <div class="relative flex items-center justify-center w-[22px] h-[22px]">
+        ${isHighlighted ? `<span class="absolute inline-flex h-full w-full rounded-md bg-[#EC4899] opacity-75 ${pulseClass}"></span>` : ''}
+        <div class="relative flex items-center justify-center w-[22px] h-[22px] ${finalBg} text-white rounded-md border-2 border-white shadow-md">
+          <span class="text-[10px] font-bold">${symbol}</span>
+        </div>
       </div>
     `,
     iconSize: [22, 22],
@@ -106,11 +125,17 @@ const createWaterAccessoryIcon = (accessoryType: string, isHighlighted: boolean)
 };
 
 const createGreaseTrapIcon = (isHighlighted: boolean) => {
+  const finalBg = isHighlighted ? 'bg-[#EC4899] ring-4 ring-pink-400/90 scale-150 animate-bounce shadow-2xl z-[9999]' : 'bg-amber-600';
+  const pulseClass = isHighlighted ? 'animate-ping duration-300' : '';
+
   return L.divIcon({
     className: 'custom-grease-trap-icon',
     html: `
-      <div class="relative flex items-center justify-center w-[22px] h-[22px] bg-amber-600 text-white rounded-md border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-amber-400' : ''}">
-        <span class="text-[10px] font-bold">🍳</span>
+      <div class="relative flex items-center justify-center w-[22px] h-[22px]">
+        ${isHighlighted ? `<span class="absolute inline-flex h-full w-full rounded-md bg-[#EC4899] opacity-75 ${pulseClass}"></span>` : ''}
+        <div class="relative flex items-center justify-center w-[22px] h-[22px] ${finalBg} text-white rounded-md border-2 border-white shadow-md">
+          <span class="text-[10px] font-bold">🍳</span>
+        </div>
       </div>
     `,
     iconSize: [22, 22],
@@ -242,13 +267,14 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   useEffect(() => {
     if (selectedAssetIdFromParent) {
       setSelectedAssetId(selectedAssetIdFromParent);
-      const matched = [...manholes, ...pumpStations].find(a => a.id === selectedAssetIdFromParent);
+      const allAssets = [...manholes, ...pumpStations, ...(wtps || []), ...(waterAccessories || []), ...(greaseTraps || [])];
+      const matched = allAssets.find(a => a.id === selectedAssetIdFromParent);
       if (matched) {
         const c = getRawCoords(matched);
         if (c) setPanTarget(c);
       }
     }
-  }, [selectedAssetIdFromParent, manholes, pumpStations]);
+  }, [selectedAssetIdFromParent, manholes, pumpStations, wtps, waterAccessories, greaseTraps]);
 
   const handleSelectAsset = (asset: SewerAsset | null) => {
     setSelectedAssetId(asset ? asset.id : null);
@@ -344,6 +370,21 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         onSelectBasemap={(b) => setBasemap(b as BasemapType)}
         availableAreas={Array.from(new Set([...manholes, ...pumpStations, ...pipes].map(a => a.area).filter(Boolean)))}
       />
+
+      {/* Floating Highlight Active Banner (Center Top) */}
+      {selectedAssetId && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-slate-900/95 text-white backdrop-blur-md border border-pink-500/60 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2.5 text-xs font-bold animate-fade-in">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#EC4899] animate-ping"></span>
+          <span>📍 Lokasi Aset: <span className="text-pink-400 font-mono font-extrabold">{allAssets.find(a => a.id === selectedAssetId)?.assetCode}</span> — {allAssets.find(a => a.id === selectedAssetId)?.name} <span className="text-pink-300 font-normal">(Titik Pink Menyala)</span></span>
+          <button
+            onClick={() => setSelectedAssetId(null)}
+            className="ml-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-full w-5 h-5 flex items-center justify-center transition cursor-pointer text-[10px]"
+            title="Tutup Sorotan"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Floating Quick Basemap Switcher Pill (Top Right) */}
       <div className="absolute top-4 right-4 z-[1000] bg-white/95 backdrop-blur-md border border-slate-200/90 p-1.5 rounded-xl shadow-lg flex items-center gap-1 text-xs font-extrabold">
@@ -490,7 +531,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           const coords = getDisambiguatedCoords(mh, idx);
           if (!coords) return null;
           const inTrace = isAssetInTrace(mh.id);
-          const icon = createManholeIcon(mh.condition, inTrace);
+          const isHighlighted = selectedAssetId === mh.id || selectedAssetIdFromParent === mh.id;
+          const icon = createManholeIcon(mh.condition, isHighlighted || inTrace);
           const opacity = activeTraceResult && !inTrace ? 0.4 : 1.0;
 
           return (
@@ -536,7 +578,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           const coords = getDisambiguatedCoords(ps, idx);
           if (!coords) return null;
           const inTrace = isAssetInTrace(ps.id);
-          const icon = createPumpStationIcon(inTrace);
+          const isHighlighted = selectedAssetId === ps.id || selectedAssetIdFromParent === ps.id;
+          const icon = createPumpStationIcon(isHighlighted || inTrace);
 
           return (
             <Marker
@@ -569,7 +612,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           const coords = getDisambiguatedCoords(wtp, idx);
           if (!coords) return null;
           const inTrace = isAssetInTrace(wtp.id);
-          const icon = createWtpIcon(inTrace);
+          const isHighlighted = selectedAssetId === wtp.id || selectedAssetIdFromParent === wtp.id;
+          const icon = createWtpIcon(isHighlighted || inTrace);
 
           return (
             <Marker
@@ -609,7 +653,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           const coords = getDisambiguatedCoords(acc, idx);
           if (!coords) return null;
           const inTrace = isAssetInTrace(acc.id);
-          const icon = createWaterAccessoryIcon(acc.accessoryType, inTrace);
+          const isHighlighted = selectedAssetId === acc.id || selectedAssetIdFromParent === acc.id;
+          const icon = createWaterAccessoryIcon(acc.accessoryType, isHighlighted || inTrace);
 
           return (
             <Marker
@@ -648,7 +693,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           const coords = getDisambiguatedCoords(gt, idx);
           if (!coords) return null;
           const inTrace = isAssetInTrace(gt.id);
-          const icon = createGreaseTrapIcon(inTrace);
+          const isHighlighted = selectedAssetId === gt.id || selectedAssetIdFromParent === gt.id;
+          const icon = createGreaseTrapIcon(isHighlighted || inTrace);
 
           return (
             <Marker
