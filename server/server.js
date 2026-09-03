@@ -47,19 +47,22 @@ const rateLimiter = (maxRequests = 250, windowMs = 60000) => (req, res, next) =>
   next();
 };
 
-app.use(rateLimiter(300, 60000));
-
-// --------------------------------------------------------------------
-// 0. HEALTH CHECK ROUTE ALIAS
-// --------------------------------------------------------------------
+// Health Check Endpoints (Placed BEFORE rateLimiter so healthchecks from Docker/Coolify never get rate-limited)
 app.get('/health', (req, res) => {
-  res.status(200).send('OK');
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
+
+app.use(rateLimiter(300, 60000));
 
 // PostgreSQL Connection Pool Setup
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://sewerbita_admin:sewerbita_pass@postgres-sewerbita:5432/sewerbita_db',
   ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
+});
+
+// Handle idle pool errors gracefully without crashing the Node.js process
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle PostgreSQL client:', err.message);
 });
 
 // Test Database Connection and Auto-Initialize Required Tables
