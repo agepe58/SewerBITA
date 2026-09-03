@@ -25,7 +25,7 @@ interface NetworkMapProps {
   onRefreshOnZoom?: () => void;
 }
 
-// Custom Leaflet DivIcons Standardized to Manhole Size (24px x 24px)
+// Custom Leaflet DivIcons Standardized to Exact 22px x 22px Sizing Across All Assets
 const createManholeIcon = (condition: string, isHighlighted: boolean) => {
   let color = '#16A34A'; // Good
   if (condition === 'Fair') color = '#0284C7';
@@ -38,15 +38,15 @@ const createManholeIcon = (condition: string, isHighlighted: boolean) => {
   return L.divIcon({
     className: 'custom-mh-icon',
     html: `
-      <div class="relative flex items-center justify-center w-6 h-6">
+      <div class="relative flex items-center justify-center w-[22px] h-[22px]">
         ${isHighlighted || condition === 'Critical' ? `<span class="absolute inline-flex h-full w-full rounded-full opacity-75 ${pulseClass}" style="background-color: ${color}"></span>` : ''}
-        <div class="relative w-5 h-5 rounded-full flex items-center justify-center ${borderStyle} shadow-md" style="background-color: ${color}">
+        <div class="relative w-[22px] h-[22px] rounded-full flex items-center justify-center ${borderStyle} shadow-md" style="background-color: ${color}">
           <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
         </div>
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
   });
 };
 
@@ -54,12 +54,12 @@ const createPumpStationIcon = (isHighlighted: boolean) => {
   return L.divIcon({
     className: 'custom-ps-icon',
     html: `
-      <div class="relative flex items-center justify-center w-6 h-6 bg-[#2563EB] text-white rounded-lg border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-blue-400' : ''}">
+      <div class="relative flex items-center justify-center w-[22px] h-[22px] bg-[#2563EB] text-white rounded-md border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-blue-400' : ''}">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
   });
 };
 
@@ -67,12 +67,12 @@ const createWtpIcon = (isHighlighted: boolean) => {
   return L.divIcon({
     className: 'custom-wtp-icon',
     html: `
-      <div class="relative flex items-center justify-center w-6 h-6 bg-[#0284C7] text-white rounded-lg border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-sky-400' : ''}">
+      <div class="relative flex items-center justify-center w-[22px] h-[22px] bg-[#0284C7] text-white rounded-md border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-sky-400' : ''}">
         <span class="text-[10px]">🏭</span>
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
   });
 };
 
@@ -96,12 +96,12 @@ const createWaterAccessoryIcon = (accessoryType: string, isHighlighted: boolean)
   return L.divIcon({
     className: 'custom-accessory-icon',
     html: `
-      <div class="relative flex items-center justify-center w-6 h-6 ${bg} text-white rounded-lg border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-white' : ''}">
+      <div class="relative flex items-center justify-center w-[22px] h-[22px] ${bg} text-white rounded-md border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-white' : ''}">
         <span class="text-[10px] font-bold">${symbol}</span>
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
   });
 };
 
@@ -109,12 +109,12 @@ const createGreaseTrapIcon = (isHighlighted: boolean) => {
   return L.divIcon({
     className: 'custom-grease-trap-icon',
     html: `
-      <div class="relative flex items-center justify-center w-6 h-6 bg-amber-600 text-white rounded-lg border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-amber-400' : ''}">
+      <div class="relative flex items-center justify-center w-[22px] h-[22px] bg-amber-600 text-white rounded-md border border-white shadow-md ${isHighlighted ? 'scale-125 ring-2 ring-amber-400' : ''}">
         <span class="text-[10px] font-bold">🍳</span>
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
   });
 };
 
