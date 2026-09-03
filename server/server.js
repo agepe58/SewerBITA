@@ -439,13 +439,35 @@ app.delete('/api/areas/:name', async (req, res) => {
   }
 });
 
+const ensureUniqueAssetCode = async (tableName, assetCode, id) => {
+  if (!assetCode || !assetCode.trim()) {
+    return `${tableName.slice(0, 2).toUpperCase()}-${Date.now()}`;
+  }
+  const cleanCode = assetCode.trim();
+  try {
+    const res = await pool.query(
+      `SELECT id FROM ${tableName} WHERE LOWER(asset_code) = LOWER($1) AND id != $2;`,
+      [cleanCode, id || '']
+    );
+    if (res.rows.length > 0) {
+      return `${cleanCode}-${Math.floor(10 + Math.random() * 90)}`;
+    }
+    return cleanCode;
+  } catch (e) {
+    return cleanCode;
+  }
+};
+
 // --------------------------------------------------------------------
 // 3. CREATE ASSET ENDPOINT (WITH PERSISTENT UPSERT)
 // --------------------------------------------------------------------
 app.post('/api/assets', async (req, res) => {
   const { type, data } = req.body;
   try {
-    if (data && data.area) {
+    if (!data) {
+      return res.status(400).json({ error: 'Data aset tidak boleh kosong' });
+    }
+    if (data.area) {
       await ensureAreaExists(data.area);
     }
     if (type === 'manhole') {
@@ -473,12 +495,13 @@ app.post('/api/assets', async (req, res) => {
       const parsedLng = Number(rawLng);
       const finalLat = !isNaN(parsedLat) && parsedLat !== 0 ? parsedLat : -6.444;
       const finalLng = !isNaN(parsedLng) && parsedLng !== 0 ? parsedLng : 107.452;
+      const finalAssetCode = await ensureUniqueAssetCode('manhole_assets', data.assetCode, data.id);
 
       const values = [
         data.id || `mh-${Date.now()}`,
-        data.assetCode,
-        data.name,
-        data.area,
+        finalAssetCode,
+        data.name || `Manhole ${finalAssetCode}`,
+        data.area || 'Utama',
         finalLat,
         finalLng,
         Number(data.depthMeters) || 2.0,
@@ -519,12 +542,13 @@ app.post('/api/assets', async (req, res) => {
       const parsedLng = Number(rawLng);
       const finalLat = !isNaN(parsedLat) && parsedLat !== 0 ? parsedLat : -6.444;
       const finalLng = !isNaN(parsedLng) && parsedLng !== 0 ? parsedLng : 107.452;
+      const finalAssetCode = await ensureUniqueAssetCode('pump_station_assets', data.assetCode || data.psCode, data.id);
 
       const values = [
         data.id || `ps-${Date.now()}`,
-        data.assetCode,
-        data.name,
-        data.area,
+        finalAssetCode,
+        data.name || `Stasiun Pompa ${finalAssetCode}`,
+        data.area || 'Utama',
         finalLat,
         finalLng,
         Number(data.flowCapacityLps ?? data.capacityLps) || 150.0,
@@ -564,13 +588,14 @@ app.post('/api/assets', async (req, res) => {
           next_inspection_due = EXCLUDED.next_inspection_due
         RETURNING id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
+      const finalAssetCode = await ensureUniqueAssetCode('pipe_assets', data.assetCode || data.pipeCode, data.id);
       const values = [
         data.id || `p-${Date.now()}`,
-        data.assetCode,
-        data.name,
-        data.area,
-        data.fromAssetId,
-        data.toAssetId,
+        finalAssetCode,
+        data.name || `Pipa ${finalAssetCode}`,
+        data.area || 'Utama',
+        data.fromAssetId || 'node-start',
+        data.toAssetId || 'node-end',
         Number(data.lengthMeters) || 50.0,
         Number(data.diameterMm) || 300,
         data.material || 'HDPE',
@@ -607,11 +632,12 @@ app.post('/api/assets', async (req, res) => {
           next_inspection_due = EXCLUDED.next_inspection_due
         RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
+      const finalAssetCode = await ensureUniqueAssetCode('wtp_assets', data.assetCode || data.wtpCode, data.id);
       const values = [
         data.id || `wtp-${Date.now()}`,
-        data.assetCode,
-        data.name,
-        data.area,
+        finalAssetCode,
+        data.name || `WTP ${finalAssetCode}`,
+        data.area || 'Utama',
         Number(data.latitude ?? data.coordinates?.lat) || -6.444,
         Number(data.longitude ?? data.coordinates?.lng) || 107.452,
         Number(data.productionCapacityLps) || 500.0,
@@ -649,11 +675,12 @@ app.post('/api/assets', async (req, res) => {
           next_inspection_due = EXCLUDED.next_inspection_due
         RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
+      const finalAssetCode = await ensureUniqueAssetCode('water_accessory_assets', data.assetCode || data.accCode, data.id);
       const values = [
         data.id || `acc-${Date.now()}`,
-        data.assetCode,
-        data.name,
-        data.area,
+        finalAssetCode,
+        data.name || `Aksesori ${finalAssetCode}`,
+        data.area || 'Utama',
         Number(data.latitude ?? data.coordinates?.lat) || -6.444,
         Number(data.longitude ?? data.coordinates?.lng) || 107.452,
         data.accessoryType || 'air_valve',
@@ -692,11 +719,12 @@ app.post('/api/assets', async (req, res) => {
           next_inspection_due = EXCLUDED.next_inspection_due
         RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue";
       `;
+      const finalAssetCode = await ensureUniqueAssetCode('grease_trap_assets', data.assetCode || data.gtCode, data.id);
       const values = [
         data.id || `gt-${Date.now()}`,
-        data.assetCode,
-        data.name,
-        data.area,
+        finalAssetCode,
+        data.name || `Grease Trap ${finalAssetCode}`,
+        data.area || 'Utama',
         Number(data.latitude ?? data.coordinates?.lat) || -6.444,
         Number(data.longitude ?? data.coordinates?.lng) || 107.452,
         Number(data.capacityLiters) || 500.0,
