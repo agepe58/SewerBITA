@@ -742,302 +742,316 @@ const cleanDate = (d) => {
 
 const saveOrUpdateAssetInDb = async (type, id, data) => {
   if (!data) throw new Error('Data aset tidak boleh kosong');
-  if (data.area) await ensureAreaExists(data.area);
 
-  let normalizedType = String(type || data.type || '').toLowerCase().trim();
-  if (normalizedType === 'pumpstation' || normalizedType === 'pump') normalizedType = 'pump_station';
-  if (normalizedType === 'wateraccessory' || normalizedType === 'accessory' || normalizedType === 'valve') normalizedType = 'water_accessory';
-  if (normalizedType === 'greasetrap' || normalizedType === 'grease') normalizedType = 'grease_trap';
-  if (normalizedType === 'wwtp') normalizedType = 'wtp';
+  const runUpsert = async () => {
+    if (data.area) await ensureAreaExists(data.area);
 
-  const lat = Number(data.latitude ?? data.coordinates?.lat);
-  const lng = Number(data.longitude ?? data.coordinates?.lng);
-  const validLat = !isNaN(lat) && lat !== 0 ? lat : -6.444;
-  const validLng = !isNaN(lng) && lng !== 0 ? lng : 107.452;
+    let normalizedType = String(type || data.type || '').toLowerCase().trim();
+    if (normalizedType === 'pumpstation' || normalizedType === 'pump') normalizedType = 'pump_station';
+    if (normalizedType === 'wateraccessory' || normalizedType === 'accessory' || normalizedType === 'valve') normalizedType = 'water_accessory';
+    if (normalizedType === 'greasetrap' || normalizedType === 'grease') normalizedType = 'grease_trap';
+    if (normalizedType === 'wwtp') normalizedType = 'wtp';
 
-  const targetId = id || data.id || `ast-${Date.now()}`;
-  const safeAssetCode = String(data.assetCode || data.asset_code || data.code || targetId).trim();
-  const safeNextDue = cleanDate(data.nextInspectionDue || data.next_inspection_due);
+    const lat = Number(data.latitude ?? data.coordinates?.lat);
+    const lng = Number(data.longitude ?? data.coordinates?.lng);
+    const validLat = !isNaN(lat) && lat !== 0 ? lat : -6.444;
+    const validLng = !isNaN(lng) && lng !== 0 ? lng : 107.452;
 
-  if (normalizedType === 'manhole') {
-    const check = await pool.query(
-      'SELECT id FROM manhole_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
-      [targetId, safeAssetCode]
-    );
+    const targetId = id || data.id || `ast-${Date.now()}`;
+    const safeAssetCode = String(data.assetCode || data.asset_code || data.code || targetId).trim();
+    const safeNextDue = cleanDate(data.nextInspectionDue || data.next_inspection_due);
 
-    if (check.rows.length > 0) {
-      const dbId = check.rows[0].id;
-      const updateQ = `
-        UPDATE manhole_assets SET
-          asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
-          depth_meters = $6, diameter_mm = $7, material = $8, status = $9, condition = $10, next_inspection_due = $11, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $12
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        safeAssetCode, data.name || `Manhole ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        Number(data.depthMeters ?? data.depth_meters) || 2.5, Number(data.diameterMm ?? data.diameter_mm) || 800,
-        data.material || 'Precast Concrete', data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
-      ];
-      const res = await pool.query(updateQ, values);
-      return { type: 'manhole', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
-    } else {
-      const insertQ = `
-        INSERT INTO manhole_assets
-        (id, asset_code, name, area, latitude, longitude, depth_meters, diameter_mm, material, status, condition, next_inspection_due)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        targetId, safeAssetCode, data.name || `Manhole ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        Number(data.depthMeters ?? data.depth_meters) || 2.5, Number(data.diameterMm ?? data.diameter_mm) || 800,
-        data.material || 'Precast Concrete', data.status || 'Active', data.condition || 'Good', safeNextDue
-      ];
-      const res = await pool.query(insertQ, values);
-      return { type: 'manhole', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+    if (normalizedType === 'manhole') {
+      const check = await pool.query(
+        'SELECT id FROM manhole_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
+        [targetId, safeAssetCode]
+      );
+
+      if (check.rows.length > 0) {
+        const dbId = check.rows[0].id;
+        const updateQ = `
+          UPDATE manhole_assets SET
+            asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
+            depth_meters = $6, diameter_mm = $7, material = $8, status = $9, condition = $10, next_inspection_due = $11, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $12
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          safeAssetCode, data.name || `Manhole ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          Number(data.depthMeters ?? data.depth_meters) || 2.5, Number(data.diameterMm ?? data.diameter_mm) || 800,
+          data.material || 'Precast Concrete', data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
+        ];
+        const res = await pool.query(updateQ, values);
+        return { type: 'manhole', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      } else {
+        const insertQ = `
+          INSERT INTO manhole_assets
+          (id, asset_code, name, area, latitude, longitude, depth_meters, diameter_mm, material, status, condition, next_inspection_due)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          targetId, safeAssetCode, data.name || `Manhole ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          Number(data.depthMeters ?? data.depth_meters) || 2.5, Number(data.diameterMm ?? data.diameter_mm) || 800,
+          data.material || 'Precast Concrete', data.status || 'Active', data.condition || 'Good', safeNextDue
+        ];
+        const res = await pool.query(insertQ, values);
+        return { type: 'manhole', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      }
     }
-  }
 
-  if (normalizedType === 'pump_station') {
-    const check = await pool.query(
-      'SELECT id FROM pump_station_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
-      [targetId, safeAssetCode]
-    );
+    if (normalizedType === 'pump_station') {
+      const check = await pool.query(
+        'SELECT id FROM pump_station_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
+        [targetId, safeAssetCode]
+      );
 
-    if (check.rows.length > 0) {
-      const dbId = check.rows[0].id;
-      const updateQ = `
-        UPDATE pump_station_assets SET
-          asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
-          flow_capacity_lps = $6, total_pumps = $7, active_pumps = $8, power_source = $9, generator_backup = $10, status = $11, condition = $12, next_inspection_due = $13, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $14
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        safeAssetCode, data.name || `Stasiun Pompa ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        Number(data.flowCapacityLps ?? data.capacityLps ?? data.flow_capacity_lps) || 150,
-        Number(data.totalPumps ?? data.pumpCount ?? data.total_pumps) || 3,
-        Number(data.activePumps ?? data.active_pumps) || 2,
-        data.powerSource || data.power_source || 'PLN Grid',
-        data.generatorBackup || data.generator_backup || 'Genset',
-        data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
-      ];
-      const res = await pool.query(updateQ, values);
-      return { type: 'pump_station', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
-    } else {
-      const insertQ = `
-        INSERT INTO pump_station_assets
-        (id, asset_code, name, area, latitude, longitude, flow_capacity_lps, total_pumps, active_pumps, power_source, generator_backup, status, condition, next_inspection_due)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        targetId, safeAssetCode, data.name || `Stasiun Pompa ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        Number(data.flowCapacityLps ?? data.capacityLps ?? data.flow_capacity_lps) || 150,
-        Number(data.totalPumps ?? data.pumpCount ?? data.total_pumps) || 3,
-        Number(data.activePumps ?? data.active_pumps) || 2,
-        data.powerSource || data.power_source || 'PLN Grid',
-        data.generatorBackup || data.generator_backup || 'Genset',
-        data.status || 'Active', data.condition || 'Good', safeNextDue
-      ];
-      const res = await pool.query(insertQ, values);
-      return { type: 'pump_station', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      if (check.rows.length > 0) {
+        const dbId = check.rows[0].id;
+        const updateQ = `
+          UPDATE pump_station_assets SET
+            asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
+            flow_capacity_lps = $6, total_pumps = $7, active_pumps = $8, power_source = $9, generator_backup = $10, status = $11, condition = $12, next_inspection_due = $13, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $14
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          safeAssetCode, data.name || `Stasiun Pompa ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          Number(data.flowCapacityLps ?? data.capacityLps ?? data.flow_capacity_lps) || 150,
+          Number(data.totalPumps ?? data.pumpCount ?? data.total_pumps) || 3,
+          Number(data.activePumps ?? data.active_pumps) || 2,
+          data.powerSource || data.power_source || 'PLN Grid',
+          data.generatorBackup || data.generator_backup || 'Genset',
+          data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
+        ];
+        const res = await pool.query(updateQ, values);
+        return { type: 'pump_station', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      } else {
+        const insertQ = `
+          INSERT INTO pump_station_assets
+          (id, asset_code, name, area, latitude, longitude, flow_capacity_lps, total_pumps, active_pumps, power_source, generator_backup, status, condition, next_inspection_due)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          targetId, safeAssetCode, data.name || `Stasiun Pompa ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          Number(data.flowCapacityLps ?? data.capacityLps ?? data.flow_capacity_lps) || 150,
+          Number(data.totalPumps ?? data.pumpCount ?? data.total_pumps) || 3,
+          Number(data.activePumps ?? data.active_pumps) || 2,
+          data.powerSource || data.power_source || 'PLN Grid',
+          data.generatorBackup || data.generator_backup || 'Genset',
+          data.status || 'Active', data.condition || 'Good', safeNextDue
+        ];
+        const res = await pool.query(insertQ, values);
+        return { type: 'pump_station', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      }
     }
-  }
 
-  if (normalizedType === 'pipe') {
-    const check = await pool.query(
-      'SELECT id FROM pipe_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
-      [targetId, safeAssetCode]
-    );
+    if (normalizedType === 'pipe') {
+      const check = await pool.query(
+        'SELECT id FROM pipe_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
+        [targetId, safeAssetCode]
+      );
 
-    if (check.rows.length > 0) {
-      const dbId = check.rows[0].id;
-      const updateQ = `
-        UPDATE pipe_assets SET
-          asset_code = $1, name = $2, area = $3, from_asset_id = $4, to_asset_id = $5,
-          length_meters = $6, diameter_mm = $7, material = $8, slope_percent = $9,
-          pipe_category = $10, waypoints = $11, pressure_bar = $12, destination_wwtp_name = $13,
-          status = $14, condition = $15, next_inspection_due = $16, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $17
-        RETURNING id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        safeAssetCode, data.name || `Pipa ${safeAssetCode}`, data.area || 'Utama',
-        data.fromAssetId || data.from_asset_id || 'node-start', data.toAssetId || data.to_asset_id || 'node-end',
-        Number(data.lengthMeters ?? data.length_meters) || 50, Number(data.diameterMm ?? data.diameter_mm) || 300,
-        data.material || 'HDPE', Number(data.slopePercent ?? data.slope_percent) || 0.5,
-        data.pipeCategory || data.pipe_category || 'gravity', JSON.stringify(data.waypoints || []),
-        Number(data.pressureBar ?? data.pressure_bar) || 0.0, data.destinationWwtpName || data.destination_wwtp_name || '',
-        data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
-      ];
-      const res = await pool.query(updateQ, values);
-      return { type: 'pipe', ...res.rows[0] };
-    } else {
-      const insertQ = `
-        INSERT INTO pipe_assets
-        (id, asset_code, name, area, from_asset_id, to_asset_id, length_meters, diameter_mm, material, slope_percent, pipe_category, waypoints, pressure_bar, destination_wwtp_name, status, condition, next_inspection_due)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-        RETURNING id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        targetId, safeAssetCode, data.name || `Pipa ${safeAssetCode}`, data.area || 'Utama',
-        data.fromAssetId || data.from_asset_id || 'node-start', data.toAssetId || data.to_asset_id || 'node-end',
-        Number(data.lengthMeters ?? data.length_meters) || 50, Number(data.diameterMm ?? data.diameter_mm) || 300,
-        data.material || 'HDPE', Number(data.slopePercent ?? data.slope_percent) || 0.5,
-        data.pipeCategory || data.pipe_category || 'gravity', JSON.stringify(data.waypoints || []),
-        Number(data.pressureBar ?? data.pressure_bar) || 0.0, data.destinationWwtpName || data.destination_wwtp_name || '',
-        data.status || 'Active', data.condition || 'Good', safeNextDue
-      ];
-      const res = await pool.query(insertQ, values);
-      return { type: 'pipe', ...res.rows[0] };
+      if (check.rows.length > 0) {
+        const dbId = check.rows[0].id;
+        const updateQ = `
+          UPDATE pipe_assets SET
+            asset_code = $1, name = $2, area = $3, from_asset_id = $4, to_asset_id = $5,
+            length_meters = $6, diameter_mm = $7, material = $8, slope_percent = $9,
+            pipe_category = $10, waypoints = $11, pressure_bar = $12, destination_wwtp_name = $13,
+            status = $14, condition = $15, next_inspection_due = $16, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $17
+          RETURNING id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          safeAssetCode, data.name || `Pipa ${safeAssetCode}`, data.area || 'Utama',
+          data.fromAssetId || data.from_asset_id || 'node-start', data.toAssetId || data.to_asset_id || 'node-end',
+          Number(data.lengthMeters ?? data.length_meters) || 50, Number(data.diameterMm ?? data.diameter_mm) || 300,
+          data.material || 'HDPE', Number(data.slopePercent ?? data.slope_percent) || 0.5,
+          data.pipeCategory || data.pipe_category || 'gravity', JSON.stringify(data.waypoints || []),
+          Number(data.pressureBar ?? data.pressure_bar) || 0.0, data.destinationWwtpName || data.destination_wwtp_name || '',
+          data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
+        ];
+        const res = await pool.query(updateQ, values);
+        return { type: 'pipe', ...res.rows[0] };
+      } else {
+        const insertQ = `
+          INSERT INTO pipe_assets
+          (id, asset_code, name, area, from_asset_id, to_asset_id, length_meters, diameter_mm, material, slope_percent, pipe_category, waypoints, pressure_bar, destination_wwtp_name, status, condition, next_inspection_due)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+          RETURNING id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          targetId, safeAssetCode, data.name || `Pipa ${safeAssetCode}`, data.area || 'Utama',
+          data.fromAssetId || data.from_asset_id || 'node-start', data.toAssetId || data.to_asset_id || 'node-end',
+          Number(data.lengthMeters ?? data.length_meters) || 50, Number(data.diameterMm ?? data.diameter_mm) || 300,
+          data.material || 'HDPE', Number(data.slopePercent ?? data.slope_percent) || 0.5,
+          data.pipeCategory || data.pipe_category || 'gravity', JSON.stringify(data.waypoints || []),
+          Number(data.pressureBar ?? data.pressure_bar) || 0.0, data.destinationWwtpName || data.destination_wwtp_name || '',
+          data.status || 'Active', data.condition || 'Good', safeNextDue
+        ];
+        const res = await pool.query(insertQ, values);
+        return { type: 'pipe', ...res.rows[0] };
+      }
     }
-  }
 
-  if (normalizedType === 'wtp') {
-    const check = await pool.query(
-      'SELECT id FROM wtp_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
-      [targetId, safeAssetCode]
-    );
+    if (normalizedType === 'wtp') {
+      const check = await pool.query(
+        'SELECT id FROM wtp_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
+        [targetId, safeAssetCode]
+      );
 
-    if (check.rows.length > 0) {
-      const dbId = check.rows[0].id;
-      const updateQ = `
-        UPDATE wtp_assets SET
-          asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
-          production_capacity_lps = $6, raw_water_source = $7, water_quality_status = $8, reservoir_capacity_m3 = $9, status = $10, condition = $11, next_inspection_due = $12, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $13
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        safeAssetCode, data.name || `WTP ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        Number(data.productionCapacityLps ?? data.production_capacity_lps) || 500,
-        data.rawWaterSource || data.raw_water_source || 'Sungai Citarum',
-        data.waterQualityStatus || data.water_quality_status || 'Safe - Permenkes 2023',
-        Number(data.reservoirCapacityM3 ?? data.reservoir_capacity_m3) || 5000,
-        data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
-      ];
-      const res = await pool.query(updateQ, values);
-      return { type: 'wtp', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
-    } else {
-      const insertQ = `
-        INSERT INTO wtp_assets
-        (id, asset_code, name, area, latitude, longitude, production_capacity_lps, raw_water_source, water_quality_status, reservoir_capacity_m3, status, condition, next_inspection_due)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        targetId, safeAssetCode, data.name || `WTP ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        Number(data.productionCapacityLps ?? data.production_capacity_lps) || 500,
-        data.rawWaterSource || data.raw_water_source || 'Sungai Citarum',
-        data.waterQualityStatus || data.water_quality_status || 'Safe - Permenkes 2023',
-        Number(data.reservoirCapacityM3 ?? data.reservoir_capacity_m3) || 5000,
-        data.status || 'Active', data.condition || 'Good', safeNextDue
-      ];
-      const res = await pool.query(insertQ, values);
-      return { type: 'wtp', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      if (check.rows.length > 0) {
+        const dbId = check.rows[0].id;
+        const updateQ = `
+          UPDATE wtp_assets SET
+            asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
+            production_capacity_lps = $6, raw_water_source = $7, water_quality_status = $8, reservoir_capacity_m3 = $9, status = $10, condition = $11, next_inspection_due = $12, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $13
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          safeAssetCode, data.name || `WTP ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          Number(data.productionCapacityLps ?? data.production_capacity_lps) || 500,
+          data.rawWaterSource || data.raw_water_source || 'Sungai Citarum',
+          data.waterQualityStatus || data.water_quality_status || 'Safe - Permenkes 2023',
+          Number(data.reservoirCapacityM3 ?? data.reservoir_capacity_m3) || 5000,
+          data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
+        ];
+        const res = await pool.query(updateQ, values);
+        return { type: 'wtp', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      } else {
+        const insertQ = `
+          INSERT INTO wtp_assets
+          (id, asset_code, name, area, latitude, longitude, production_capacity_lps, raw_water_source, water_quality_status, reservoir_capacity_m3, status, condition, next_inspection_due)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          targetId, safeAssetCode, data.name || `WTP ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          Number(data.productionCapacityLps ?? data.production_capacity_lps) || 500,
+          data.rawWaterSource || data.raw_water_source || 'Sungai Citarum',
+          data.waterQualityStatus || data.water_quality_status || 'Safe - Permenkes 2023',
+          Number(data.reservoirCapacityM3 ?? data.reservoir_capacity_m3) || 5000,
+          data.status || 'Active', data.condition || 'Good', safeNextDue
+        ];
+        const res = await pool.query(insertQ, values);
+        return { type: 'wtp', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      }
     }
-  }
 
-  if (normalizedType === 'water_accessory') {
-    const check = await pool.query(
-      'SELECT id FROM water_accessory_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
-      [targetId, safeAssetCode]
-    );
+    if (normalizedType === 'water_accessory') {
+      const check = await pool.query(
+        'SELECT id FROM water_accessory_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
+        [targetId, safeAssetCode]
+      );
 
-    if (check.rows.length > 0) {
-      const dbId = check.rows[0].id;
-      const updateQ = `
-        UPDATE water_accessory_assets SET
-          asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
-          accessory_type = $6, system_category = $7, pipe_id = $8, diameter_mm = $9, pressure_bar = $10, elevation_meters = $11, operating_status = $12, status = $13, condition = $14, next_inspection_due = $15, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $16
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        safeAssetCode, data.name || `Aksesori ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        data.accessoryType || data.accessory_type || 'air_valve',
-        data.systemCategory || data.system_category || 'clean_water',
-        data.pipeId || data.pipe_id || '',
-        Number(data.diameterMm ?? data.diameter_mm) || 150,
-        Number(data.pressureBar ?? data.pressure_bar) || 6.0,
-        Number(data.elevationMeters ?? data.elevation_meters) || 15.0,
-        data.operatingStatus || data.operating_status || 'Normal Open',
-        data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
-      ];
-      const res = await pool.query(updateQ, values);
-      return { type: 'water_accessory', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
-    } else {
-      const insertQ = `
-        INSERT INTO water_accessory_assets
-        (id, asset_code, name, area, latitude, longitude, accessory_type, system_category, pipe_id, diameter_mm, pressure_bar, elevation_meters, operating_status, status, condition, next_inspection_due)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        targetId, safeAssetCode, data.name || `Aksesori ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        data.accessoryType || data.accessory_type || 'air_valve',
-        data.systemCategory || data.system_category || 'clean_water',
-        data.pipeId || data.pipe_id || '',
-        Number(data.diameterMm ?? data.diameter_mm) || 150,
-        Number(data.pressureBar ?? data.pressure_bar) || 6.0,
-        Number(data.elevationMeters ?? data.elevation_meters) || 15.0,
-        data.operatingStatus || data.operating_status || 'Normal Open',
-        data.status || 'Active', data.condition || 'Good', safeNextDue
-      ];
-      const res = await pool.query(insertQ, values);
-      return { type: 'water_accessory', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      if (check.rows.length > 0) {
+        const dbId = check.rows[0].id;
+        const updateQ = `
+          UPDATE water_accessory_assets SET
+            asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
+            accessory_type = $6, system_category = $7, pipe_id = $8, diameter_mm = $9, pressure_bar = $10, elevation_meters = $11, operating_status = $12, status = $13, condition = $14, next_inspection_due = $15, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $16
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          safeAssetCode, data.name || `Aksesori ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          data.accessoryType || data.accessory_type || 'air_valve',
+          data.systemCategory || data.system_category || 'clean_water',
+          data.pipeId || data.pipe_id || '',
+          Number(data.diameterMm ?? data.diameter_mm) || 150,
+          Number(data.pressureBar ?? data.pressure_bar) || 6.0,
+          Number(data.elevationMeters ?? data.elevation_meters) || 15.0,
+          data.operatingStatus || data.operating_status || 'Normal Open',
+          data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
+        ];
+        const res = await pool.query(updateQ, values);
+        return { type: 'water_accessory', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      } else {
+        const insertQ = `
+          INSERT INTO water_accessory_assets
+          (id, asset_code, name, area, latitude, longitude, accessory_type, system_category, pipe_id, diameter_mm, pressure_bar, elevation_meters, operating_status, status, condition, next_inspection_due)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          targetId, safeAssetCode, data.name || `Aksesori ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          data.accessoryType || data.accessory_type || 'air_valve',
+          data.systemCategory || data.system_category || 'clean_water',
+          data.pipeId || data.pipe_id || '',
+          Number(data.diameterMm ?? data.diameter_mm) || 150,
+          Number(data.pressureBar ?? data.pressure_bar) || 6.0,
+          Number(data.elevationMeters ?? data.elevation_meters) || 15.0,
+          data.operatingStatus || data.operating_status || 'Normal Open',
+          data.status || 'Active', data.condition || 'Good', safeNextDue
+        ];
+        const res = await pool.query(insertQ, values);
+        return { type: 'water_accessory', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      }
     }
-  }
 
-  if (normalizedType === 'grease_trap') {
-    const check = await pool.query(
-      'SELECT id FROM grease_trap_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
-      [targetId, safeAssetCode]
-    );
+    if (normalizedType === 'grease_trap') {
+      const check = await pool.query(
+        'SELECT id FROM grease_trap_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($2) LIMIT 1;',
+        [targetId, safeAssetCode]
+      );
 
-    if (check.rows.length > 0) {
-      const dbId = check.rows[0].id;
-      const updateQ = `
-        UPDATE grease_trap_assets SET
-          asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
-          capacity_liters = $6, chamber_count = $7, outlet_manhole_id = $8, cleaning_frequency_days = $9, grease_level_percent = $10, status = $11, condition = $12, next_inspection_due = $13, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $14
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        safeAssetCode, data.name || `Grease Trap ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        Number(data.capacityLiters ?? data.capacity_liters) || 500,
-        Number(data.chamberCount ?? data.chamber_count) || 3,
-        data.outletManholeId || data.outlet_manhole_id || '',
-        Number(data.cleaningFrequencyDays ?? data.cleaning_frequency_days) || 30,
-        Number(data.greaseLevelPercent ?? data.grease_level_percent) || 20,
-        data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
-      ];
-      const res = await pool.query(updateQ, values);
-      return { type: 'grease_trap', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
-    } else {
-      const insertQ = `
-        INSERT INTO grease_trap_assets
-        (id, asset_code, name, area, latitude, longitude, capacity_liters, chamber_count, outlet_manhole_id, cleaning_frequency_days, grease_level_percent, status, condition, next_inspection_due)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-        RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue";
-      `;
-      const values = [
-        targetId, safeAssetCode, data.name || `Grease Trap ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
-        Number(data.capacityLiters ?? data.capacity_liters) || 500,
-        Number(data.chamberCount ?? data.chamber_count) || 3,
-        data.outletManholeId || data.outlet_manhole_id || '',
-        Number(data.cleaningFrequencyDays ?? data.cleaning_frequency_days) || 30,
-        Number(data.greaseLevelPercent ?? data.grease_level_percent) || 20,
-        data.status || 'Active', data.condition || 'Good', safeNextDue
-      ];
-      const res = await pool.query(insertQ, values);
-      return { type: 'grease_trap', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      if (check.rows.length > 0) {
+        const dbId = check.rows[0].id;
+        const updateQ = `
+          UPDATE grease_trap_assets SET
+            asset_code = $1, name = $2, area = $3, latitude = $4, longitude = $5,
+            capacity_liters = $6, chamber_count = $7, outlet_manhole_id = $8, cleaning_frequency_days = $9, grease_level_percent = $10, status = $11, condition = $12, next_inspection_due = $13, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $14
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          safeAssetCode, data.name || `Grease Trap ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          Number(data.capacityLiters ?? data.capacity_liters) || 500,
+          Number(data.chamberCount ?? data.chamber_count) || 3,
+          data.outletManholeId || data.outlet_manhole_id || '',
+          Number(data.cleaningFrequencyDays ?? data.cleaning_frequency_days) || 30,
+          Number(data.greaseLevelPercent ?? data.grease_level_percent) || 20,
+          data.status || 'Active', data.condition || 'Good', safeNextDue, dbId
+        ];
+        const res = await pool.query(updateQ, values);
+        return { type: 'grease_trap', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      } else {
+        const insertQ = `
+          INSERT INTO grease_trap_assets
+          (id, asset_code, name, area, latitude, longitude, capacity_liters, chamber_count, outlet_manhole_id, cleaning_frequency_days, grease_level_percent, status, condition, next_inspection_due)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          RETURNING id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue";
+        `;
+        const values = [
+          targetId, safeAssetCode, data.name || `Grease Trap ${safeAssetCode}`, data.area || 'Utama', validLat, validLng,
+          Number(data.capacityLiters ?? data.capacity_liters) || 500,
+          Number(data.chamberCount ?? data.chamber_count) || 3,
+          data.outletManholeId || data.outlet_manhole_id || '',
+          Number(data.cleaningFrequencyDays ?? data.cleaning_frequency_days) || 30,
+          Number(data.greaseLevelPercent ?? data.grease_level_percent) || 20,
+          data.status || 'Active', data.condition || 'Good', safeNextDue
+        ];
+        const res = await pool.query(insertQ, values);
+        return { type: 'grease_trap', ...res.rows[0], coordinates: { lat: Number(res.rows[0].latitude), lng: Number(res.rows[0].longitude) } };
+      }
     }
-  }
 
-  throw new Error(`Tipe aset '${type}' tidak dikenal.`);
+    throw new Error(`Tipe aset '${type}' tidak dikenal.`);
+  };
+
+  try {
+    return await runUpsert();
+  } catch (err) {
+    if (err.message && (err.message.toLowerCase().includes('does not exist') || err.message.toLowerCase().includes('column'))) {
+      console.warn('⚠️ Missing column error detected. Executing dynamic schema auto-heal...', err.message);
+      await ensureSchemaUpToDate();
+      return await runUpsert();
+    }
+    throw err;
+  }
 };
 
 // --------------------------------------------------------------------
