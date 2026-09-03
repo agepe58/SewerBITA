@@ -1,20 +1,23 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Sidebar, NavTab } from './components/common/Sidebar';
 import { Header } from './components/common/Header';
-import { LandingPage } from './components/landing/LandingPage';
 import { DashboardView } from './components/dashboard/DashboardView';
-import { NetworkMap } from './components/map/NetworkMap';
-import { TopologyView } from './components/topology/TopologyView';
-import { AssetRegistry } from './components/assets/AssetRegistry';
-import { InspectionView } from './components/inspections/InspectionView';
-import { ImportExportView } from './components/data/ImportExportView';
-import { ProfileView } from './components/common/ProfileView';
-import { UserManagementView } from './components/rbac/UserManagementView';
+import { ToastContainer, ToastMessage } from './components/common/Toast';
+
+// Lazy-loaded heavy modules for optimized bundle size & fast initial page load
+const LandingPage = lazy(() => import('./components/landing/LandingPage').then(m => ({ default: m.LandingPage })));
+const NetworkMap = lazy(() => import('./components/map/NetworkMap').then(m => ({ default: m.NetworkMap })));
+const TopologyView = lazy(() => import('./components/topology/TopologyView').then(m => ({ default: m.TopologyView })));
+const AssetRegistry = lazy(() => import('./components/assets/AssetRegistry').then(m => ({ default: m.AssetRegistry })));
+const InspectionView = lazy(() => import('./components/inspections/InspectionView').then(m => ({ default: m.InspectionView })));
+const ImportExportView = lazy(() => import('./components/data/ImportExportView').then(m => ({ default: m.ImportExportView })));
+const ProfileView = lazy(() => import('./components/common/ProfileView').then(m => ({ default: m.ProfileView })));
+const UserManagementView = lazy(() => import('./components/rbac/UserManagementView').then(m => ({ default: m.UserManagementView })));
+const AreaManagementView = lazy(() => import('./components/areas/AreaManagementView').then(m => ({ default: m.AreaManagementView })));
+const BackupRestoreView = lazy(() => import('./components/admin/BackupRestoreView').then(m => ({ default: m.BackupRestoreView })));
+
 import { EditUserModal } from './components/rbac/EditUserModal';
 import { AddUserModal } from './components/rbac/AddUserModal';
-import { AreaManagementView } from './components/areas/AreaManagementView';
-import { BackupRestoreView } from './components/admin/BackupRestoreView';
-
 import { AddAssetModal } from './components/assets/AddAssetModal';
 import { EditAssetModal } from './components/assets/EditAssetModal';
 import { NewInspectionModal } from './components/inspections/NewInspectionModal';
@@ -31,7 +34,7 @@ import { NetworkTraceResult } from './types/topology';
 import { apiClient } from './services/api';
 import { authService } from './services/authService';
 import { AuthModal } from './components/auth/AuthModal';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Loader2 } from 'lucide-react';
 
 const AccessDeniedView: React.FC<{ role: string; tab: string; onGoHome: () => void; isDarkMode: boolean }> = ({
   role,
@@ -182,13 +185,24 @@ export const App: React.FC = () => {
     }
   }, []);
 
+  // Toast Notifications State
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const addToast = useCallback((type: 'success' | 'error' | 'info', title: string, message?: string) => {
+    const id = `toast-${Date.now()}-${Math.random()}`;
+    setToasts(prev => [...prev, { id, type, title, message }]);
+  }, []);
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   // Handle Registered Callback
   const handleUserRegistered = useCallback(async (newUser: UserProfile) => {
     const normalizedEmail = (newUser.email || '').trim().toLowerCase();
     const updatedUser = { ...newUser, email: normalizedEmail };
     await apiClient.createUser(updatedUser);
     await reloadUsersList();
-  }, [reloadUsersList]);
+    addToast('success', 'Registrasi Berhasil', 'Akun Anda sedang menunggu persetujuan Administrator.');
+  }, [reloadUsersList, addToast]);
 
   // Load Real Data from Backend PostgreSQL API on App Startup
   useEffect(() => {
@@ -201,15 +215,42 @@ export const App: React.FC = () => {
     loadRealDatabaseData();
   }, [reloadAssetsList, reloadAreasList, reloadInspectionsList, reloadUsersList]);
 
-  // Realtime Polling (Every 3 seconds Live Sync for ALL connected devices PC & Mobile)
+  // Smart Live Polling Efficiency (10 seconds + Window Visibility Listener)
   useEffect(() => {
-    const interval = setInterval(() => {
-      reloadAssetsList();
-      reloadAreasList();
-      reloadInspectionsList();
-      reloadUsersList();
-    }, 3000);
-    return () => clearInterval(interval);
+    let interval: any = null;
+    const startPolling = () => {
+      if (!interval) {
+        interval = setInterval(() => {
+          if (document.visibilityState === 'visible') {
+            reloadAssetsList();
+            reloadAreasList();
+            reloadInspectionsList();
+            reloadUsersList();
+          }
+        }, 10000);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        reloadAssetsList();
+        reloadAreasList();
+        reloadInspectionsList();
+        reloadUsersList();
+        startPolling();
+      } else if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    startPolling();
+
+    return () => {
+      if (interval) clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [reloadAssetsList, reloadAreasList, reloadInspectionsList, reloadUsersList]);
 
   // Active User & Role Session Initialization
@@ -514,180 +555,187 @@ export const App: React.FC = () => {
 
           {/* Main View Router */}
           <main className="flex-1 overflow-y-auto">
-            {!isTabAllowed(activeTab, currentUser.role) ? (
-              <AccessDeniedView
-                role={currentUser.role}
-                tab={activeTab}
-                onGoHome={() => setActiveTab('dashboard')}
-                isDarkMode={isDarkMode}
-              />
-            ) : (
-              <>
-                {activeTab === 'dashboard' && (
-                  <DashboardView
-                    manholes={manholes}
-                    pumpStations={pumpStations}
-                    pipes={pipes}
-                    inspections={inspections}
-                    onNavigate={setActiveTab}
-                    isDarkMode={isDarkMode}
-                  />
-                )}
+            <Suspense fallback={
+              <div className="p-16 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                <p className="text-xs font-semibold">Memuat Modul BITA GIS...</p>
+              </div>
+            }>
+              {!isTabAllowed(activeTab, currentUser.role) ? (
+                <AccessDeniedView
+                  role={currentUser.role}
+                  tab={activeTab}
+                  onGoHome={() => setActiveTab('dashboard')}
+                  isDarkMode={isDarkMode}
+                />
+              ) : (
+                <>
+                  {activeTab === 'dashboard' && (
+                    <DashboardView
+                      manholes={manholes}
+                      pumpStations={pumpStations}
+                      pipes={pipes}
+                      inspections={inspections}
+                      onNavigate={setActiveTab}
+                      isDarkMode={isDarkMode}
+                    />
+                  )}
 
-                {activeTab === 'map' && (
-                  <div className="h-[calc(100vh-5rem)] p-4">
-                    <div className="h-full rounded-2xl overflow-hidden border border-slate-800 shadow-md">
-                      <NetworkMap
-                        manholes={manholes}
-                        pumpStations={pumpStations}
-                        pipes={pipes}
-                        wtps={wtps}
-                        waterAccessories={waterAccessories}
-                        greaseTraps={greaseTraps}
-                        inspections={inspections}
-                        activeTraceResult={activeTraceResult}
-                        onTraceDownstream={handleTraceDownstreamFromMap}
-                        onTraceUpstream={handleTraceUpstreamFromMap}
-                        onClearTrace={() => setActiveTraceResult(null)}
-                        onOpenQrModal={(id) => setActiveQrAssetId(id)}
-                        onOpenNewInspection={(id) => {
-                          setSelectedAssetIdForMap(id);
-                          setIsNewInspectionModalOpen(true);
-                        }}
-                        selectedAssetIdFromParent={selectedAssetIdForMap}
-                      />
+                  {activeTab === 'map' && (
+                    <div className="h-[calc(100vh-5rem)] p-4">
+                      <div className="h-full rounded-2xl overflow-hidden border border-slate-800 shadow-md">
+                        <NetworkMap
+                          manholes={manholes}
+                          pumpStations={pumpStations}
+                          pipes={pipes}
+                          wtps={wtps}
+                          waterAccessories={waterAccessories}
+                          greaseTraps={greaseTraps}
+                          inspections={inspections}
+                          activeTraceResult={activeTraceResult}
+                          onTraceDownstream={handleTraceDownstreamFromMap}
+                          onTraceUpstream={handleTraceUpstreamFromMap}
+                          onClearTrace={() => setActiveTraceResult(null)}
+                          onOpenQrModal={(id) => setActiveQrAssetId(id)}
+                          onOpenNewInspection={(id) => {
+                            setSelectedAssetIdForMap(id);
+                            setIsNewInspectionModalOpen(true);
+                          }}
+                          selectedAssetIdFromParent={selectedAssetIdForMap}
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {activeTab === 'topology' && (
-                  <TopologyView
-                    manholes={manholes}
-                    pumpStations={pumpStations}
-                    pipes={pipes}
-                    graphEngine={graphEngine}
-                    onApplyTraceResult={(trace) => {
-                      setActiveTraceResult(trace);
-                      setActiveTab('map');
-                    }}
-                    onNavigateToMap={() => setActiveTab('map')}
-                  />
-                )}
+                  {activeTab === 'topology' && (
+                    <TopologyView
+                      manholes={manholes}
+                      pumpStations={pumpStations}
+                      pipes={pipes}
+                      graphEngine={graphEngine}
+                      onApplyTraceResult={(trace) => {
+                        setActiveTraceResult(trace);
+                        setActiveTab('map');
+                      }}
+                      onNavigateToMap={() => setActiveTab('map')}
+                    />
+                  )}
 
-                {activeTab === 'assets' && (
-                  <AssetRegistry
-                    manholes={manholes}
-                    pumpStations={pumpStations}
-                    pipes={pipes}
-                    currentUserRole={currentUser.role}
-                    onOpenAddModal={() => setIsAddAssetModalOpen(true)}
-                    onOpenQrModal={(id) => setActiveQrAssetId(id)}
-                    onNavigateToMapWithAsset={(id) => {
-                      setSelectedAssetIdForMap(id);
-                      setActiveTab('map');
-                    }}
-                    onEditAsset={(asset) => setAssetToEdit(asset)}
-                    onDeleteAsset={(id: string) => {
-                      if (manholes.some(m => m.id === id)) {
-                        handleDeleteAsset(id, 'manhole');
-                      } else if (pumpStations.some(ps => ps.id === id)) {
-                        handleDeleteAsset(id, 'pumpStation');
-                      } else {
-                        handleDeleteAsset(id, 'pipe');
-                      }
-                    }}
-                    isDarkMode={isDarkMode}
-                  />
-                )}
+                  {activeTab === 'assets' && (
+                    <AssetRegistry
+                      manholes={manholes}
+                      pumpStations={pumpStations}
+                      pipes={pipes}
+                      currentUserRole={currentUser.role}
+                      onOpenAddModal={() => setIsAddAssetModalOpen(true)}
+                      onOpenQrModal={(id) => setActiveQrAssetId(id)}
+                      onNavigateToMapWithAsset={(id) => {
+                        setSelectedAssetIdForMap(id);
+                        setActiveTab('map');
+                      }}
+                      onEditAsset={(asset) => setAssetToEdit(asset)}
+                      onDeleteAsset={(id: string) => {
+                        if (manholes.some(m => m.id === id)) {
+                          handleDeleteAsset(id, 'manhole');
+                        } else if (pumpStations.some(ps => ps.id === id)) {
+                          handleDeleteAsset(id, 'pumpStation');
+                        } else {
+                          handleDeleteAsset(id, 'pipe');
+                        }
+                      }}
+                      isDarkMode={isDarkMode}
+                    />
+                  )}
 
-                {activeTab === 'areas' && (
-                  <AreaManagementView
-                    areas={areas}
-                    allAssets={allAssets}
-                    currentUserRole={currentUser.role}
-                    onAddArea={handleAddArea}
-                    onEditArea={handleEditArea}
-                    onDeleteArea={handleDeleteArea}
-                    isDarkMode={isDarkMode}
-                  />
-                )}
+                  {activeTab === 'areas' && (
+                    <AreaManagementView
+                      areas={areas}
+                      allAssets={allAssets}
+                      currentUserRole={currentUser.role}
+                      onAddArea={handleAddArea}
+                      onEditArea={handleEditArea}
+                      onDeleteArea={handleDeleteArea}
+                      isDarkMode={isDarkMode}
+                    />
+                  )}
 
-                {activeTab === 'inspections' && (
-                  <InspectionView
-                    inspections={inspections}
-                    currentUserRole={currentUser.role}
-                    onOpenNewModal={() => setIsNewInspectionModalOpen(true)}
-                    onOpenScheduleModal={() => setIsManholeScheduleModalOpen(true)}
-                    onEditInspection={(insp) => setInspectionToEdit(insp)}
-                    onDeleteInspection={handleDeleteInspection}
-                    isDarkMode={isDarkMode}
-                  />
-                )}
+                  {activeTab === 'inspections' && (
+                    <InspectionView
+                      inspections={inspections}
+                      currentUserRole={currentUser.role}
+                      onOpenNewModal={() => setIsNewInspectionModalOpen(true)}
+                      onOpenScheduleModal={() => setIsManholeScheduleModalOpen(true)}
+                      onEditInspection={(insp) => setInspectionToEdit(insp)}
+                      onDeleteInspection={handleDeleteInspection}
+                      isDarkMode={isDarkMode}
+                    />
+                  )}
 
-                {activeTab === 'qr_scanner' && (
-                  <div className="p-6">
-                    <div className="p-8 rounded-2xl border max-w-lg mx-auto text-center space-y-4 bg-[#111827] border-slate-800">
-                      <h3 className="text-base font-extrabold text-white">Pemindai QR Code Lapangan</h3>
-                      <p className="text-xs text-slate-400">Pindai kode QR fisik yang terpasang pada tutup manhole atau stasiun pompa</p>
-                      <button
-                        onClick={() => setIsQrScannerModalOpen(true)}
-                        className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition cursor-pointer"
-                      >
-                        Buka Kamera Scanner
-                      </button>
+                  {activeTab === 'qr_scanner' && (
+                    <div className="p-6">
+                      <div className="p-8 rounded-2xl border max-w-lg mx-auto text-center space-y-4 bg-[#111827] border-slate-800">
+                        <h3 className="text-base font-extrabold text-white">Pemindai QR Code Lapangan</h3>
+                        <p className="text-xs text-slate-400">Pindai kode QR fisik yang terpasang pada tutup manhole atau stasiun pompa</p>
+                        <button
+                          onClick={() => setIsQrScannerModalOpen(true)}
+                          className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition cursor-pointer"
+                        >
+                          Buka Kamera Scanner
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {activeTab === 'data' && (
-                  <ImportExportView
-                    manholes={manholes}
-                    pumpStations={pumpStations}
-                    pipes={pipes}
-                    inspections={inspections}
-                    currentUserRole={currentUser.role}
-                    onBatchImportManholes={(newMhs) => setManholes(prev => [...newMhs, ...prev])}
-                  />
-                )}
+                  {activeTab === 'data' && (
+                    <ImportExportView
+                      manholes={manholes}
+                      pumpStations={pumpStations}
+                      pipes={pipes}
+                      inspections={inspections}
+                      currentUserRole={currentUser.role}
+                      onBatchImportManholes={(newMhs) => setManholes(prev => [...newMhs, ...prev])}
+                    />
+                  )}
 
-                {activeTab === 'users' && (
-                  <UserManagementView
-                    users={users}
-                    currentUser={currentUser}
-                    onRoleChange={handleRoleChange}
-                    onEditUser={(usr) => setUserToEdit(usr)}
-                    onDeleteUser={handleDeleteUser}
-                    onOpenAddUserModal={() => setIsAddUserModalOpen(true)}
-                    onRefreshUsers={reloadUsersList}
-                  />
-                )}
+                  {activeTab === 'users' && (
+                    <UserManagementView
+                      users={users}
+                      currentUser={currentUser}
+                      onRoleChange={handleRoleChange}
+                      onEditUser={(usr) => setUserToEdit(usr)}
+                      onDeleteUser={handleDeleteUser}
+                      onOpenAddUserModal={() => setIsAddUserModalOpen(true)}
+                      onRefreshUsers={reloadUsersList}
+                    />
+                  )}
 
-                {activeTab === 'backup' && (
-                  <BackupRestoreView
-                    currentUserRole={currentUser.role}
-                    onRestoreDataToSystem={async () => {
-                      await reloadAssetsList();
-                      await reloadInspectionsList();
-                      await reloadUsersList();
-                    }}
-                    isDarkMode={isDarkMode}
-                  />
-                )}
+                  {activeTab === 'backup' && (
+                    <BackupRestoreView
+                      currentUserRole={currentUser.role}
+                      onRestoreDataToSystem={async () => {
+                        await reloadAssetsList();
+                        await reloadInspectionsList();
+                        await reloadUsersList();
+                      }}
+                      isDarkMode={isDarkMode}
+                    />
+                  )}
 
-                {activeTab === 'profile' && (
-                  <ProfileView
-                    currentUser={currentUser}
-                    onUpdateProfile={(updated) => {
-                      setCurrentUser(updated);
-                      authService.saveSession(updated);
-                      apiClient.updateUser(updated.id, updated);
-                      reloadUsersList();
-                    }}
-                    isDarkMode={isDarkMode}
-                  />
-                )}
-              </>
-            )}
+                  {activeTab === 'profile' && (
+                    <ProfileView
+                      currentUser={currentUser}
+                      onUpdateProfile={(updated) => {
+                        setCurrentUser(updated);
+                        authService.saveSession(updated);
+                        apiClient.updateUser(updated.id, updated);
+                        reloadUsersList();
+                      }}
+                      isDarkMode={isDarkMode}
+                    />
+                  )}
+                </>
+              )}
+            </Suspense>
           </main>
         </div>
       </div>
@@ -784,6 +832,8 @@ export const App: React.FC = () => {
         onUserRegistered={handleUserRegistered}
         initialMode={authModalMode}
       />
+      {/* Global Toast Container */}
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 };

@@ -14,9 +14,40 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || process.en
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS and JSON parsing
-app.use(cors());
+// Configure CORS
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins === '*' || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  }
+}));
+
 app.use(express.json());
+
+// In-memory rate limiter middleware (DDoS & Brute-force protection)
+const rateLimitMap = new Map();
+const rateLimiter = (maxRequests = 250, windowMs = 60000) => (req, res, next) => {
+  const ip = req.ip || req.connection?.remoteAddress || 'client-ip';
+  const now = Date.now();
+  const record = rateLimitMap.get(ip) || { count: 0, resetTime: now + windowMs };
+  if (now > record.resetTime) {
+    record.count = 1;
+    record.resetTime = now + windowMs;
+  } else {
+    record.count += 1;
+  }
+  rateLimitMap.set(ip, record);
+  if (record.count > maxRequests) {
+    return res.status(429).json({ error: 'Terlalu banyak permintaan API. Silakan coba beberapa saat lagi.' });
+  }
+  next();
+};
+
+app.use(rateLimiter(300, 60000));
 
 // --------------------------------------------------------------------
 // 0. HEALTH CHECK ROUTE ALIAS
@@ -298,6 +329,16 @@ const initDb = async () => {
           longitude = 107.452 + ((rnum - 1) * 0.0025)
       FROM ranked
       WHERE mh.id = ranked.id;
+    `);
+
+    // 14. PostGIS Spatial Index Optimization (GiST Indexes)
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_manhole_geom ON manhole_assets USING GIST(geom);
+      CREATE INDEX IF NOT EXISTS idx_pump_station_geom ON pump_station_assets USING GIST(geom);
+      CREATE INDEX IF NOT EXISTS idx_pipe_geom ON pipe_assets USING GIST(geom);
+      CREATE INDEX IF NOT EXISTS idx_wtp_geom ON wtp_assets USING GIST(geom);
+      CREATE INDEX IF NOT EXISTS idx_water_accessory_geom ON water_accessory_assets USING GIST(geom);
+      CREATE INDEX IF NOT EXISTS idx_grease_trap_geom ON grease_trap_assets USING GIST(geom);
     `);
 
     console.log('✅ PostgreSQL Schema & Tables (work_orders, projects, reports, assets, users) initialized for production!');
