@@ -123,14 +123,42 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
     setGoogleMapsInput(val);
     if (!val.trim()) return;
 
-    const match = val.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-    if (match) {
-      const parsedLat = parseFloat(match[1]);
-      const parsedLng = parseFloat(match[2]);
-      if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
-        setLat(parsedLat);
-        setLng(parsedLng);
+    let parsedLat: number | null = null;
+    let parsedLng: number | null = null;
+
+    // 1. Check for Google Maps URL with !3d (Latitude) and !4d (Longitude) pin location:
+    // e.g. https://www.google.com/maps/place/.../@-6.44421,107.45231,17z/data=!3m1!1e3!4m6!3m5!1s0x...!8m2!3d-6.44421!4d107.45231
+    const pinMatch = val.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    if (pinMatch) {
+      parsedLat = parseFloat(pinMatch[1]);
+      parsedLng = parseFloat(pinMatch[2]);
+    } else {
+      // 2. Check for Google Maps URL with camera center @-6.44421,107.45231
+      const atMatch = val.match(/@(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+      if (atMatch) {
+        parsedLat = parseFloat(atMatch[1]);
+        parsedLng = parseFloat(atMatch[2]);
+      } else {
+        // 3. Raw "lat, lng" or "lng, lat" or Google Maps search query ?q=-6.44421,107.45231
+        const coordMatch = val.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+        if (coordMatch) {
+          parsedLat = parseFloat(coordMatch[1]);
+          parsedLng = parseFloat(coordMatch[2]);
+        }
       }
+    }
+
+    if (parsedLat !== null && parsedLng !== null && !isNaN(parsedLat) && !isNaN(parsedLng)) {
+      // SMART AUTO-CORRECTION FOR INDONESIA COORDINATES:
+      // Indonesia is located between Latitude -11.0 to 6.0 and Longitude 95.0 to 141.0.
+      // If the user inputs Longitude first (e.g. 107.45231, -6.44421):
+      if (parsedLat > 50 && parsedLng < 10) {
+        const temp = parsedLat;
+        parsedLat = parsedLng;
+        parsedLng = temp;
+      }
+      setLat(Number(parsedLat.toFixed(6)));
+      setLng(Number(parsedLng.toFixed(6)));
     }
   };
 
