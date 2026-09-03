@@ -385,22 +385,32 @@ app.get('/api/health', async (req, res) => {
 // --------------------------------------------------------------------
 app.get('/api/assets', async (req, res) => {
   try {
-    const [manholesRes, pumpStationsRes, pipesRes, wtpsRes, accessoriesRes, greaseTrapsRes] = await Promise.all([
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue" FROM manhole_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue" FROM pump_station_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue" FROM pipe_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue" FROM wtp_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue" FROM water_accessory_assets ORDER BY created_at DESC;'),
-      pool.query('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue" FROM grease_trap_assets ORDER BY created_at DESC;')
+    const fetchSafe = async (queryStr) => {
+      try {
+        const result = await pool.query(queryStr);
+        return result.rows || [];
+      } catch (e) {
+        console.warn('Query notice for asset table:', e.message);
+        return [];
+      }
+    };
+
+    const [manholes, pumpStations, pipes, wtps, waterAccessories, greaseTraps] = await Promise.all([
+      fetchSafe('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, depth_meters AS "depthMeters", diameter_mm AS "diameterMm", material, status, condition, next_inspection_due AS "nextInspectionDue" FROM manhole_assets ORDER BY created_at DESC;'),
+      fetchSafe('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, flow_capacity_lps AS "flowCapacityLps", total_pumps AS "totalPumps", active_pumps AS "activePumps", power_source AS "powerSource", generator_backup AS "generatorBackup", status, condition, next_inspection_due AS "nextInspectionDue" FROM pump_station_assets ORDER BY created_at DESC;'),
+      fetchSafe('SELECT id, asset_code AS "assetCode", name, area, from_asset_id AS "fromAssetId", to_asset_id AS "toAssetId", length_meters AS "lengthMeters", diameter_mm AS "diameterMm", material, slope_percent AS "slopePercent", pipe_category AS "pipeCategory", waypoints, pressure_bar AS "pressureBar", destination_wwtp_name AS "destinationWwtpName", status, condition, next_inspection_due AS "nextInspectionDue" FROM pipe_assets ORDER BY created_at DESC;'),
+      fetchSafe('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, production_capacity_lps AS "productionCapacityLps", raw_water_source AS "rawWaterSource", water_quality_status AS "waterQualityStatus", reservoir_capacity_m3 AS "reservoirCapacityM3", status, condition, next_inspection_due AS "nextInspectionDue" FROM wtp_assets ORDER BY created_at DESC;'),
+      fetchSafe('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, accessory_type AS "accessoryType", system_category AS "systemCategory", pipe_id AS "pipeId", diameter_mm AS "diameterMm", pressure_bar AS "pressureBar", elevation_meters AS "elevationMeters", operating_status AS "operatingStatus", status, condition, next_inspection_due AS "nextInspectionDue" FROM water_accessory_assets ORDER BY created_at DESC;'),
+      fetchSafe('SELECT id, asset_code AS "assetCode", name, area, latitude, longitude, capacity_liters AS "capacityLiters", chamber_count AS "chamberCount", outlet_manhole_id AS "outletManholeId", cleaning_frequency_days AS "cleaningFrequencyDays", grease_level_percent AS "greaseLevelPercent", status, condition, next_inspection_due AS "nextInspectionDue" FROM grease_trap_assets ORDER BY created_at DESC;')
     ]);
 
     res.json({
-      manholes: manholesRes.rows,
-      pumpStations: pumpStationsRes.rows,
-      pipes: pipesRes.rows,
-      wtps: wtpsRes.rows,
-      waterAccessories: accessoriesRes.rows,
-      greaseTraps: greaseTrapsRes.rows
+      manholes,
+      pumpStations,
+      pipes,
+      wtps,
+      waterAccessories,
+      greaseTraps
     });
   } catch (err) {
     console.error('Error fetching assets:', err);
@@ -413,27 +423,37 @@ app.get('/api/assets', async (req, res) => {
 // --------------------------------------------------------------------
 app.get('/api/areas', async (req, res) => {
   try {
-    const areasRes = await pool.query('SELECT name FROM system_areas ORDER BY name ASC;');
-    const customAreas = areasRes.rows.map(r => r.name);
+    let customAreas = [];
+    try {
+      const areasRes = await pool.query('SELECT name FROM system_areas ORDER BY name ASC;');
+      customAreas = areasRes.rows.map(r => r.name);
+    } catch (e) {
+      console.warn('system_areas query notice:', e.message);
+    }
 
-    const assetsAreasRes = await pool.query(`
-      SELECT DISTINCT area FROM (
-        SELECT area FROM manhole_assets
-        UNION ALL
-        SELECT area FROM pump_station_assets
-        UNION ALL
-        SELECT area FROM pipe_assets
-        UNION ALL
-        SELECT area FROM wtp_assets
-        UNION ALL
-        SELECT area FROM water_accessory_assets
-        UNION ALL
-        SELECT area FROM grease_trap_assets
-      ) combined WHERE area IS NOT NULL AND area != '';
-    `);
-    const assetAreas = assetsAreasRes.rows.map(r => r.area);
+    let assetAreas = [];
+    try {
+      const assetsAreasRes = await pool.query(`
+        SELECT DISTINCT area FROM (
+          SELECT area FROM manhole_assets
+          UNION ALL
+          SELECT area FROM pump_station_assets
+          UNION ALL
+          SELECT area FROM pipe_assets
+          UNION ALL
+          SELECT area FROM wtp_assets
+          UNION ALL
+          SELECT area FROM water_accessory_assets
+          UNION ALL
+          SELECT area FROM grease_trap_assets
+        ) combined WHERE area IS NOT NULL AND area != '';
+      `);
+      assetAreas = assetsAreasRes.rows.map(r => r.area);
+    } catch (e) {
+      console.warn('assetAreas query notice:', e.message);
+    }
 
-    const mergedAreas = Array.from(new Set([...customAreas, ...assetAreas]));
+    const mergedAreas = Array.from(new Set([...customAreas, ...assetAreas])).sort();
     res.json(mergedAreas);
   } catch (err) {
     console.error('Error fetching areas:', err);
