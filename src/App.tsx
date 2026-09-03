@@ -101,13 +101,73 @@ export const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  // Master Data States (Full Production Mode - PostgreSQL Server is Single Source of Truth)
-  const [manholes, setManholes] = useState<ManholeAsset[]>([]);
-  const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>([]);
-  const [pipes, setPipes] = useState<PipeAsset[]>([]);
-  const [wtps, setWtps] = useState<WtpAsset[]>([]);
-  const [waterAccessories, setWaterAccessories] = useState<WaterAccessoryAsset[]>([]);
-  const [greaseTraps, setGreaseTraps] = useState<GreaseTrapAsset[]>([]);
+  // Master Data States (Double-Layer Persistence: LocalStorage Fallback + Live PostgreSQL Server Sync)
+  const [manholes, setManholes] = useState<ManholeAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_manholes');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load manholes', e); }
+    }
+    return [];
+  });
+
+  const [pumpStations, setPumpStations] = useState<PumpStationAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_pump_stations');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load pumpStations', e); }
+    }
+    return [];
+  });
+
+  const [pipes, setPipes] = useState<PipeAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_pipes');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load pipes', e); }
+    }
+    return [];
+  });
+
+  const [wtps, setWtps] = useState<WtpAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_wtps');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load wtps', e); }
+    }
+    return [];
+  });
+
+  const [waterAccessories, setWaterAccessories] = useState<WaterAccessoryAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_water_accessories');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load waterAccessories', e); }
+    }
+    return [];
+  });
+
+  const [greaseTraps, setGreaseTraps] = useState<GreaseTrapAsset[]>(() => {
+    const saved = localStorage.getItem('sewerbita_grease_traps');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) { console.error('Failed to load greaseTraps', e); }
+    }
+    return [];
+  });
+
   // Areas state with LocalStorage persistence + Server Sync
   const [areas, setAreas] = useState<string[]>(() => {
     const saved = localStorage.getItem('sewerbita_areas');
@@ -142,6 +202,12 @@ export const App: React.FC = () => {
     return [];
   });
 
+  useEffect(() => { localStorage.setItem('sewerbita_manholes', JSON.stringify(manholes)); }, [manholes]);
+  useEffect(() => { localStorage.setItem('sewerbita_pump_stations', JSON.stringify(pumpStations)); }, [pumpStations]);
+  useEffect(() => { localStorage.setItem('sewerbita_pipes', JSON.stringify(pipes)); }, [pipes]);
+  useEffect(() => { localStorage.setItem('sewerbita_wtps', JSON.stringify(wtps)); }, [wtps]);
+  useEffect(() => { localStorage.setItem('sewerbita_water_accessories', JSON.stringify(waterAccessories)); }, [waterAccessories]);
+  useEffect(() => { localStorage.setItem('sewerbita_grease_traps', JSON.stringify(greaseTraps)); }, [greaseTraps]);
   useEffect(() => { localStorage.setItem('sewerbita_areas', JSON.stringify(areas)); }, [areas]);
   useEffect(() => { localStorage.setItem('sewerbita_inspections', JSON.stringify(inspections)); }, [inspections]);
 
