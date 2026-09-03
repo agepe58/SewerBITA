@@ -544,15 +544,27 @@ app.get('/api/admin/migrate-schema', async (req, res) => {
   }
 };
 
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('❌ Failed to connect to PostgreSQL Database:', err.message);
-  } else {
-    console.log('✅ Connected to PostgreSQL + PostGIS Database successfully!');
-    release();
-    initDb();
+let isDbInitialized = false;
+
+const startDbConnectionLoop = async () => {
+  let attempts = 0;
+  while (!isDbInitialized) {
+    attempts++;
+    try {
+      const client = await pool.connect();
+      console.log(`✅ Connected to PostgreSQL + PostGIS Database successfully on attempt #${attempts}!`);
+      client.release();
+      isDbInitialized = true;
+      await initDb();
+      break;
+    } catch (err) {
+      console.warn(`⚠️ PostgreSQL connection attempt #${attempts} failed: ${err.message}. Retrying in 3 seconds...`);
+      await new Promise((res) => setTimeout(res, 3000));
+    }
   }
-});
+};
+
+startDbConnectionLoop();
 
 // --------------------------------------------------------------------
 // 1. HEALTH CHECK ENDPOINT
