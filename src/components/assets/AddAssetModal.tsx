@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Plus, MapPin, Boxes, GitBranch, Zap, Layers } from 'lucide-react';
+import { X, Plus, MapPin, Boxes, GitBranch, Zap, Layers, Compass } from 'lucide-react';
 import { ManholeAsset, PipeAsset, PumpStationAsset, AssetType, SewerAsset, WtpAsset, WaterAccessoryAsset, WaterAccessoryType, SystemCategory, GreaseTrapAsset } from '../../types/asset';
+import { calculatePipeRouteDistance } from '../../utils/geoUtils';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -176,6 +177,25 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   const [pressureBar, setPressureBar] = useState<number>(6.0);
   const [destinationWwtpName, setDestinationWwtpName] = useState<string>('WWTP Bukit Indah Central');
   const [waypoints, setWaypoints] = useState<{ lat: number; lng: number }[]>([]);
+
+  // Geospatial distance calculation from Node 1 to Node 2 coordinates + waypoints
+  const calculatedPipeLength = React.useMemo(() => {
+    const allNodes = [...existingManholes, ...(existingPumpStations || [])];
+    const startNode = allNodes.find(n => n.id === fromAssetId);
+    const endNode = allNodes.find(n => n.id === toAssetId);
+    
+    const startCoords = startNode ? ((startNode as any).coordinates || { lat: (startNode as any).latitude, lng: (startNode as any).longitude }) : null;
+    const endCoords = endNode ? ((endNode as any).coordinates || { lat: (endNode as any).latitude, lng: (endNode as any).longitude }) : null;
+    
+    return calculatePipeRouteDistance(startCoords, endCoords, waypoints);
+  }, [fromAssetId, toAssetId, waypoints, existingManholes, existingPumpStations]);
+
+  // Auto-update pipeLength when nodes or waypoints change
+  React.useEffect(() => {
+    if (calculatedPipeLength > 0) {
+      setPipeLength(calculatedPipeLength);
+    }
+  }, [calculatedPipeLength]);
 
   // Auto-generate Manhole Code based on Civil Engineering Standards (e.g. MH-SD-01, MH-SD-01.1)
   React.useEffect(() => {
@@ -815,12 +835,25 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-600 font-bold">Panjang Total (meter)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs text-slate-600 font-bold">Panjang Total (meter)</label>
+                    {calculatedPipeLength > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setPipeLength(calculatedPipeLength)}
+                        className="text-[11px] font-extrabold text-[#0284C7] hover:underline flex items-center gap-1 cursor-pointer bg-sky-50 px-2 py-0.5 rounded-lg border border-sky-200"
+                        title="Hitung ulang jarak geografis dari koordinat titik awal ke titik akhir"
+                      >
+                        <Compass className="w-3 h-3 text-[#0284C7]" />
+                        <span>📐 Otomatis: {calculatedPipeLength}m</span>
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="number"
                     value={pipeLength}
                     onChange={e => setPipeLength(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 mt-1 font-mono font-bold text-sm focus:outline-none focus:border-[#0284C7]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-mono font-bold text-sm focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
               </div>

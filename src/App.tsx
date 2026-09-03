@@ -841,6 +841,7 @@ export const App: React.FC = () => {
         onSavePumpStation={handleEditPumpStation}
         onSaveAsset={handleEditGenericAsset}
         areas={areas}
+        allAssets={allAssets}
       />
 
       <EditInspectionModal
