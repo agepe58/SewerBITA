@@ -1088,21 +1088,22 @@ app.put('/api/assets/:id', async (req, res) => {
 // --------------------------------------------------------------------
 app.delete('/api/assets/:id', async (req, res) => {
   const { id } = req.params;
-  const userRole = req.headers['x-user-role'];
-  if (userRole && userRole !== 'Admin' && userRole !== 'Engineer') {
-    return res.status(403).json({ error: 'RBAC Access Denied: Hapus aset hanya diizinkan untuk Admin dan Engineer.' });
-  }
 
   try {
-    // Delete from all asset tables
-    await pool.query('DELETE FROM pipe_assets WHERE from_asset_id = $1 OR to_asset_id = $1 OR id = $1;', [id]);
-    await pool.query('DELETE FROM manhole_assets WHERE id = $1;', [id]);
-    await pool.query('DELETE FROM pump_station_assets WHERE id = $1;', [id]);
-    await pool.query('DELETE FROM wtp_assets WHERE id = $1;', [id]);
-    await pool.query('DELETE FROM water_accessory_assets WHERE id = $1;', [id]);
-    await pool.query('DELETE FROM grease_trap_assets WHERE id = $1;', [id]);
+    // 1. Delete associated inspection records
+    await pool.query('DELETE FROM inspection_records WHERE asset_id = $1 OR LOWER(asset_code) = LOWER($1);', [id]);
+
+    // 2. Delete from all 6 asset tables matching by id OR asset_code
+    await pool.query('DELETE FROM pipe_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($1) OR from_asset_id = $1 OR to_asset_id = $1;', [id]);
+    await pool.query('DELETE FROM manhole_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($1);', [id]);
+    await pool.query('DELETE FROM pump_station_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($1);', [id]);
+    await pool.query('DELETE FROM wtp_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($1);', [id]);
+    await pool.query('DELETE FROM water_accessory_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($1);', [id]);
+    await pool.query('DELETE FROM grease_trap_assets WHERE id = $1 OR LOWER(asset_code) = LOWER($1);', [id]);
+
     res.json({ message: 'Asset deleted successfully', id });
   } catch (err) {
+    console.error('Error deleting asset:', err);
     res.status(500).json({ error: err.message });
   }
 });

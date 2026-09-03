@@ -432,13 +432,13 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteAsset = async (id: string, _type: 'manhole' | 'pumpStation' | 'pipe') => {
-    const res = await apiClient.deleteAsset(id);
+    const res: any = await apiClient.deleteAsset(id);
     await reloadAssetsList();
     await reloadAreasList();
-    if (res) {
+    if (res && !res.error) {
       addToast('success', 'Aset Berhasil Dihapus', 'Data aset telah dihapus dari PostgreSQL server.');
     } else {
-      addToast('error', 'Gagal Menghapus Aset', 'Terjadi kesalahan saat menghapus dari database.');
+      addToast('error', 'Gagal Menghapus Aset', res?.error || 'Terjadi kesalahan saat menghapus dari database.');
     }
   };
 

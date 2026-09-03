@@ -197,15 +197,16 @@ export const apiClient = {
   // Delete Asset
   deleteAsset: async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/assets/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/assets/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
+      const json = await res.json();
+      if (!res.ok) return { error: json?.error || 'Gagal menghapus aset' };
+      return json;
+    } catch (e: any) {
       console.warn('API deleteAsset failed:', e);
-      return null;
+      return { error: e.message || 'Gagal koneksi ke server' };
     }
   },
 
