@@ -300,18 +300,20 @@ export const App: React.FC = () => {
     setActiveTraceResult(res);
   };
 
-  // Asset Handlers (Immediate Local Display + PostgreSQL Persistence)
+  // Asset Handlers (Full Production Mode - PostgreSQL Server Single Source of Truth)
   const handleAddManhole = async (newMh: Omit<ManholeAsset, 'id'>) => {
     const createdMh: ManholeAsset = {
       ...newMh,
       id: `mh-${Date.now()}`
     };
-    setManholes(prev => [createdMh, ...prev]);
-    if (createdMh.area) {
-      setAreas(prev => Array.from(new Set([...prev, createdMh.area])));
-    }
-    await apiClient.createAsset('manhole', createdMh);
+    const saved = await apiClient.createAsset('manhole', createdMh);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Disimpan', `Manhole ${createdMh.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setIsAddAssetModalOpen(false);
   };
 
@@ -320,12 +322,14 @@ export const App: React.FC = () => {
       ...newPs,
       id: `ps-${Date.now()}`
     };
-    setPumpStations(prev => [createdPs, ...prev]);
-    if (createdPs.area) {
-      setAreas(prev => Array.from(new Set([...prev, createdPs.area])));
-    }
-    await apiClient.createAsset('pumpStation', createdPs);
+    const saved = await apiClient.createAsset('pump_station', createdPs);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Disimpan', `Stasiun Pompa ${createdPs.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setIsAddAssetModalOpen(false);
   };
 
@@ -334,12 +338,14 @@ export const App: React.FC = () => {
       ...newPipe,
       id: `p-${Date.now()}`
     };
-    setPipes(prev => [createdPipe, ...prev]);
-    if (createdPipe.area) {
-      setAreas(prev => Array.from(new Set([...prev, createdPipe.area])));
-    }
-    await apiClient.createAsset('pipe', createdPipe);
+    const saved = await apiClient.createAsset('pipe', createdPipe);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Disimpan', `Pipa ${createdPipe.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setIsAddAssetModalOpen(false);
   };
 
@@ -348,12 +354,14 @@ export const App: React.FC = () => {
       ...newWtp,
       id: `wtp-${Date.now()}`
     };
-    setWtps(prev => [createdWtp, ...prev]);
-    if (createdWtp.area) {
-      setAreas(prev => Array.from(new Set([...prev, createdWtp.area])));
-    }
-    await apiClient.createAsset('wtp', createdWtp);
+    const saved = await apiClient.createAsset('wtp', createdWtp);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Disimpan', `WTP ${createdWtp.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setIsAddAssetModalOpen(false);
   };
 
@@ -362,12 +370,14 @@ export const App: React.FC = () => {
       ...newAcc,
       id: `acc-${Date.now()}`
     };
-    setWaterAccessories(prev => [createdAcc, ...prev]);
-    if (createdAcc.area) {
-      setAreas(prev => Array.from(new Set([...prev, createdAcc.area])));
-    }
-    await apiClient.createAsset('water_accessory', createdAcc);
+    const saved = await apiClient.createAsset('water_accessory', createdAcc);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Disimpan', `Aksesori ${createdAcc.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setIsAddAssetModalOpen(false);
   };
 
@@ -376,12 +386,14 @@ export const App: React.FC = () => {
       ...newGt,
       id: `gt-${Date.now()}`
     };
-    setGreaseTraps(prev => [createdGt, ...prev]);
-    if (createdGt.area) {
-      setAreas(prev => Array.from(new Set([...prev, createdGt.area])));
-    }
-    await apiClient.createAsset('grease_trap', createdGt);
+    const saved = await apiClient.createAsset('grease_trap', createdGt);
     await reloadAssetsList();
+    await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Aset Berhasil Disimpan', `Grease Trap ${createdGt.name} tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Aset', 'Terjadi kesalahan saat menyimpan ke database PostgreSQL server.');
+    }
     setIsAddAssetModalOpen(false);
   };
 
@@ -464,9 +476,13 @@ export const App: React.FC = () => {
   const handleAddArea = async (newArea: string) => {
     const cleanName = newArea.trim();
     if (!cleanName) return;
-    setAreas(prev => Array.from(new Set([...prev, cleanName])));
-    await apiClient.createArea(cleanName);
+    const saved = await apiClient.createArea(cleanName);
     await reloadAreasList();
+    if (saved) {
+      addToast('success', 'Area Berhasil Disimpan', `Wilayah "${cleanName}" tersimpan di PostgreSQL server.`);
+    } else {
+      addToast('error', 'Gagal Menyimpan Area', 'Terjadi kesalahan saat menyimpan wilayah ke database PostgreSQL.');
+    }
   };
 
   const handleEditArea = (oldArea: string, newArea: string) => {
@@ -477,9 +493,9 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteArea = async (areaToDelete: string) => {
-    setAreas(prev => prev.filter(a => a !== areaToDelete));
     await apiClient.deleteArea(areaToDelete);
     await reloadAreasList();
+    addToast('info', 'Area Dihapus', `Wilayah "${areaToDelete}" dihapus dari database PostgreSQL.`);
   };
 
   const allAssets: SewerAsset[] = [...manholes, ...pumpStations, ...pipes, ...wtps, ...waterAccessories];

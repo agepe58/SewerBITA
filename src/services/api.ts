@@ -155,7 +155,7 @@ export const apiClient = {
   },
 
   // Create Asset
-  createAsset: async (type: 'manhole' | 'pumpStation' | 'pipe' | 'wtp' | 'water_accessory' | 'grease_trap', data: any) => {
+  createAsset: async (type: 'manhole' | 'pumpStation' | 'pump_station' | 'pipe' | 'wtp' | 'water_accessory' | 'waterAccessory' | 'grease_trap' | 'greaseTrap', data: any) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets`, {
         method: 'POST',
@@ -171,7 +171,7 @@ export const apiClient = {
   },
 
   // Update Asset
-  updateAsset: async (id: string, type: 'manhole' | 'pumpStation' | 'pipe' | 'wtp' | 'water_accessory', data: any) => {
+  updateAsset: async (id: string, type: 'manhole' | 'pumpStation' | 'pump_station' | 'pipe' | 'wtp' | 'water_accessory' | 'waterAccessory' | 'grease_trap' | 'greaseTrap', data: any) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/assets/${id}`, {
         method: 'PUT',

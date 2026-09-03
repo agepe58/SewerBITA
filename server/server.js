@@ -556,7 +556,7 @@ app.post('/api/assets', async (req, res) => {
       return res.status(201).json(result.rows[0]);
     }
 
-    if (type === 'pumpStation') {
+    if (type === 'pumpStation' || type === 'pump_station') {
       const q = `
         INSERT INTO pump_station_assets 
         (id, asset_code, name, area, latitude, longitude, flow_capacity_lps, total_pumps, active_pumps, power_source, generator_backup, status, condition, next_inspection_due)
@@ -693,7 +693,7 @@ app.post('/api/assets', async (req, res) => {
       return res.status(201).json(result.rows[0]);
     }
 
-    if (type === 'water_accessory') {
+    if (type === 'water_accessory' || type === 'waterAccessory') {
       const q = `
         INSERT INTO water_accessory_assets 
         (id, asset_code, name, area, latitude, longitude, accessory_type, system_category, pipe_id, diameter_mm, pressure_bar, elevation_meters, operating_status, status, condition, next_inspection_due)
@@ -739,7 +739,7 @@ app.post('/api/assets', async (req, res) => {
       return res.status(201).json(result.rows[0]);
     }
 
-    if (type === 'grease_trap') {
+    if (type === 'grease_trap' || type === 'greaseTrap') {
       const q = `
         INSERT INTO grease_trap_assets 
         (id, asset_code, name, area, latitude, longitude, capacity_liters, chamber_count, outlet_manhole_id, cleaning_frequency_days, grease_level_percent, status, condition, next_inspection_due)
