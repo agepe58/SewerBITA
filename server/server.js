@@ -340,112 +340,6 @@ const initDb = async () => {
       );
     `);
 
-    await ensureSchemaUpToDate();
-    console.log('PostgreSQL Database initialization & schema migration completed successfully.');
-  } catch (err) {
-    console.error('PostgreSQL DB init error:', err.message);
-  }
-};
-
-// Top-level self-healing schema migration helper
-const ensureSchemaUpToDate = async () => {
-  const alterQueries = [
-    // User profiles
-    "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'Technician';",
-    "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'Operasional & Pemeliharaan';",
-    "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(50);",
-    "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Pending Approval';",
-    "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;",
-
-    // Manhole assets
-    "ALTER TABLE manhole_assets ADD COLUMN IF NOT EXISTS depth_meters DOUBLE PRECISION DEFAULT 2.0;",
-    "ALTER TABLE manhole_assets ADD COLUMN IF NOT EXISTS diameter_mm INT DEFAULT 600;",
-    "ALTER TABLE manhole_assets ADD COLUMN IF NOT EXISTS material VARCHAR(100) DEFAULT 'Precast Concrete';",
-    "ALTER TABLE manhole_assets ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Active';",
-    "ALTER TABLE manhole_assets ADD COLUMN IF NOT EXISTS condition VARCHAR(50) DEFAULT 'Good';",
-    "ALTER TABLE manhole_assets ADD COLUMN IF NOT EXISTS next_inspection_due DATE DEFAULT CURRENT_DATE + INTERVAL '90 days';",
-    "ALTER TABLE manhole_assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;",
-
-    // Pump station assets
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS flow_capacity_lps DOUBLE PRECISION DEFAULT 150.0;",
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS total_pumps INT DEFAULT 3;",
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS active_pumps INT DEFAULT 2;",
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS power_source VARCHAR(100) DEFAULT 'PLN Grid + Genset';",
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS generator_backup VARCHAR(100) DEFAULT '150 kVA Genset';",
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Active';",
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS condition VARCHAR(50) DEFAULT 'Good';",
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS next_inspection_due DATE DEFAULT CURRENT_DATE + INTERVAL '90 days';",
-    "ALTER TABLE pump_station_assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;",
-
-    // Pipe assets (CRITICAL FIX FOR MISSING pipe_category, waypoints, pressure_bar, destination_wwtp_name)
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS pipe_category VARCHAR(50) DEFAULT 'gravity';",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS waypoints JSONB DEFAULT '[]'::jsonb;",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS pressure_bar DOUBLE PRECISION DEFAULT 0.0;",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS destination_wwtp_name VARCHAR(255);",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS from_asset_id VARCHAR(100) DEFAULT 'node-start';",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS to_asset_id VARCHAR(100) DEFAULT 'node-end';",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS length_meters DOUBLE PRECISION DEFAULT 50.0;",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS diameter_mm INT DEFAULT 300;",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS material VARCHAR(100) DEFAULT 'HDPE';",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS slope_percent DOUBLE PRECISION DEFAULT 0.5;",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Active';",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS condition VARCHAR(50) DEFAULT 'Good';",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS next_inspection_due DATE DEFAULT CURRENT_DATE + INTERVAL '90 days';",
-    "ALTER TABLE pipe_assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;",
-
-    // WTP assets
-    "ALTER TABLE wtp_assets ADD COLUMN IF NOT EXISTS production_capacity_lps DOUBLE PRECISION DEFAULT 500.0;",
-    "ALTER TABLE wtp_assets ADD COLUMN IF NOT EXISTS raw_water_source VARCHAR(255) DEFAULT 'Sungai Citarum';",
-    "ALTER TABLE wtp_assets ADD COLUMN IF NOT EXISTS water_quality_status VARCHAR(100) DEFAULT 'Safe - Permenkes 2023';",
-    "ALTER TABLE wtp_assets ADD COLUMN IF NOT EXISTS reservoir_capacity_m3 DOUBLE PRECISION DEFAULT 5000.0;",
-    "ALTER TABLE wtp_assets ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Active';",
-    "ALTER TABLE wtp_assets ADD COLUMN IF NOT EXISTS condition VARCHAR(50) DEFAULT 'Good';",
-    "ALTER TABLE wtp_assets ADD COLUMN IF NOT EXISTS next_inspection_due DATE DEFAULT CURRENT_DATE + INTERVAL '90 days';",
-    "ALTER TABLE wtp_assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;",
-
-    // Water accessory assets
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS accessory_type VARCHAR(50) DEFAULT 'air_valve';",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS system_category VARCHAR(50) DEFAULT 'clean_water';",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS pipe_id VARCHAR(100) DEFAULT '';",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS diameter_mm INT DEFAULT 150;",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS pressure_bar DOUBLE PRECISION DEFAULT 6.0;",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS elevation_meters DOUBLE PRECISION DEFAULT 15.0;",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS operating_status VARCHAR(50) DEFAULT 'Normal Open';",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Active';",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS condition VARCHAR(50) DEFAULT 'Good';",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS next_inspection_due DATE DEFAULT CURRENT_DATE + INTERVAL '90 days';",
-    "ALTER TABLE water_accessory_assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;",
-
-    // Grease trap assets
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS capacity_liters DOUBLE PRECISION DEFAULT 500.0;",
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS chamber_count INT DEFAULT 3;",
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS outlet_manhole_id VARCHAR(100) DEFAULT '';",
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS cleaning_frequency_days INT DEFAULT 30;",
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS grease_level_percent DOUBLE PRECISION DEFAULT 20.0;",
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Active';",
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS condition VARCHAR(50) DEFAULT 'Good';",
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS next_inspection_due DATE DEFAULT CURRENT_DATE + INTERVAL '90 days';",
-    "ALTER TABLE grease_trap_assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"
-  ];
-
-  for (const q of alterQueries) {
-    try {
-      await pool.query(q);
-    } catch (err) {
-      // Ignore if column exists or concurrent query
-    }
-  }
-};
-
-app.get('/api/admin/migrate-schema', async (req, res) => {
-  try {
-    await ensureSchemaUpToDate();
-    res.json({ status: 'success', message: 'Schema migration executed successfully.' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
     // 7. Drop Legacy/Orphan Tables if they exist
     await pool.query(`
       DROP TABLE IF EXISTS work_orders CASCADE;
@@ -538,6 +432,7 @@ app.get('/api/admin/migrate-schema', async (req, res) => {
       CREATE INDEX IF NOT EXISTS idx_grease_trap_geom ON grease_trap_assets USING GIST(geom);
     `);
 
+    await ensureSchemaUpToDate();
     console.log('✅ PostgreSQL Schema & Tables (work_orders, projects, reports, assets, users) initialized for production!');
   } catch (err) {
     console.error('⚠️ DB Init Warning:', err.message);
