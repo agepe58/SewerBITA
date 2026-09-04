@@ -204,7 +204,8 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   const [selectedArea, setSelectedArea] = useState('All Areas');
   const [selectedCondition, setSelectedCondition] = useState('All Conditions');
   const [showManholes, setShowManholes] = useState(true);
-  const [showPipes, setShowPipes] = useState(true);
+  const [showSewerPipes, setShowSewerPipes] = useState(true);
+  const [showCleanWaterPipes, setShowCleanWaterPipes] = useState(true);
   const [showPumpStations, setShowPumpStations] = useState(true);
   const [showWtps, setShowWtps] = useState(true);
   const [showWaterAccessories, setShowWaterAccessories] = useState(true);
@@ -319,6 +320,10 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   });
 
   const filteredPipes = pipes.filter(p => {
+    const isCleanWater = p.systemCategory === 'clean_water' || p.pipeCategory === 'clean_water_distribution';
+    if (isCleanWater && !showCleanWaterPipes) return false;
+    if (!isCleanWater && !showSewerPipes) return false;
+
     const areaMatch = selectedArea === 'All Areas' || p.area === selectedArea;
     const condMatch = selectedCondition === 'All Conditions' || p.condition === selectedCondition;
     return areaMatch && condMatch;
@@ -359,8 +364,10 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         onSelectArea={setSelectedArea}
         showManholes={showManholes}
         onToggleManholes={setShowManholes}
-        showPipes={showPipes}
-        onTogglePipes={setShowPipes}
+        showSewerPipes={showSewerPipes}
+        onToggleSewerPipes={setShowSewerPipes}
+        showCleanWaterPipes={showCleanWaterPipes}
+        onToggleCleanWaterPipes={setShowCleanWaterPipes}
         showPumpStations={showPumpStations}
         onTogglePumpStations={setShowPumpStations}
         selectedCondition={selectedCondition}
@@ -450,7 +457,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
         />
 
         {/* Render Pipe Polyline Lines */}
-        {showPipes && filteredPipes.map((pipe) => {
+        {(showSewerPipes || showCleanWaterPipes) && filteredPipes.map((pipe) => {
           const fromCoords = nodeCoordsMap.get(pipe.fromAssetId);
           const toCoords = nodeCoordsMap.get(pipe.toAssetId);
           if (!fromCoords || !toCoords) return null;

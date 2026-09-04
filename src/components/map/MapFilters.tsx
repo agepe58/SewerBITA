@@ -7,8 +7,10 @@ interface MapFiltersProps {
   onSelectArea: (area: string) => void;
   showManholes: boolean;
   onToggleManholes: (val: boolean) => void;
-  showPipes: boolean;
-  onTogglePipes: (val: boolean) => void;
+  showSewerPipes: boolean;
+  onToggleSewerPipes: (val: boolean) => void;
+  showCleanWaterPipes: boolean;
+  onToggleCleanWaterPipes: (val: boolean) => void;
   showPumpStations: boolean;
   onTogglePumpStations: (val: boolean) => void;
   selectedCondition: string;
@@ -25,8 +27,10 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
   onSelectArea,
   showManholes,
   onToggleManholes,
-  showPipes,
-  onTogglePipes,
+  showSewerPipes,
+  onToggleSewerPipes,
+  showCleanWaterPipes,
+  onToggleCleanWaterPipes,
   showPumpStations,
   onTogglePumpStations,
   selectedCondition,
@@ -153,12 +157,28 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
           </label>
 
           <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-slate-50 font-bold text-slate-800">
-            <span>Pipa & Directional Flow</span>
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-1.5 rounded-full bg-[#8B4513] inline-block"></span>
+              <span>Pipa Air Limbah (Coklat)</span>
+            </span>
             <input
               type="checkbox"
-              checked={showPipes}
-              onChange={(e) => onTogglePipes(e.target.checked)}
-              className="accent-[#2563EB] w-4.5 h-4.5 cursor-pointer"
+              checked={showSewerPipes}
+              onChange={(e) => onToggleSewerPipes(e.target.checked)}
+              className="accent-[#8B4513] w-4.5 h-4.5 cursor-pointer"
+            />
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-slate-50 font-bold text-slate-800">
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-1.5 rounded-full bg-[#0284C7] inline-block"></span>
+              <span>Pipa Air Bersih (Biru)</span>
+            </span>
+            <input
+              type="checkbox"
+              checked={showCleanWaterPipes}
+              onChange={(e) => onToggleCleanWaterPipes(e.target.checked)}
+              className="accent-[#0284C7] w-4.5 h-4.5 cursor-pointer"
             />
           </label>
 
